@@ -1375,6 +1375,7 @@ namespace BotSpace
                             thisHomeTeam == homeTeamId)
                         {
                             idx = int.Parse(id);
+                            hasRows = true;
                             break;
                         }
                         else
