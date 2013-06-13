@@ -49,6 +49,7 @@
             this.renameLeagueButton = new System.Windows.Forms.Button();
             this.createLeague = new System.Windows.Forms.Button();
             this.dupGames = new System.Windows.Forms.Button();
+            this.specialButton = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // label1
@@ -238,17 +239,28 @@
             // 
             this.dupGames.Location = new System.Drawing.Point(701, 119);
             this.dupGames.Name = "dupGames";
-            this.dupGames.Size = new System.Drawing.Size(186, 26);
+            this.dupGames.Size = new System.Drawing.Size(97, 26);
             this.dupGames.TabIndex = 22;
             this.dupGames.Text = "Remove Dup Games";
             this.dupGames.UseVisualStyleBackColor = true;
             this.dupGames.Click += new System.EventHandler(this.dupGames_Click);
+            // 
+            // specialButton
+            // 
+            this.specialButton.Location = new System.Drawing.Point(804, 118);
+            this.specialButton.Name = "specialButton";
+            this.specialButton.Size = new System.Drawing.Size(86, 26);
+            this.specialButton.TabIndex = 23;
+            this.specialButton.Text = "Special Button";
+            this.specialButton.UseVisualStyleBackColor = true;
+            this.specialButton.Click += new System.EventHandler(this.specialButton_Click);
             // 
             // FormzDBEditor
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(899, 411);
+            this.Controls.Add(this.specialButton);
             this.Controls.Add(this.dupGames);
             this.Controls.Add(this.createLeague);
             this.Controls.Add(this.renameLeagueButton);
@@ -300,6 +312,7 @@
         private System.Windows.Forms.Button renameLeagueButton;
         private System.Windows.Forms.Button createLeague;
         private System.Windows.Forms.Button dupGames;
+        private System.Windows.Forms.Button specialButton;
     }
 }
 

@@ -970,7 +970,7 @@ namespace FormzTool
             List<string> team2s = new List<string>();
             List<string> kodates = new List<string>();
 
-            string sql = "select team1, team2, kodate, count(*) from games group by team1, team2, kodate having count(*) > 1;";
+            string sql = "select team1, team2, kodate::date, count(*) from games group by team1, team2, kodate::date having count(*) > 1;";
 
             using (NpgsqlCommand find = new NpgsqlCommand(sql, pgConnection))
             {
@@ -994,7 +994,7 @@ namespace FormzTool
             {
                 string sql2 = "select id from games where team1='" + team1s.ElementAt(j)
                             + "' and team2='" + team2s.ElementAt(j)
-                            + "' and kodate='" + kodates.ElementAt(j) + "';";
+                            + "' and to_char(kodate, 'DD/MM/YYYY') = '" + kodates.ElementAt(j).Substring(0, 10) + "';";
 
                 var ids = OneColumnQuery(sql2);
 
@@ -1057,6 +1057,37 @@ namespace FormzTool
                 }
             }
             return ids;
+        }
+
+        private void specialButton_Click(object sender, EventArgs e)
+        {
+
+
+                string sql2 = "select id from games where team1='9706' and team2='9709';";
+
+                var ids = OneColumnQuery(sql2);
+
+                ids.RemoveAt(0);
+
+
+                if (ids.Count() > 1)
+                {
+                    string primaryId = ids.ElementAt(0);
+                    for (int i = 1; i != ids.Count(); ++i)
+                    {
+                        string sqlTeam1 = "update statistics set game_id='" + primaryId + "' where game_id='" + ids.ElementAt(i) + "';";
+                        string sqlDeleteTeam = "delete from games where id='" + ids.ElementAt(i) + "';";
+                        
+                            ExecuteNonQuery(sqlTeam1);
+                        
+                        ExecuteNonQuery(sqlDeleteTeam);
+                    }
+
+                }
+            
+
+            matchBox.Items.Clear();
+
         }
 
     }

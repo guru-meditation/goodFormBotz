@@ -78,6 +78,30 @@ namespace BotSpace
             return result;
         }
 
+        private static bool ClickElement(IWebDriver driver, IWebElement iwe)
+        {
+            bool result = false;
+
+            try
+            {
+                if (iwe != null)
+                {
+                    iwe.Click();
+                    result = true;
+                }
+                else
+                {
+                    Console.WriteLine("Couldn't click NULL web element");
+                }
+            }
+            catch (Exception ce)
+            {
+                Console.WriteLine("=========> Exception thrown trying to click element: " + iwe.TagName + " [" + ce + "]");
+            }
+
+            return result;
+        }
+
         private static bool ClickElement(IWebDriver driver, string xpath)
         {
             bool result = false;
@@ -291,60 +315,81 @@ namespace BotSpace
 
                         string text = GetElementText(driver, "//*[@id=\"commentaryContent\"]");
 
-                        if (string.IsNullOrEmpty(text))
+                        int totalDAs = -1;
+                        int totalAs = -1;
+                        int totalCs  = -1;
+                        int totalBs  = -1;
+
+                        int homeDAs = -1;
+                        int homeAs  = -1;
+                        int homeCs = -1;
+                        int homeBs = -1;
+                        int homeSonTs  = -1;
+                        int homeSoffTs = -1;
+
+                        int awayDAs = -1;
+                        int awayAs = -1;
+                        int awayCs  = -1;
+                        int awayBs = -1;
+                        int awaySonTs  = -1;
+                        int awaySoffTs = -1;
+
+                        if (string.IsNullOrEmpty(text) == false)
                         {
-                            continue;
-                        }
+                            var splits = text.Split('\n').ToList();
 
-                        var splits = text.Split('\n').ToList();
+                            splits.RemoveAll(x => String.IsNullOrEmpty(x));
+                            splits.RemoveAll(x => x[0] == ' ');
+                            splits.RemoveAll(x => char.IsDigit(x[0]));
 
-                        splits.RemoveAll(x => String.IsNullOrEmpty(x));
-                        splits.RemoveAll(x => x[0] == ' ');
-                        splits.RemoveAll(x => char.IsDigit(x[0]));
+                            var distinct = splits.Distinct();
 
-                        var distinct = splits.Distinct();
+                            var query = distinct.Select(g => new { Name = g, Count = g.Count() });
 
-                        var query = distinct.Select(g => new { Name = g, Count = g.Count() });
+                            splits.ForEach(x => x.Trim());
 
-                        splits.ForEach(x => x.Trim());
+                            totalDAs = splits.Count(x => x.StartsWith("Dangerous Attack by"));
+                            totalAs = splits.Count(x => x.StartsWith("Attack by"));
+                            totalCs = splits.Count(x => x.StartsWith("Clearance by"));
+                            totalBs = splits.Count(x => x.StartsWith("Blocked Shot for"));
 
-                        int totalDAs = splits.Count(x => x.StartsWith("Dangerous Attack by"));
-                        int totalAs = splits.Count(x => x.StartsWith("Attack by"));
-                        int totalCs = splits.Count(x => x.StartsWith("Clearance by"));
-                        int totalBs = splits.Count(x => x.StartsWith("Blocked Shot for"));
+                            homeDAs = splits.Count(x => x.StartsWith("Dangerous Attack by " + homeTeamName));
+                            homeAs = splits.Count(x => x.StartsWith("Attack by " + homeTeamName));
+                            homeCs = splits.Count(x => x.StartsWith("Clearance by " + homeTeamName));
+                            homeBs = splits.Count(x => x.StartsWith("Blocked Shot for " + homeTeamName));
+                            homeSonTs = splits.Count(x => x.StartsWith("Shot On Target for " + homeTeamName));
+                            homeSoffTs = splits.Count(x => x.StartsWith("Shot Off Target for " + homeTeamName));
 
-                        int homeDAs = splits.Count(x => x.StartsWith("Dangerous Attack by " + homeTeamName));
-                        int homeAs = splits.Count(x => x.StartsWith("Attack by " + homeTeamName));
-                        int homeCs = splits.Count(x => x.StartsWith("Clearance by " + homeTeamName));
-                        int homeBs = splits.Count(x => x.StartsWith("Blocked Shot for " + homeTeamName));
+                            awayDAs = splits.Count(x => x.StartsWith("Dangerous Attack by " + awayTeamName));
+                            awayAs = splits.Count(x => x.StartsWith("Attack by " + awayTeamName));
+                            awayCs = splits.Count(x => x.StartsWith("Clearance by " + awayTeamName));
+                            awayBs = splits.Count(x => x.StartsWith("Blocked Shot for " + awayTeamName));
+                            awaySonTs = splits.Count(x => x.StartsWith("Shot On Target for " + awayTeamName));
+                            awaySoffTs = splits.Count(x => x.StartsWith("Shot Off Target for " + awayTeamName));
 
-                        int awayDAs = splits.Count(x => x.StartsWith("Dangerous Attack by " + awayTeamName));
-                        int awayAs = splits.Count(x => x.StartsWith("Attack by " + awayTeamName));
-                        int awayCs = splits.Count(x => x.StartsWith("Clearance by " + awayTeamName));
-                        int awayBs = splits.Count(x => x.StartsWith("Blocked Shot for " + awayTeamName));
+                            if (homeDAs + awayDAs != totalDAs)
+                            {
+                                if (homeDAs == 0) homeDAs = totalDAs - awayDAs;
+                                if (awayDAs == 0) awayDAs = totalDAs - homeDAs;
+                            }
 
-                        if (homeDAs + awayDAs != totalDAs)
-                        {
-                            if (homeDAs == 0) homeDAs = totalDAs - awayDAs;
-                            if (awayDAs == 0) awayDAs = totalDAs - homeDAs;
-                        }
+                            if (homeAs + awayAs != totalAs)
+                            {
+                                if (homeAs == 0) homeAs = totalAs - awayAs;
+                                if (awayAs == 0) awayAs = totalAs - homeAs;
+                            }
 
-                        if (homeAs + awayAs != totalAs)
-                        {
-                            if (homeAs == 0) homeAs = totalAs - awayAs;
-                            if (awayAs == 0) awayAs = totalAs - homeAs;
-                        }
+                            if (homeCs + awayCs != totalCs)
+                            {
+                                if (homeCs == 0) homeCs = totalCs - awayCs;
+                                if (awayCs == 0) awayCs = totalCs - homeCs;
+                            }
 
-                        if (homeCs + awayCs != totalCs)
-                        {
-                            if (homeCs == 0) homeCs = totalCs - awayCs;
-                            if (awayCs == 0) awayCs = totalCs - homeCs;
-                        }
-
-                        if (homeBs + awayBs != totalBs)
-                        {
-                            if (homeBs == 0) homeBs = totalBs - awayBs;
-                            if (awayBs == 0) awayBs = totalBs - homeBs;
+                            if (homeBs + awayBs != totalBs)
+                            {
+                                if (homeBs == 0) homeBs = totalBs - awayBs;
+                                if (awayBs == 0) awayBs = totalBs - homeBs;
+                            }
                         }
 
                         Console.WriteLine("Game:\t\t" + homeTeamName + " v " + awayTeamName);
@@ -390,7 +435,26 @@ namespace BotSpace
 
                             for (int i = 0; i != 10; ++i)
                             {
-                                hstats[statType[i + 1]] = ParseInt(statType[i + 1], justHomeStats[i]);
+                                int parseResult = ParseInt(statType[i + 1], justHomeStats[i]);
+                                if (parseResult == -1 && (i == 0 || i == 5 || i == 8 || i == 9))
+                                {
+                                    hstats[statType[i + 1]] = 0;
+                                }
+                                else
+                                {
+                                    hstats[statType[i + 1]] = parseResult;
+                                }
+                            }
+
+                            if (hstats[statType[3]] == -1)
+                            {
+                                hstats[statType[3]] = homeSonTs;
+                            }
+
+                            if (hstats[statType[4]] == -1)
+                            {
+                                hstats[statType[4]] = homeSoffTs;
+
                             }
 
                             hstats[statType[11]] = homeAs;
@@ -402,7 +466,25 @@ namespace BotSpace
 
                             for (int i = 0; i != 10; ++i)
                             {
-                                astats[statType[i + 1]] = ParseInt(statType[i + 1], justAwayStats[i]);
+                                int parseResult =  ParseInt(statType[i + 1], justAwayStats[i]);
+                                if (parseResult == -1 && (i == 0 || i == 5 || i == 8 || i == 9))
+                                {
+                                    astats[statType[i + 1]] = 0;
+                                }
+                                else
+                                {
+                                    astats[statType[i + 1]] = parseResult;
+                                }
+                            }
+
+                            if (astats[statType[3]] == -1)
+                            {
+                                astats[statType[3]] = awaySonTs;
+                            }
+
+                            if (astats[statType[4]] == -1)
+                            {
+                                astats[statType[4]] = awaySoffTs;
                             }
 
                             astats[statType[11]] = awayAs;
@@ -516,14 +598,13 @@ namespace BotSpace
 
                     driver.Url = "https://mobile.bet365.com/premium/#type=Splash;key=1;ip=0;lng=1";
                     System.Threading.Thread.Sleep(sleepTime);
-                    string inPlayXPath = "//*[@id=\"sc_0_L1_1-1-5-0-0-0-0-1-1-0-0-0-0-0-1-0-0-0-0\"]";
-                    //string inPlayXPath = "//*[@id=\"sc_0_L1_1-1-5-0-0-0-0-1-1-0-0-0-0-0-1-0-0-0\"]";
-                    string fullTimeResultXPath = "//*[@id=\"sc_0_L1_1-1-13-0-0-0-0-0-1-0-0-0-0-0-1-0-0-0\"]";
-                    string mainListXPath = "//*[@id=\"sc__L2_201\"]";
+                    
+                    //string inPlayXPath = "//*[@id=\"sc_0_L1_1-1-5-0-0-0-0-1-1-0-0-0-0-0-1-0-0-0-0\"]";
+                    IWebElement inPlayElement = GetWebElementFromClassAndDivText(driver, "Level1", "In-Play");
 
                     if (firstTime)
                     {
-                        ClickElement(driver, inPlayXPath);
+                        ClickElement(driver, inPlayElement);
                     }
 
                     var elements = driver.FindElements(By.ClassName("IPScoreTitle"));
@@ -642,12 +723,6 @@ namespace BotSpace
                         string homeTeamName = teams.ElementAt(0);
                         string awayTeamName = teams.ElementAt(1);
 
-                        Console.WriteLine(homeTeamName + " v " + awayTeamName + " at " + time);
-
-                        Console.WriteLine("Goals Corners");
-                        Console.WriteLine(cleanScores.ElementAt(0).PadRight(6) + hstats[statType[6]].ToString());
-                        Console.WriteLine(cleanScores.ElementAt(1).PadRight(6) + astats[statType[6]].ToString());
-
                         string today = DateTime.Now.ToString("ddMMyy");
                         string league = "All";
 
@@ -699,6 +774,23 @@ namespace BotSpace
             }
         }
 
+        private static IWebElement GetWebElementFromClassAndDivText(IWebDriver driver, string classType, string findString)
+        {
+            IWebElement retVal = null;
+            var thisTypes = driver.FindElements(By.ClassName(classType));
+
+            foreach (var level1 in thisTypes)
+            {
+                if (level1.Text.Trim().Equals(findString))
+                {
+                    retVal = level1;
+                    break;
+                }
+            }
+
+            return retVal;
+        }
+
         private static void AddTodaysBet365Matches(int sleepTime, IWebDriver driver)
         {
             var foundMatches = new List<aMatch>();
@@ -706,41 +798,45 @@ namespace BotSpace
             driver.Url = "https://mobile.bet365.com/premium/#type=Splash;key=1;ip=0;lng=1";
             System.Threading.Thread.Sleep(sleepTime);
 
-            var level1s = driver.FindElements(By.ClassName("Level1"));
-
             int dirtySleep = 2000;
 
-            foreach (var level1 in level1s)
+            var matchMarket = GetWebElementFromClassAndDivText(driver, "Level1", "Match Markets");
+
+            if (matchMarket != null)
             {
-                if (level1.Text.Contains("Match Markets"))
-                {
-                    level1.Click();
-                    System.Threading.Thread.Sleep(dirtySleep);
-                    break;
-                }
+                matchMarket.Click();
+                System.Threading.Thread.Sleep(dirtySleep);
+            }
+            else
+            {
+                Console.WriteLine("Couldn't find Match Markets");
+                return;
             }
 
-            var level2s = driver.FindElements(By.ClassName("Level2"));
+            var mainGroup = GetWebElementFromClassAndDivText(driver, "Level2", "Main");
 
-            foreach (var level2 in level2s)
+            if (mainGroup != null)
             {
-                if (level2.Text.Trim() == "Main")
-                {
-                    level2.Click();
-                    System.Threading.Thread.Sleep(dirtySleep);
-                    break;
-                }
+                mainGroup.Click();
+                System.Threading.Thread.Sleep(dirtySleep);
+            }
+            else
+            {
+                Console.WriteLine("Couldn't find Main");
+                return;
             }
 
-            var genRows = driver.FindElements(By.ClassName("genericRow"));
-            foreach (var genRow in genRows)
+            var fullTimeResult = GetWebElementFromClassAndDivText(driver, "genericRow", "Full Time Result");
+
+            if (fullTimeResult != null)
             {
-                if (genRow.Text.Trim() == "Full Time Result")
-                {
-                    genRow.Click();
-                    System.Threading.Thread.Sleep(dirtySleep);
-                    break;
-                }
+                fullTimeResult.Click();
+                System.Threading.Thread.Sleep(dirtySleep);
+            }
+            else
+            {
+                Console.WriteLine("Couldn't find Full Time Result");
+                return;
             }
 
             int numGenRows = driver.FindElements(By.ClassName("genericRow")).Count();
@@ -976,6 +1072,12 @@ namespace BotSpace
 
             int retries = 0;
 
+            Console.WriteLine("Adding " + homeTeam + " [" + hTeamId + "] v " + awayTeam + " [" + aTeamId + "] in league [" + leagueId + "] with game id: " + gameId + " at time: " + time);
+ 
+            Console.WriteLine("Goals Corners");
+            Console.WriteLine(hstats[statType[1]].ToString().PadRight(6) + hstats[statType[6]].ToString());
+            Console.WriteLine(astats[statType[1]].ToString().PadRight(6) + astats[statType[6]].ToString());
+
             while (retries < gKeyClashRetries)
             {
                 try
@@ -984,6 +1086,7 @@ namespace BotSpace
                 }
                 catch (NpgsqlException ne)
                 {
+                    Console.WriteLine("Retrying....");
                     retries += 1;
                 }
                 break;
@@ -1110,7 +1213,7 @@ namespace BotSpace
 
                         if (hasRows)
                         {
-                            Console.WriteLine("Already seen minute " + lastMinuteParsed + " of this game");
+                            Console.WriteLine("Already seen the minute " + lastMinuteParsed + " of this game");
                             dr.Close();
                             return false;
                         }
@@ -1257,9 +1360,9 @@ namespace BotSpace
                 {
                     bool hasRows = dr.HasRows;
 
-                    if (hasRows == true)
+                    while (dr.Read())  //bug fix for repeated same game added after rematch
                     {
-                        dr.Read();
+                        
                         string id = dr[0].ToString();
                         int thisHomeTeam = int.Parse(dr[1].ToString());
 
@@ -1272,6 +1375,11 @@ namespace BotSpace
                             thisHomeTeam == homeTeamId)
                         {
                             idx = int.Parse(id);
+                            break;
+                        }
+                        else
+                        {
+                            hasRows = false;
                         }
                     }
 
@@ -1449,7 +1557,22 @@ namespace BotSpace
 
                             Upload(league, koDate, homeTeam, awayTeam, snaps);
 
-                            File.Move(xml, xml + ".uploaded");
+                            bool renamedOk = false;
+                            int qwert = 0;
+                            while (renamedOk == false)
+                            {
+                                string uploadedFileName = qwert == 0 ? xml + ".uploaded" : xml + "." + qwert + ".uploaded"; 
+                                try
+                                {
+                                    File.Move(xml, uploadedFileName);
+                                    renamedOk = true;
+                                }
+                                catch
+                                {
+                                    Console.WriteLine("Warning: cannot overwrite: " + uploadedFileName);
+                                    qwert += 1;
+                                }
+                            }
                         }
                     }
 
