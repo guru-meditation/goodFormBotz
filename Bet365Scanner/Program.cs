@@ -602,12 +602,16 @@ namespace BotSpace
                     //string inPlayXPath = "//*[@id=\"sc_0_L1_1-1-5-0-0-0-0-1-1-0-0-0-0-0-1-0-0-0-0\"]";
                     IWebElement inPlayElement = GetWebElementFromClassAndDivText(driver, "Level1", "In-Play");
 
-                    if (firstTime)
-                    {
-                        ClickElement(driver, inPlayElement);
-                    }
+                    ClickElement(driver, inPlayElement);
 
                     var elements = driver.FindElements(By.ClassName("IPScoreTitle"));
+
+                    if (firstTime || elements.Count() == 0)
+                    {
+                        inPlayElement = GetWebElementFromClassAndDivText(driver, "Level1", "In-Play");
+                        ClickElement(driver, inPlayElement);
+                        elements = driver.FindElements(By.ClassName("IPScoreTitle"));
+                    }
 
                     if (elements.Count() == 0)
                     {
