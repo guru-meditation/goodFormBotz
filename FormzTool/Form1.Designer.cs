@@ -50,6 +50,10 @@
             this.createLeague = new System.Windows.Forms.Button();
             this.dupGames = new System.Windows.Forms.Button();
             this.specialButton = new System.Windows.Forms.Button();
+            this.todayButton = new System.Windows.Forms.Button();
+            this.matchBox2 = new System.Windows.Forms.ListBox();
+            this.matchBox3 = new System.Windows.Forms.ListBox();
+            this.tomo_button1 = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // label1
@@ -66,12 +70,12 @@
             // 
             this.teamBox1.Location = new System.Drawing.Point(81, 6);
             this.teamBox1.Name = "teamBox1";
-            this.teamBox1.Size = new System.Drawing.Size(614, 20);
+            this.teamBox1.Size = new System.Drawing.Size(775, 20);
             this.teamBox1.TabIndex = 1;
             // 
             // getButton1
             // 
-            this.getButton1.Location = new System.Drawing.Point(701, 4);
+            this.getButton1.Location = new System.Drawing.Point(862, 6);
             this.getButton1.Name = "getButton1";
             this.getButton1.Size = new System.Drawing.Size(189, 23);
             this.getButton1.TabIndex = 2;
@@ -87,7 +91,7 @@
             this.matchBox.Location = new System.Drawing.Point(15, 148);
             this.matchBox.Name = "matchBox";
             this.matchBox.SelectionMode = System.Windows.Forms.SelectionMode.MultiSimple;
-            this.matchBox.Size = new System.Drawing.Size(878, 256);
+            this.matchBox.Size = new System.Drawing.Size(1036, 256);
             this.matchBox.TabIndex = 3;
             this.matchBox.SelectedIndexChanged += new System.EventHandler(this.matchBox_SelectedIndexChanged);
             // 
@@ -129,12 +133,12 @@
             // 
             this.leagueBox1.Location = new System.Drawing.Point(81, 63);
             this.leagueBox1.Name = "leagueBox1";
-            this.leagueBox1.Size = new System.Drawing.Size(614, 20);
+            this.leagueBox1.Size = new System.Drawing.Size(591, 20);
             this.leagueBox1.TabIndex = 9;
             // 
             // renameTeamButton
             // 
-            this.renameTeamButton.Location = new System.Drawing.Point(701, 59);
+            this.renameTeamButton.Location = new System.Drawing.Point(862, 57);
             this.renameTeamButton.Name = "renameTeamButton";
             this.renameTeamButton.Size = new System.Drawing.Size(189, 26);
             this.renameTeamButton.TabIndex = 10;
@@ -146,7 +150,7 @@
             // 
             this.renameBox1.Location = new System.Drawing.Point(81, 34);
             this.renameBox1.Name = "renameBox1";
-            this.renameBox1.Size = new System.Drawing.Size(614, 20);
+            this.renameBox1.Size = new System.Drawing.Size(775, 20);
             this.renameBox1.TabIndex = 11;
             // 
             // setLeague
@@ -181,7 +185,7 @@
             // 
             // getLeague
             // 
-            this.getLeague.Location = new System.Drawing.Point(701, 30);
+            this.getLeague.Location = new System.Drawing.Point(862, 30);
             this.getLeague.Name = "getLeague";
             this.getLeague.Size = new System.Drawing.Size(189, 26);
             this.getLeague.TabIndex = 15;
@@ -203,7 +207,7 @@
             // 
             this.newLeagueBox1.Location = new System.Drawing.Point(81, 93);
             this.newLeagueBox1.Name = "newLeagueBox1";
-            this.newLeagueBox1.Size = new System.Drawing.Size(614, 20);
+            this.newLeagueBox1.Size = new System.Drawing.Size(775, 20);
             this.newLeagueBox1.TabIndex = 18;
             // 
             // label2
@@ -217,7 +221,7 @@
             // 
             // renameLeagueButton
             // 
-            this.renameLeagueButton.Location = new System.Drawing.Point(701, 89);
+            this.renameLeagueButton.Location = new System.Drawing.Point(862, 86);
             this.renameLeagueButton.Name = "renameLeagueButton";
             this.renameLeagueButton.Size = new System.Drawing.Size(189, 26);
             this.renameLeagueButton.TabIndex = 20;
@@ -237,7 +241,7 @@
             // 
             // dupGames
             // 
-            this.dupGames.Location = new System.Drawing.Point(701, 119);
+            this.dupGames.Location = new System.Drawing.Point(862, 116);
             this.dupGames.Name = "dupGames";
             this.dupGames.Size = new System.Drawing.Size(97, 26);
             this.dupGames.TabIndex = 22;
@@ -247,7 +251,7 @@
             // 
             // specialButton
             // 
-            this.specialButton.Location = new System.Drawing.Point(804, 118);
+            this.specialButton.Location = new System.Drawing.Point(965, 116);
             this.specialButton.Name = "specialButton";
             this.specialButton.Size = new System.Drawing.Size(86, 26);
             this.specialButton.TabIndex = 23;
@@ -255,11 +259,57 @@
             this.specialButton.UseVisualStyleBackColor = true;
             this.specialButton.Click += new System.EventHandler(this.specialButton_Click);
             // 
+            // todayButton
+            // 
+            this.todayButton.Location = new System.Drawing.Point(678, 58);
+            this.todayButton.Name = "todayButton";
+            this.todayButton.Size = new System.Drawing.Size(178, 25);
+            this.todayButton.TabIndex = 24;
+            this.todayButton.Text = "Todays Games";
+            this.todayButton.UseVisualStyleBackColor = true;
+            this.todayButton.Click += new System.EventHandler(this.todayButton_Click);
+            // 
+            // matchBox2
+            // 
+            this.matchBox2.Font = new System.Drawing.Font("Consolas", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.matchBox2.FormattingEnabled = true;
+            this.matchBox2.ItemHeight = 14;
+            this.matchBox2.Location = new System.Drawing.Point(15, 410);
+            this.matchBox2.Name = "matchBox2";
+            this.matchBox2.SelectionMode = System.Windows.Forms.SelectionMode.MultiSimple;
+            this.matchBox2.Size = new System.Drawing.Size(1036, 256);
+            this.matchBox2.TabIndex = 25;
+            // 
+            // matchBox3
+            // 
+            this.matchBox3.Font = new System.Drawing.Font("Consolas", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.matchBox3.FormattingEnabled = true;
+            this.matchBox3.ItemHeight = 14;
+            this.matchBox3.Location = new System.Drawing.Point(15, 672);
+            this.matchBox3.Name = "matchBox3";
+            this.matchBox3.SelectionMode = System.Windows.Forms.SelectionMode.MultiSimple;
+            this.matchBox3.Size = new System.Drawing.Size(1036, 256);
+            this.matchBox3.TabIndex = 26;
+            // 
+            // tomo_button1
+            // 
+            this.tomo_button1.Location = new System.Drawing.Point(701, 120);
+            this.tomo_button1.Name = "tomo_button1";
+            this.tomo_button1.Size = new System.Drawing.Size(155, 25);
+            this.tomo_button1.TabIndex = 27;
+            this.tomo_button1.Text = "Tomo Games";
+            this.tomo_button1.UseVisualStyleBackColor = true;
+            this.tomo_button1.Click += new System.EventHandler(this.tomo_button1_Click);
+            // 
             // FormzDBEditor
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(899, 411);
+            this.ClientSize = new System.Drawing.Size(1079, 938);
+            this.Controls.Add(this.tomo_button1);
+            this.Controls.Add(this.matchBox3);
+            this.Controls.Add(this.matchBox2);
+            this.Controls.Add(this.todayButton);
             this.Controls.Add(this.specialButton);
             this.Controls.Add(this.dupGames);
             this.Controls.Add(this.createLeague);
@@ -313,6 +363,10 @@
         private System.Windows.Forms.Button createLeague;
         private System.Windows.Forms.Button dupGames;
         private System.Windows.Forms.Button specialButton;
+        private System.Windows.Forms.Button todayButton;
+        private System.Windows.Forms.ListBox matchBox2;
+        private System.Windows.Forms.ListBox matchBox3;
+        private System.Windows.Forms.Button tomo_button1;
     }
 }
 

@@ -144,9 +144,6 @@ namespace BotSpace
             return result;
         }
 
-        static NpgsqlConnection pgConnection = null;
-        //static MySqlConnection  msConnection = null;
-
         enum OperationMode
         {
             WilliamHillScan,
@@ -155,15 +152,16 @@ namespace BotSpace
             UploadBet365
         }
 
-        static OperationMode gOpMode = OperationMode.WilliamHillScan;
-        static bool gSkipAddGames = false;
-        static int gKeyClashRetries = 5;
+        static OperationMode                        gOpMode = OperationMode.WilliamHillScan;
+        static int                                  numBots = 1;
+        static int                                  botIndex = 0;
+        static bool                                 gSkipAddGames = false;
+        static int                                  gKeyClashRetries = 5;
+        static List<NpgsqlConnection>               pgConnectionList = new List<NpgsqlConnection>();
+        //static MySqlConnection  msConnection = null;
 
         static void Main(string[] args)
         {
-            // ScratchPad();
-            // return;
-
             int r = 0;
 
             foreach (string arg in args)
@@ -178,6 +176,18 @@ namespace BotSpace
                 if (arg.ToLower().Contains("-m:bet365"))
                 {
                     gOpMode = OperationMode.Bet365Scan;
+                }
+
+                if (arg.ToLower().Contains("-n:"))
+                {
+                    try
+                    {
+                        numBots = int.Parse(arg.Substring("-n:".Length));
+                    }
+                    catch 
+                    {
+                        Console.WriteLine("Warning: Couldn't parse number of bots: " + arg);
+                    }
                 }
 
                 if (arg.ToLower().Contains("-m:uploadwh"))
@@ -229,13 +239,17 @@ namespace BotSpace
             {
                 try
                 {
-                    pgConnection = new NpgsqlConnection(connectionString);
-                    pgConnection.Open();
+                    for (int i = 0; i != numBots; ++i)
+                    {
+                        var pgConnection = new NpgsqlConnection(connectionString);
+                        pgConnection.Open();
+                        pgConnectionList.Add(pgConnection);
+                    }
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine("Error: {0}", ex.ToString());
-                    pgConnection = null;
+                    pgConnectionList = null;
                 }
             }
 
@@ -257,7 +271,7 @@ namespace BotSpace
 
             if (gOpMode == OperationMode.Bet365Scan)
             {
-                ScanBet365(sleep);
+                ScanBet365(sleep, 0);
             }
             else if (gOpMode == OperationMode.WilliamHillScan)
             {
@@ -548,7 +562,7 @@ namespace BotSpace
             }
         }
 
-        private static void ScanBet365(int sleepTime)
+        private static void ScanBet365(int sleepTime, int botIndex)
         {
             IWebDriver driver = null;
             int idx = -1;
@@ -562,7 +576,7 @@ namespace BotSpace
                 driver = GetChromeDriver(agentString);
             }
 
-            if (gSkipAddGames == false)
+            if (botIndex == 0 && gSkipAddGames == false)
             {
                 Console.WriteLine("Scanning today's games for " + lastDayGamesUpdated.Date);
                 AddTodaysBet365Matches(sleepTime, driver);
@@ -642,9 +656,15 @@ namespace BotSpace
                         elements.ElementAt(idx).Click();
                         System.Threading.Thread.Sleep(sleepTime);
 
-
                         var hCardsAndCorners = GetValuesById(driver, "team1IconStats", attempts, 3, " ");
-                        if (hCardsAndCorners == null) { Console.WriteLine("hCardsAndCorners == null"); continue; }
+                        if (hCardsAndCorners == null) { 
+                            Console.WriteLine("hCardsAndCorners == null");
+                            Console.WriteLine("Resetting driver...");
+                            driver.Close();
+                            driver.Dispose();
+                            driver = null;
+                            continue;
+                        }
 
                         var aCardsAndCorners = GetValuesById(driver, "team2IconStats", attempts, 3, " ");
                         if (aCardsAndCorners == null) { Console.WriteLine("aCardsAndCorners == null"); continue; }
@@ -924,16 +944,25 @@ namespace BotSpace
         {
             IWebDriver driver = null;
 
-            if (string.IsNullOrEmpty(agentString) == false)
+            try
             {
-                ChromeOptions options = new ChromeOptions();
-                options.AddArgument(agentString);
-                driver = new ChromeDriver(options);
+
+                if (string.IsNullOrEmpty(agentString) == false)
+                {
+                    ChromeOptions options = new ChromeOptions();
+                    options.AddArgument(agentString);
+                    driver = new ChromeDriver(options);
+                }
+                else
+                {
+                    driver = new ChromeDriver();
+                }
             }
-            else
+            catch (Exception ce)
             {
-                driver = new ChromeDriver();
+                Console.WriteLine("Exception: " + ce);
             }
+
 
             driver.Manage().Timeouts().ImplicitlyWait(TimeSpan.FromSeconds(10));
             return driver;
@@ -1047,7 +1076,7 @@ namespace BotSpace
 
                 if (lastSnapTime.Split(':').First() == time.Split(':').First())
                 {
-                    Console.WriteLine("Already seen this minute of the game!");
+                    Console.WriteLine("Already seen this minute of the " + homeTeamName + " vs " + awayTeamName + " game!");
                 }
                 else
                 {
@@ -1119,7 +1148,7 @@ namespace BotSpace
             int idx = -1;
             bool hasRows = false;
 
-            using (NpgsqlCommand findInTeamsTable = new NpgsqlCommand("SELECT id, name FROM teams WHERE name = '" + team + "';", pgConnection))
+            using (NpgsqlCommand findInTeamsTable = new NpgsqlCommand("SELECT id, name FROM teams WHERE name = '" + team + "';", pgConnectionList.ElementAt(botIndex)))
             {
                 using (NpgsqlDataReader dr = findInTeamsTable.ExecuteReader())
                 {
@@ -1143,7 +1172,7 @@ namespace BotSpace
             if (hasRows == false)
             {
                 //see if it exists in the team_associations
-                using (NpgsqlCommand findInTeamsTable = new NpgsqlCommand("SELECT team_id, name FROM team_associations WHERE name = '" + team + "';", pgConnection))
+                using (NpgsqlCommand findInTeamsTable = new NpgsqlCommand("SELECT team_id, name FROM team_associations WHERE name = '" + team + "';", pgConnectionList.ElementAt(botIndex)))
                 {
                     using (NpgsqlDataReader dr = findInTeamsTable.ExecuteReader())
                     {
@@ -1168,7 +1197,7 @@ namespace BotSpace
 
             if (hasRows == false)
             {
-                using (NpgsqlCommand count = new NpgsqlCommand("select max(id) from teams", pgConnection))
+                using (NpgsqlCommand count = new NpgsqlCommand("select max(id) from teams", pgConnectionList.ElementAt(botIndex)))
                 {
                     using (NpgsqlDataReader dr2 = count.ExecuteReader())
                     {
@@ -1188,7 +1217,7 @@ namespace BotSpace
 
                         string now = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
 
-                        using (NpgsqlCommand insert = new NpgsqlCommand("INSERT into teams ( id, name, created_at, updated_at ) VALUES (" + idx + ", '" + team + "', '" + now + "', '" + now + "');", pgConnection))
+                        using (NpgsqlCommand insert = new NpgsqlCommand("INSERT into teams ( id, name, created_at, updated_at ) VALUES (" + idx + ", '" + team + "', '" + now + "', '" + now + "');", pgConnectionList.ElementAt(botIndex)))
                         {
                             insert.ExecuteNonQuery();
                         }
@@ -1209,7 +1238,7 @@ namespace BotSpace
             {
                 int lastMinuteParsed = ParseMinutes(lastMinute);
 
-                using (NpgsqlCommand find = new NpgsqlCommand("SELECT id, game_id FROM statistics WHERE game_id = " + gameId + " AND gametime = " + lastMinuteParsed + ";", pgConnection))
+                using (NpgsqlCommand find = new NpgsqlCommand("SELECT id, game_id FROM statistics WHERE game_id = " + gameId + " AND gametime = " + lastMinuteParsed + ";", pgConnectionList.ElementAt(botIndex)))
                 {
                     using (NpgsqlDataReader dr = find.ExecuteReader())
                     {
@@ -1227,7 +1256,7 @@ namespace BotSpace
                 }
             }
 
-            using (NpgsqlCommand find = new NpgsqlCommand("SELECT id, game_id FROM statistics WHERE game_id = " + gameId + " AND gametime = " + minutesParsed + ";", pgConnection))
+            using (NpgsqlCommand find = new NpgsqlCommand("SELECT id, game_id FROM statistics WHERE game_id = " + gameId + " AND gametime = " + minutesParsed + ";", pgConnectionList.ElementAt(botIndex)))
             {
                 using (NpgsqlDataReader dr = find.ExecuteReader())
                 {
@@ -1252,7 +1281,7 @@ namespace BotSpace
                     {
                         Console.WriteLine("Uploading game time: " + minutesParsed);
 
-                        using (NpgsqlCommand count = new NpgsqlCommand("select max(id) from statistics;", pgConnection))
+                        using (NpgsqlCommand count = new NpgsqlCommand("select max(id) from statistics;", pgConnectionList.ElementAt(botIndex)))
                         {
                             using (NpgsqlDataReader dr2 = count.ExecuteReader())
                             {
@@ -1273,7 +1302,7 @@ namespace BotSpace
                                 string now = DateTime.Now.ToString("yyyy-MM-dd");
                                 string valuesAsString = string.Join(", ", values);
 
-                                pgConnection.CreateCommand();
+                                pgConnectionList.ElementAt(botIndex).CreateCommand();
 
                                 string sql = "";
 
@@ -1318,7 +1347,7 @@ namespace BotSpace
 
                                 using (NpgsqlCommand insert = new NpgsqlCommand(sql))
                                 {
-                                    insert.Connection = pgConnection;
+                                    insert.Connection = pgConnectionList.ElementAt(botIndex);
                                     insert.ExecuteNonQuery();
                                 }
                             }
@@ -1358,7 +1387,7 @@ namespace BotSpace
         public static int AddGame(int homeTeamId, int awayTeamId, int leagueId, DateTime koDate)
         {
             int idx = -1;
-            using (NpgsqlCommand find = new NpgsqlCommand("SELECT id, team1, kodate, league_id FROM games WHERE team1 = '" + homeTeamId + "' AND team2 = '" + awayTeamId + "';", pgConnection))
+            using (NpgsqlCommand find = new NpgsqlCommand("SELECT id, team1, kodate, league_id FROM games WHERE team1 = '" + homeTeamId + "' AND team2 = '" + awayTeamId + "';", pgConnectionList.ElementAt(botIndex)))
             {
                 using (NpgsqlDataReader dr = find.ExecuteReader())
                 {
@@ -1392,7 +1421,7 @@ namespace BotSpace
 
                     if (hasRows == false)
                     {
-                        using (NpgsqlCommand count = new NpgsqlCommand("select max(id) from games;", pgConnection))
+                        using (NpgsqlCommand count = new NpgsqlCommand("select max(id) from games;", pgConnectionList.ElementAt(botIndex)))
                         {
                             using (NpgsqlDataReader dr2 = count.ExecuteReader())
                             {
@@ -1411,7 +1440,7 @@ namespace BotSpace
 
                                 string now = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
 
-                                using (NpgsqlCommand insert = new NpgsqlCommand("INSERT into games (id, league_id, team1, team2, koDate,  created_at, updated_at  ) VALUES (" + idx + ", " + leagueId + ", " + homeTeamId + ", " + awayTeamId + ", '" + koDate.ToString("yyyy-MM-dd HH:mm:ss") + "', '" + now + "', '" + now + "');", pgConnection))
+                                using (NpgsqlCommand insert = new NpgsqlCommand("INSERT into games (id, league_id, team1, team2, koDate,  created_at, updated_at  ) VALUES (" + idx + ", " + leagueId + ", " + homeTeamId + ", " + awayTeamId + ", '" + koDate.ToString("yyyy-MM-dd HH:mm:ss") + "', '" + now + "', '" + now + "');", pgConnectionList.ElementAt(botIndex)))
                                 {
                                     insert.ExecuteNonQuery();
                                 }
@@ -1429,7 +1458,7 @@ namespace BotSpace
             int idx = -1;
 
             bool hasRows = false;
-            using (NpgsqlCommand find = new NpgsqlCommand("SELECT id, name FROM leagues WHERE name = '" + leagueName + "';", pgConnection))
+            using (NpgsqlCommand find = new NpgsqlCommand("SELECT id, name FROM leagues WHERE name = '" + leagueName + "';", pgConnectionList.ElementAt(botIndex)))
             {
                 using (NpgsqlDataReader dr = find.ExecuteReader())
                 {
@@ -1454,7 +1483,7 @@ namespace BotSpace
             if (hasRows == false)
             {
                 //see if it exists in the team_associations
-                using (NpgsqlCommand findInTeamsTable = new NpgsqlCommand("SELECT league_id, name FROM league_associations WHERE name = '" + leagueName + "';", pgConnection))
+                using (NpgsqlCommand findInTeamsTable = new NpgsqlCommand("SELECT league_id, name FROM league_associations WHERE name = '" + leagueName + "';", pgConnectionList.ElementAt(botIndex)))
                 {
                     using (NpgsqlDataReader dr = findInTeamsTable.ExecuteReader())
                     {
@@ -1479,7 +1508,7 @@ namespace BotSpace
 
             if (hasRows == false)
             {
-                using (NpgsqlCommand count = new NpgsqlCommand("select max(id) from leagues;", pgConnection))
+                using (NpgsqlCommand count = new NpgsqlCommand("select max(id) from leagues;", pgConnectionList.ElementAt(botIndex)))
                 {
                     using (NpgsqlDataReader dr2 = count.ExecuteReader())
                     {
@@ -1496,7 +1525,7 @@ namespace BotSpace
 
                         dr2.Close();
                         string now = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-                        using (NpgsqlCommand insert = new NpgsqlCommand("INSERT into leagues ( id, name, league_id, created_at, updated_at  ) VALUES (" + idx + ", '" + leagueName + "', " + idx + ", '" + now + "', '" + now + "');", pgConnection))
+                        using (NpgsqlCommand insert = new NpgsqlCommand("INSERT into leagues ( id, name, league_id, created_at, updated_at  ) VALUES (" + idx + ", '" + leagueName + "', " + idx + ", '" + now + "', '" + now + "');", pgConnectionList.ElementAt(botIndex)))
                         {
                             insert.ExecuteNonQuery();
                         }
