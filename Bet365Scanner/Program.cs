@@ -99,8 +99,11 @@ namespace BotSpace
                 Console.WriteLine("=========> Exception thrown trying to click element: " + iwe.TagName + " [" + ce + "]");
             }
 
+            System.Threading.Thread.Sleep(2000);
+
             return result;
         }
+
 
         private static bool ClickElement(IWebDriver driver, string xpath)
         {
@@ -152,12 +155,12 @@ namespace BotSpace
             UploadBet365
         }
 
-        static OperationMode                        gOpMode = OperationMode.WilliamHillScan;
-        static int                                  numBots = 1;
-        static int                                  botIndex = 0;
-        static bool                                 gSkipAddGames = false;
-        static int                                  gKeyClashRetries = 5;
-        static List<NpgsqlConnection>               pgConnectionList = new List<NpgsqlConnection>();
+        static OperationMode gOpMode = OperationMode.WilliamHillScan;
+        static int numBots = 1;
+        static int botIndex = 0;
+        static bool gSkipAddGames = false;
+        static int gKeyClashRetries = 5;
+        static List<NpgsqlConnection> pgConnectionList = new List<NpgsqlConnection>();
         //static MySqlConnection  msConnection = null;
 
         static void Main(string[] args)
@@ -184,7 +187,7 @@ namespace BotSpace
                     {
                         numBots = int.Parse(arg.Substring("-n:".Length));
                     }
-                    catch 
+                    catch
                     {
                         Console.WriteLine("Warning: Couldn't parse number of bots: " + arg);
                     }
@@ -331,21 +334,21 @@ namespace BotSpace
 
                         int totalDAs = -1;
                         int totalAs = -1;
-                        int totalCs  = -1;
-                        int totalBs  = -1;
+                        int totalCs = -1;
+                        int totalBs = -1;
 
                         int homeDAs = -1;
-                        int homeAs  = -1;
+                        int homeAs = -1;
                         int homeCs = -1;
                         int homeBs = -1;
-                        int homeSonTs  = -1;
+                        int homeSonTs = -1;
                         int homeSoffTs = -1;
 
                         int awayDAs = -1;
                         int awayAs = -1;
-                        int awayCs  = -1;
+                        int awayCs = -1;
                         int awayBs = -1;
-                        int awaySonTs  = -1;
+                        int awaySonTs = -1;
                         int awaySoffTs = -1;
 
                         if (string.IsNullOrEmpty(text) == false)
@@ -480,7 +483,7 @@ namespace BotSpace
 
                             for (int i = 0; i != 10; ++i)
                             {
-                                int parseResult =  ParseInt(statType[i + 1], justAwayStats[i]);
+                                int parseResult = ParseInt(statType[i + 1], justAwayStats[i]);
                                 if (parseResult == -1 && (i == 0 || i == 5 || i == 8 || i == 9))
                                 {
                                     astats[statType[i + 1]] = 0;
@@ -612,7 +615,7 @@ namespace BotSpace
 
                     driver.Url = "https://mobile.bet365.com/premium/#type=Splash;key=1;ip=0;lng=1";
                     System.Threading.Thread.Sleep(sleepTime);
-                    
+
                     //string inPlayXPath = "//*[@id=\"sc_0_L1_1-1-5-0-0-0-0-1-1-0-0-0-0-0-1-0-0-0-0\"]";
                     IWebElement inPlayElement = GetWebElementFromClassAndDivText(driver, "Level1", "In-Play");
 
@@ -620,12 +623,12 @@ namespace BotSpace
 
                     var elements = driver.FindElements(By.ClassName("IPScoreTitle"));
 
-                    if (firstTime || elements.Count() == 0)
-                    {
-                        inPlayElement = GetWebElementFromClassAndDivText(driver, "Level1", "In-Play");
-                        ClickElement(driver, inPlayElement);
-                        elements = driver.FindElements(By.ClassName("IPScoreTitle"));
-                    }
+                    //if (firstTime || elements.Count() == 0)
+                    //{
+                    //    inPlayElement = GetWebElementFromClassAndDivText(driver, "Level1", "In-Play");
+                    //    ClickElement(driver, inPlayElement);
+                    //    elements = driver.FindElements(By.ClassName("IPScoreTitle"));
+                    //}
 
                     if (elements.Count() == 0)
                     {
@@ -645,6 +648,8 @@ namespace BotSpace
                         firstTime = false;
                     }
 
+                    System.Threading.Thread.Sleep(sleepTime);
+
                     if (idx < elements.Count())
                     {
                         var hstats = new Dictionary<string, int>();
@@ -654,10 +659,18 @@ namespace BotSpace
 
                         //*[@id="rw_spl_sc_1-1-5-24705317-2-0-0-1-1-0-0-0-0-0-1-0-0_101"]/div[1]
                         elements.ElementAt(idx).Click();
-                        System.Threading.Thread.Sleep(sleepTime);
+                        System.Threading.Thread.Sleep(5000);
+
+                        var cleanScores = GetValuesByClassName(driver, "clock-score", attempts, 3, new char[] { ' ', '-', '\r', '\n' });
+                        if (cleanScores == null) { Console.WriteLine("cleanScores == null"); continue; }
+
+                        ClickElement(driver, "//*[@id=\"arena\"]");
+                        System.Threading.Thread.Sleep(2000);
 
                         var hCardsAndCorners = GetValuesById(driver, "team1IconStats", attempts, 3, " ");
-                        if (hCardsAndCorners == null) { 
+
+                        if (hCardsAndCorners == null)
+                        {
                             Console.WriteLine("hCardsAndCorners == null");
                             Console.WriteLine("Resetting driver...");
                             driver.Close();
@@ -666,18 +679,13 @@ namespace BotSpace
                             continue;
                         }
 
+                        //*[@id="team1IconStats"]
                         var aCardsAndCorners = GetValuesById(driver, "team2IconStats", attempts, 3, " ");
                         if (aCardsAndCorners == null) { Console.WriteLine("aCardsAndCorners == null"); continue; }
 
                         var inPlayTitles = GetValuesByClassName(driver, "InPlayTitle", attempts, 1, new char[] { '@' });
                         if (inPlayTitles == null) { Console.WriteLine("inPlayTitles == null"); continue; }
 
-                        var cleanScores = GetValuesByClassName(driver, "clock-score", attempts, 3, new char[] { ' ', '-', '\r', '\n' });
-                        if (cleanScores == null) { Console.WriteLine("cleanScores == null"); continue; }
-
-                        //var matchdetails = driver.FindElement(By.Id("match-details"));
-                        //matchdetails.Click();
-                        //System.Threading.Thread.Sleep(1000);
                         //var statButton = driver.FindElement(By.ClassName("StatsSelectIcon"));
                         //statButton.Click();
                         //System.Threading.Thread.Sleep(3000);
@@ -957,14 +965,14 @@ namespace BotSpace
                 {
                     driver = new ChromeDriver();
                 }
+
+                driver.Manage().Timeouts().ImplicitlyWait(TimeSpan.FromSeconds(10));
             }
             catch (Exception ce)
             {
                 Console.WriteLine("Exception: " + ce);
             }
 
-
-            driver.Manage().Timeouts().ImplicitlyWait(TimeSpan.FromSeconds(10));
             return driver;
         }
 
@@ -1106,7 +1114,7 @@ namespace BotSpace
             int retries = 0;
 
             Console.WriteLine("Adding " + homeTeam + " [" + hTeamId + "] v " + awayTeam + " [" + aTeamId + "] in league [" + leagueId + "] with game id: " + gameId + " at time: " + time);
- 
+
             Console.WriteLine("Goals Corners");
             Console.WriteLine(hstats[statType[1]].ToString().PadRight(6) + hstats[statType[6]].ToString());
             Console.WriteLine(astats[statType[1]].ToString().PadRight(6) + astats[statType[6]].ToString());
@@ -1395,7 +1403,7 @@ namespace BotSpace
 
                     while (dr.Read())  //bug fix for repeated same game added after rematch
                     {
-                        
+
                         string id = dr[0].ToString();
                         int thisHomeTeam = int.Parse(dr[1].ToString());
 
@@ -1595,7 +1603,7 @@ namespace BotSpace
                             int qwert = 0;
                             while (renamedOk == false)
                             {
-                                string uploadedFileName = qwert == 0 ? xml + ".uploaded" : xml + "." + qwert + ".uploaded"; 
+                                string uploadedFileName = qwert == 0 ? xml + ".uploaded" : xml + "." + qwert + ".uploaded";
                                 try
                                 {
                                     File.Move(xml, uploadedFileName);
