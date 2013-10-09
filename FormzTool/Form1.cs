@@ -274,6 +274,52 @@ namespace FormzTool
                 }
             }
 
+            //var homeGoals = matches.Select(x => x.hgs);
+            //var homeGoalsAsInts = new List<int>();
+            //homeGoals.ToList().ForEach(x => homeGoalsAsInts.Add(int.Parse(x)));
+            //int totalHGs = homeGoalsAsInts.Sum();
+
+            //var awayGoals = matches.Select(x => x.ags);
+            //var awayGoalsAsInts = new List<int>();
+            //awayGoals.ToList().ForEach(x => awayGoalsAsInts.Add(int.Parse(x)));
+            //int totalAGs = awayGoalsAsInts.Sum();
+
+            //int totalScore = totalHGs + totalAGs;
+            //int totalHomeGames = homeGoals.Count();
+            //int totalAwayGames = awayGoals.Count();
+            //int totalGames = totalHomeGames + totalAwayGames;
+
+            //var tempList = new List<int>();
+            //tempList.AddRange( homeGoalsAsInts);
+            //tempList.AddRange( awayGoalsAsInts );
+
+            //double meanGs = tempList.Average();
+
+            //int avGoalsAtHome = 1;
+            //int avGoalsAtAway = 1;
+            //list int attackStrength = 3; /// Total number of goals scored by each team, divided by the average number of goals expected by any team
+            //list int defenceWeakness = 3; /// Total number of goals conceded by each team, divided by the average number of goals expected by any team
+
+            //var teams = new List<string>();
+            //teams.AddRange(matches.Select(x => x.homeTeam));
+            //teams.AddRange(matches.Select(x => x.awayTeam));
+            //var distinctTeams = teams.Distinct();
+
+            //var GoalsH = new int[,] {};
+            //var GoalsA = new int[,] {};
+
+            //int hIdx = 0;
+            //foreach (var hTeam in distinctTeams)
+            //{
+            //    int aIdx = 0;
+
+            //    foreach (var aTeam in distinctTeams)
+            //    {
+            //        GoalsH[hIdx, aIdx] = avGoalsAtHome * 
+            //        GoalsA[hIdx, aIdx] = 1;        
+            //    }
+            //}
+   
             idBox2.Text = id;
         }
 
@@ -499,8 +545,6 @@ namespace FormzTool
 
         private bool AddTeamAssociation(string alias, string teamName)
         {
-            string id = "";
-
             string originalId = GetTeamId(teamName);
             string aliasId = GetTeamId(alias);
 
@@ -563,8 +607,6 @@ namespace FormzTool
 
         private bool AddLeagueAssociation(string alias, string leagueName)
         {
-            string id = "";
-
             string originalId = GetLeagueId(leagueName);
             string aliasId = GetLeagueId(alias);
 
@@ -807,56 +849,7 @@ namespace FormzTool
 
         private void button2_Click(object sender, EventArgs e)
         {
-            List<string> badNames = new List<string>();
-
-            string sql = "select name, count(*) from teams group by name having count(*) > 1;";
-
-            using (NpgsqlCommand find = new NpgsqlCommand(sql, pgConnection))
-            {
-                using (NpgsqlDataReader dr = find.ExecuteReader())
-                {
-                    bool hasRows = dr.HasRows;
-
-                    if (hasRows == true)
-                    {
-                        while (dr.Read())
-                        {
-                            badNames.Add(dr[0].ToString());
-
-                        }
-                    }
-                }
-            }
-
-            foreach (var name in badNames)
-            {
-                var ids = GetTeamIds(name);
-
-                if (ids.Count() > 1)
-                {
-                    string primaryId = ids.ElementAt(0);
-                    for (int i = 1; i != ids.Count(); ++i)
-                    {
-                        string sqlTeam1 = "update games set team1='" + primaryId + "' where team1='" + ids.ElementAt(i) + "';";
-                        string sqlTeam2 = "update games set team2='" + primaryId + "' where team2='" + ids.ElementAt(i) + "';";
-                        string sqlDeleteTeam = "delete from teams where id='" + ids.ElementAt(i) + "';";
-                        ExecuteNonQuery(sqlTeam1);
-                        ExecuteNonQuery(sqlTeam2);
-                        ExecuteNonQuery(sqlDeleteTeam);
-                    }
-
-                }
-            }
-
-            matchBox2.Items.Clear();
-
-
-            foreach (var name in badNames)
-            {
-                matchBox2.Items.Add(name);
-                //    string newName = name.Replace(" Ladies", " Women");
-                //    renameTeam(name, newName);
-            }
+           
         }
 
         private static void ExecuteNonQuery(string sql)
@@ -1048,75 +1041,7 @@ namespace FormzTool
 
         private void dupGames_Click(object sender, EventArgs e)
         {
-            List<string> team1s = new List<string>();
-            List<string> team2s = new List<string>();
-            List<string> kodates = new List<string>();
-
-            string sql = "select team1, team2, kodate::date, count(*) from games group by team1, team2, kodate::date having count(*) > 1;";
-
-            using (NpgsqlCommand find = new NpgsqlCommand(sql, pgConnection))
-            {
-                using (NpgsqlDataReader dr = find.ExecuteReader())
-                {
-                    bool hasRows = dr.HasRows;
-
-                    if (hasRows == true)
-                    {
-                        while (dr.Read())
-                        {
-                            team1s.Add(dr[0].ToString());
-                            team2s.Add(dr[1].ToString());
-                            kodates.Add(dr[2].ToString());
-                        }
-                    }
-                }
-            }
-
-            for (int j = 0; j != team1s.Count(); ++j)
-            {
-                string sql2 = "select id from games where team1='" + team1s.ElementAt(j)
-                            + "' and team2='" + team2s.ElementAt(j)
-                            + "' and to_char(kodate, 'DD/MM/YYYY') = '" + kodates.ElementAt(j).Substring(0, 10) + "';";
-
-                var ids = OneColumnQuery(sql2);
-
-                var justDelete = new List<string>();
-
-                foreach (var id in ids)
-                {
-                    var counts = OneColumnQuery("select count(*) from statistics where game_id = '" + id + "';");
-                    if (counts.ElementAt(0) == "0")
-                    {
-                        justDelete.Add(id);
-                    }
-                }
-
-                if (ids.Count() > 1)
-                {
-                    string primaryId = ids.ElementAt(0);
-                    for (int i = 1; i != ids.Count(); ++i)
-                    {
-                        string sqlTeam1 = "update statistics set game_id='" + primaryId + "' where game_id='" + ids.ElementAt(i) + "';";
-                        string sqlDeleteTeam = "delete from games where id='" + ids.ElementAt(i) + "';";
-                        if (justDelete.Contains(ids.ElementAt(i)) == false)
-                        {
-                            ExecuteNonQuery(sqlTeam1);
-                        }
-                        ExecuteNonQuery(sqlDeleteTeam);
-                    }
-
-                }
-            }
-
-            matchBox2.Items.Clear();
-
-
-            for (int j = 0; j != team1s.Count(); ++j)
-            {
-                matchBox2.Items.Add(kodates.ElementAt(j) + " " + team1s.ElementAt(j) + " v " + team2s.ElementAt(j));
-                //    string newName = name.Replace(" Ladies", " Women");
-                //    renameTeam(name, newName);
-            }
+            
         }
 
         private static List<string> OneColumnQuery(string sql2)
@@ -1145,30 +1070,6 @@ namespace FormzTool
         {
 
 
-            string sql2 = "select id from games where team1='9706' and team2='9709';";
-
-            var ids = OneColumnQuery(sql2);
-
-            ids.RemoveAt(0);
-
-
-            if (ids.Count() > 1)
-            {
-                string primaryId = ids.ElementAt(0);
-                for (int i = 1; i != ids.Count(); ++i)
-                {
-                    string sqlTeam1 = "update statistics set game_id='" + primaryId + "' where game_id='" + ids.ElementAt(i) + "';";
-                    string sqlDeleteTeam = "delete from games where id='" + ids.ElementAt(i) + "';";
-
-                    ExecuteNonQuery(sqlTeam1);
-
-                    ExecuteNonQuery(sqlDeleteTeam);
-                }
-
-            }
-
-
-            matchBox2.Items.Clear();
 
         }
 
@@ -1263,18 +1164,181 @@ namespace FormzTool
                 string homeTeam = selectedText.Substring(homeIdx, awayIdx - homeIdx).Trim();
                 string awayTeam = selectedText.Substring(awayIdx, leagueIdx - awayIdx).Trim();
 
-                
                 GetOldTeam(awayTeam, 2);
                 GetOldTeam(homeTeam);
-
             }
+
+            if (checkBox1.Checked)
+            {
+            }
+
         }
 
         private void tomo_button1_Click(object sender, EventArgs e)
         {
+        }
+
+        private void removeDuplicateTeamsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            List<string> badNames = new List<string>();
+
+            string sql = "select name, count(*) from teams group by name having count(*) > 1;";
+
+            using (NpgsqlCommand find = new NpgsqlCommand(sql, pgConnection))
+            {
+                using (NpgsqlDataReader dr = find.ExecuteReader())
+                {
+                    bool hasRows = dr.HasRows;
+
+                    if (hasRows == true)
+                    {
+                        while (dr.Read())
+                        {
+                            badNames.Add(dr[0].ToString());
+
+                        }
+                    }
+                }
+            }
+
+            foreach (var name in badNames)
+            {
+                var ids = GetTeamIds(name);
+
+                if (ids.Count() > 1)
+                {
+                    string primaryId = ids.ElementAt(0);
+                    for (int i = 1; i != ids.Count(); ++i)
+                    {
+                        string sqlTeam1 = "update games set team1='" + primaryId + "' where team1='" + ids.ElementAt(i) + "';";
+                        string sqlTeam2 = "update games set team2='" + primaryId + "' where team2='" + ids.ElementAt(i) + "';";
+                        string sqlDeleteTeam = "delete from teams where id='" + ids.ElementAt(i) + "';";
+                        ExecuteNonQuery(sqlTeam1);
+                        ExecuteNonQuery(sqlTeam2);
+                        ExecuteNonQuery(sqlDeleteTeam);
+                    }
+
+                }
+            }
+
+            matchBox2.Items.Clear();
+
+
+            foreach (var name in badNames)
+            {
+                matchBox2.Items.Add(name);
+                //    string newName = name.Replace(" Ladies", " Women");
+                //    renameTeam(name, newName);
+            }
+
+        }
+
+        private void specialButtonToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            string sql2 = "select id from games where team1='9706' and team2='9709';";
+
+            var ids = OneColumnQuery(sql2);
+
+            ids.RemoveAt(0);
+
+
+            if (ids.Count() > 1)
+            {
+                string primaryId = ids.ElementAt(0);
+                for (int i = 1; i != ids.Count(); ++i)
+                {
+                    string sqlTeam1 = "update statistics set game_id='" + primaryId + "' where game_id='" + ids.ElementAt(i) + "';";
+                    string sqlDeleteTeam = "delete from games where id='" + ids.ElementAt(i) + "';";
+
+                    ExecuteNonQuery(sqlTeam1);
+
+                    ExecuteNonQuery(sqlDeleteTeam);
+                }
+
+            }
+
+            matchBox2.Items.Clear();
+        }
+
+        private void removeDuplicateMatchesToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            List<string> team1s = new List<string>();
+            List<string> team2s = new List<string>();
+            List<string> kodates = new List<string>();
+
+            string sql = "select team1, team2, kodate::date, count(*) from games group by team1, team2, kodate::date having count(*) > 1;";
+
+            using (NpgsqlCommand find = new NpgsqlCommand(sql, pgConnection))
+            {
+                using (NpgsqlDataReader dr = find.ExecuteReader())
+                {
+                    bool hasRows = dr.HasRows;
+
+                    if (hasRows == true)
+                    {
+                        while (dr.Read())
+                        {
+                            team1s.Add(dr[0].ToString());
+                            team2s.Add(dr[1].ToString());
+                            kodates.Add(dr[2].ToString());
+                        }
+                    }
+                }
+            }
+
+            for (int j = 0; j != team1s.Count(); ++j)
+            {
+                string sql2 = "select id from games where team1='" + team1s.ElementAt(j)
+                            + "' and team2='" + team2s.ElementAt(j)
+                            + "' and to_char(kodate, 'DD/MM/YYYY') = '" + kodates.ElementAt(j).Substring(0, 10) + "';";
+
+                var ids = OneColumnQuery(sql2);
+
+                var justDelete = new List<string>();
+
+                foreach (var id in ids)
+                {
+                    var counts = OneColumnQuery("select count(*) from statistics where game_id = '" + id + "';");
+                    if (counts.ElementAt(0) == "0")
+                    {
+                        justDelete.Add(id);
+                    }
+                }
+
+                if (ids.Count() > 1)
+                {
+                    string primaryId = ids.ElementAt(0);
+                    for (int i = 1; i != ids.Count(); ++i)
+                    {
+                        string sqlTeam1 = "update statistics set game_id='" + primaryId + "' where game_id='" + ids.ElementAt(i) + "';";
+                        string sqlDeleteTeam = "delete from games where id='" + ids.ElementAt(i) + "';";
+                        if (justDelete.Contains(ids.ElementAt(i)) == false)
+                        {
+                            ExecuteNonQuery(sqlTeam1);
+                        }
+                        ExecuteNonQuery(sqlDeleteTeam);
+                    }
+
+                }
+            }
+
+            matchBox2.Items.Clear();
+
+
+            for (int j = 0; j != team1s.Count(); ++j)
+            {
+                matchBox2.Items.Add(kodates.ElementAt(j) + " " + team1s.ElementAt(j) + " v " + team2s.ElementAt(j));
+                //    string newName = name.Replace(" Ladies", " Women");
+                //    renameTeam(name, newName);
+            }
+        }
+
+        private void tomorrowsGamesToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+
             matchBox.Items.Clear();
 
-            string now = (DateTime.Today + TimeSpan.FromDays(1)) .ToString("yyyy-MM-dd HH:mm:ss").Substring(0, 10);
+            string now = (DateTime.Today + TimeSpan.FromDays(1)).ToString("yyyy-MM-dd HH:mm:ss").Substring(0, 10);
             string sql2 = "select id from games where to_char(kodate, 'YYYY-MM-DD') like '" + now + "%';";
 
             var ids = OneColumnQuery(sql2);
@@ -1334,5 +1398,11 @@ namespace FormzTool
                 matchBox.Items.Add(t);
             }
         }
+
+        private void label3_Click(object sender, EventArgs e)
+        {
+
+        }
+
     }
 }

@@ -587,6 +587,8 @@ namespace BotSpace
 
             lastDayGamesUpdated = DateTime.Today;
 
+            int badLoopCounter = 0;
+
             while (true)
             {
                 idx++;
@@ -623,13 +625,6 @@ namespace BotSpace
 
                     var elements = driver.FindElements(By.ClassName("IPScoreTitle"));
 
-                    //if (firstTime || elements.Count() == 0)
-                    //{
-                    //    inPlayElement = GetWebElementFromClassAndDivText(driver, "Level1", "In-Play");
-                    //    ClickElement(driver, inPlayElement);
-                    //    elements = driver.FindElements(By.ClassName("IPScoreTitle"));
-                    //}
-
                     if (elements.Count() == 0)
                     {
                         Console.WriteLine("No games in play, going to sleep for a bit....");
@@ -648,7 +643,7 @@ namespace BotSpace
                         firstTime = false;
                     }
 
-                    System.Threading.Thread.Sleep(sleepTime);
+                    Console.WriteLine("Scanning game " + idx + " of " + elements.Count() + " games in play");
 
                     if (idx < elements.Count())
                     {
@@ -659,10 +654,28 @@ namespace BotSpace
 
                         //*[@id="rw_spl_sc_1-1-5-24705317-2-0-0-1-1-0-0-0-0-0-1-0-0_101"]/div[1]
                         elements.ElementAt(idx).Click();
-                        System.Threading.Thread.Sleep(5000);
+                        System.Threading.Thread.Sleep(10000);
 
                         var cleanScores = GetValuesByClassName(driver, "clock-score", attempts, 3, new char[] { ' ', '-', '\r', '\n' });
-                        if (cleanScores == null) { Console.WriteLine("cleanScores == null"); continue; }
+
+                        if (cleanScores == null)
+                        {
+                            Console.WriteLine("cleanScores == null");
+                            
+                            ++badLoopCounter;
+
+                            if (badLoopCounter == 5)
+                            {
+                                Console.WriteLine("Bad loop counter reset...");
+                                
+                                badLoopCounter = 0;
+                                driver.Quit();
+                                driver.Dispose();
+                                driver = null;
+                            }
+
+                            continue;
+                        }
 
                         ClickElement(driver, "//*[@id=\"arena\"]");
                         System.Threading.Thread.Sleep(2000);
@@ -673,9 +686,17 @@ namespace BotSpace
                         {
                             Console.WriteLine("hCardsAndCorners == null");
                             Console.WriteLine("Resetting driver...");
-                            driver.Close();
-                            driver.Dispose();
-                            driver = null;
+
+                            ++badLoopCounter;
+
+                            if (badLoopCounter == 5)
+                            {
+                                badLoopCounter = 0;
+                                driver.Quit();
+                                driver.Dispose();
+                                driver = null;
+                            }
+
                             continue;
                         }
 
