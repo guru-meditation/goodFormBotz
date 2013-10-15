@@ -50,6 +50,9 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="log4net">
+      <HintPath>D:\log4net-1.2.12\bin\net\4.0\release\log4net.dll</HintPath>
+    </Reference>
     <Reference Include="Npgsql">
       <HintPath>..\Npgsql2.0.12.0-bin-ms.net4.0\Npgsql.dll</HintPath>
     </Reference>

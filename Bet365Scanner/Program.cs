@@ -45,6 +45,9 @@ namespace BotSpace
 
     public class TheBot
     {
+        private static readonly log4net.ILog log = log4net.LogManager.GetLogger
+        (System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+
         public static string[] statType = { "Possession", 
                                               "Goals", 
                                               "Penalties", 
@@ -69,6 +72,7 @@ namespace BotSpace
         static string xmlPath = ConfigurationSettings.AppSettings["xmlPath"];
         static string sleepTime = ConfigurationSettings.AppSettings["sleeptime"];
 
+      
         private static String GetElementText(IWebDriver driver, string xpath)
         {
             String result = String.Empty;
@@ -190,7 +194,7 @@ namespace BotSpace
                     }
                     catch
                     {
-                        Console.WriteLine("Warning: Couldn't parse number of bots: " + arg);
+                       log.Warn("Couldn't parse number of bots: " + arg);
                     }
                 }
 
@@ -221,13 +225,13 @@ namespace BotSpace
                 }
                 ++r;
             }
-
-            Console.WriteLine("Bot starting, scanning site : " + gOpMode);
-            Console.WriteLine("Connection string           : " + connectionString);
-            Console.WriteLine("Database Type               : " + dbtype);
-            Console.WriteLine("XML Path                    : " + xmlPath);
-            Console.WriteLine("Sleep Time                  : " + sleepTime);
-            Console.WriteLine(" ");
+            
+            log.Info("Bot starting, scanning site : " + gOpMode);
+            log.Info("Connection string           : " + connectionString);
+            log.Info("Database Type               : " + dbtype);
+            log.Info("XML Path                    : " + xmlPath);
+            log.Info("Sleep Time                  : " + sleepTime);
+            log.Info(" ");
 
             int sleep = 2000;
 
@@ -235,7 +239,7 @@ namespace BotSpace
 
             if (Directory.Exists(xmlPath) == false)
             {
-                Console.WriteLine("Directory " + xmlPath + " does not exist :(");
+             //   log.Error("Directory " + xmlPath + " does not exist :(");
                 return;
             }
 
