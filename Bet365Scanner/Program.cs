@@ -34,11 +34,17 @@ namespace BotSpace
             return team1 + " v " + team2 + " at " + koDateTime + " in " + league;
         }
     }
-  
+
+    enum OperationMode
+    {
+        WilliamHillScan,
+        Bet365Scan,
+        UploadWilliamHill,
+        UploadBet365
+    }
+
     public class TheBot
     {
-        static DbCreator dbCreator = null;
-
         public static string[] statType = { "Possession", 
                                               "Goals", 
                                               "Penalties", 
@@ -149,21 +155,14 @@ namespace BotSpace
             return result;
         }
 
-        enum OperationMode
-        {
-            WilliamHillScan,
-            Bet365Scan,
-            UploadWilliamHill,
-            UploadBet365
-        }
-
+       
         static OperationMode gOpMode = OperationMode.WilliamHillScan;
         static int numBots = 1;
-        static int botIndex = 0;
+  
         static bool gSkipAddGames = false;
         static int gKeyClashRetries = 5;
-        static List<DbConnection> dbConnectionList = new List<DbConnection>();
-        //static MySqlConnection  msConnection = null;
+
+        static DbStuff dbStuff = null;
 
         static void Main(string[] args)
         {
@@ -240,31 +239,7 @@ namespace BotSpace
                 return;
             }
 
-            if (dbtype == "pg")
-            {
-                dbCreator = new NpgsqlCreator();
-            }
-
-            if (dbtype == "sqlite")
-            {
-                dbCreator = new SQLiteCreator();
-            }
-
-
-            try
-            {
-                for (int i = 0; i != numBots; ++i)
-                {
-                    DbConnection connection = dbCreator.newConnection(connectionString);
-                    connection.Open();
-                    dbConnectionList.Add(connection);
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Error: {0}", ex.ToString());
-                dbConnectionList = null;
-            }
+            dbStuff = new DbStuff(dbtype, connectionString, numBots, gOpMode);
 
             if (gOpMode == OperationMode.Bet365Scan)
             {
@@ -957,10 +932,10 @@ namespace BotSpace
             foreach (aMatch m in foundMatches)
             {
                 Console.WriteLine(m.team1.PadRight(longestTeam1 + 1) + " " + m.team2.PadRight(longestTeam2 + 1) + " at " + m.koDateTime.TimeOfDay + " in " + m.league);
-                int leagueId = AddLeague(m.league);
-                int hTeamId = AddTeam(m.team1);
-                int aTeamId = AddTeam(m.team2);
-                int gameId = AddGame(hTeamId, aTeamId, leagueId, m.koDateTime);
+                int leagueId = dbStuff.AddLeague(m.league);
+                int hTeamId = dbStuff.AddTeam(m.team1);
+                int aTeamId = dbStuff.AddTeam(m.team2);
+                int gameId = dbStuff.AddGame(hTeamId, aTeamId, leagueId, m.koDateTime);
             }
 
             Console.WriteLine("");
@@ -1118,12 +1093,12 @@ namespace BotSpace
 
             if (gOpMode != OperationMode.Bet365Scan)
             {
-                leagueId = AddLeague(league);
+                leagueId = dbStuff.AddLeague(league);
             }
 
-            int hTeamId = AddTeam(homeTeam);
-            int aTeamId = AddTeam(awayTeam);
-            int gameId = AddGame(hTeamId, aTeamId, leagueId, koDate);
+            int hTeamId = dbStuff.AddTeam(homeTeam);
+            int aTeamId = dbStuff.AddTeam(awayTeam);
+            int gameId = dbStuff.AddGame(hTeamId, aTeamId, leagueId, koDate);
 
             List<int> allStats = new List<int>();
             allStats.AddRange(hstats.Values);
@@ -1141,7 +1116,7 @@ namespace BotSpace
             {
                 try
                 {
-                    AddStatistics(allStats, gameId, time, "", koDate);
+                    dbStuff.AddStatistics(allStats, gameId, time, "", koDate);
                 }
                 catch (DbException ne)
                 {
@@ -1158,410 +1133,18 @@ namespace BotSpace
 
             if (gOpMode != OperationMode.UploadBet365)
             {
-                leagueId = AddLeague(league);
+                leagueId = dbStuff.AddLeague(league);
             }
 
-            int hTeamId = AddTeam(homeTeam);
-            int aTeamId = AddTeam(awayTeam);
-            int gameId = AddGame(hTeamId, aTeamId, leagueId, koDate);
+            int hTeamId = dbStuff.AddTeam(homeTeam);
+            int aTeamId = dbStuff.AddTeam(awayTeam);
+            int gameId = dbStuff.AddGame(hTeamId, aTeamId, leagueId, koDate);
 
             Console.WriteLine("Adding " + homeTeam + " [" + hTeamId + "] v " + awayTeam + " [" + aTeamId + "] in league [" + leagueId + "] with game id: " + gameId);
             SendStats(snaps, gameId);
         }
 
-        public static int AddTeam(string team)
-        {
-            int idx = -1;
-            bool hasRows = false;
-
-            using (DbCommand findInTeamsTable = dbCreator.newCommand("SELECT id, name FROM teams WHERE name = '" + team + "';", dbConnectionList.ElementAt(botIndex)))
-            {
-                using (DbDataReader dr = findInTeamsTable.ExecuteReader())
-                {
-                    hasRows = dr.HasRows;
-
-                    if (hasRows == true)
-                    {
-                        dr.Read();
-                        string id = dr[0].ToString();
-                        string name = dr[1].ToString();
-
-                        if (name == team)
-                        {
-                            idx = int.Parse(id);
-                        }
-                    }
-                    dr.Close();
-                }
-            }
-
-            if (hasRows == false)
-            {
-                //see if it exists in the team_associations
-                using (DbCommand findInTeamsTable = dbCreator.newCommand("SELECT team_id, name FROM team_associations WHERE name = '" + team + "';", dbConnectionList.ElementAt(botIndex)))
-                {
-                    using (DbDataReader dr = findInTeamsTable.ExecuteReader())
-                    {
-                        hasRows = dr.HasRows;
-
-                        if (hasRows == true)
-                        {
-                            dr.Read();
-                            string id = dr[0].ToString();
-                            string name = dr[1].ToString();
-
-                            if (name == team)
-                            {
-                                idx = int.Parse(id);
-                            }
-                        }
-
-                        dr.Close();
-                    }
-                }
-            }
-
-            if (hasRows == false)
-            {
-                using (DbCommand count = dbCreator.newCommand("select max(id) from teams", dbConnectionList.ElementAt(botIndex)))
-                {
-                    using (DbDataReader dr2 = count.ExecuteReader())
-                    {
-                        dr2.Read();
-
-                        try
-                        {
-                            int rows = int.Parse(dr2[0].ToString());
-                            idx = rows + 1;
-                        }
-                        catch (Exception)
-                        {
-                            idx = 1;
-                        }
-
-                        dr2.Close();
-
-                        string now = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-
-                        using (DbCommand insert = dbCreator.newCommand("INSERT into teams ( id, name, created_at, updated_at ) VALUES (" + idx + ", '" + team + "', '" + now + "', '" + now + "');", dbConnectionList.ElementAt(botIndex)))
-                        {
-                            insert.ExecuteNonQuery();
-                        }
-                    }
-                }
-            }
-            return idx;
-        }
-
-        public static bool AddStatistics(List<int> values, int gameId, string minutes, string lastMinute, DateTime seenTime)
-        {
-            int idx = -1;
-
-            int minutesParsed = ParseMinutes(minutes);
-
-            //check last minute to see if we've seen this game and return quickly
-            if (lastMinute != "")
-            {
-                int lastMinuteParsed = ParseMinutes(lastMinute);
-
-                using (DbCommand find = dbCreator.newCommand("SELECT id, game_id FROM statistics WHERE game_id = " + gameId + " AND gametime = " + lastMinuteParsed + ";", dbConnectionList.ElementAt(botIndex)))
-                {
-                    using (DbDataReader dr = find.ExecuteReader())
-                    {
-                        bool hasRows = dr.HasRows;
-
-                        if (hasRows)
-                        {
-                            Console.WriteLine("Already seen the minute " + lastMinuteParsed + " of this game");
-                            dr.Close();
-                            return false;
-                        }
-
-                        dr.Close();
-                    }
-                }
-            }
-
-            using (DbCommand find = dbCreator.newCommand("SELECT id, game_id FROM statistics WHERE game_id = " + gameId + " AND gametime = " + minutesParsed + ";", dbConnectionList.ElementAt(botIndex)))
-            {
-                using (DbDataReader dr = find.ExecuteReader())
-                {
-                    bool hasRows = dr.HasRows;
-
-                    if (hasRows == true)
-                    {
-                        dr.Read();
-                        string id = dr[0].ToString();
-
-                        int gCheck = int.Parse(dr[1].ToString());
-
-                        if (gCheck == gameId)
-                        {
-                            idx = int.Parse(id);
-                        }
-                    }
-
-                    dr.Close();
-
-                    if (hasRows == false)
-                    {
-                        Console.WriteLine("Uploading game time: " + minutesParsed);
-
-                        using (DbCommand count = dbCreator.newCommand("select max(id) from statistics;", dbConnectionList.ElementAt(botIndex)))
-                        {
-                            using (DbDataReader dr2 = count.ExecuteReader())
-                            {
-                                dr2.Read();
-
-                                try
-                                {
-                                    int rows = int.Parse(dr2[0].ToString());
-                                    idx = rows + 1;
-                                }
-                                catch (Exception)
-                                {
-                                    idx = 1;
-                                }
-
-                                dr2.Close();
-
-                                string now = DateTime.Now.ToString("yyyy-MM-dd");
-                                string valuesAsString = string.Join(", ", values);
-
-                                dbConnectionList.ElementAt(botIndex).CreateCommand();
-
-                                string sql = "";
-
-                                if (gOpMode == OperationMode.Bet365Scan ||
-                                    gOpMode == OperationMode.UploadBet365)
-                                {
-                                    if (values.Count() == 8)
-                                    {
-                                        sql = "INSERT into statistics ( " +
-                                       "id, gametime, game_id, seentime, hrc, hyc, hco, hg, arc, ayc, aco, ag, created_at, updated_at ) " +
-                                       " VALUES " +
-                                       "( " + idx + ", '" +
-                                       minutesParsed + "', " +
-                                       gameId + ", '" +
-                                       seenTime.ToString("yyyy-MM-dd HH:mm:ss") + "', " +
-                                       valuesAsString + ", '" + now + "', '" + now + "');";
-                                    }
-                                    else
-                                    {
-                                        sql = "INSERT into statistics ( " +
-                                        "id, gametime, game_id, seentime, hrc, hyc, hco, hsont, hsofft, ha, hda, hg, arc, ayc, aco, asont, asofft, aa, ada, ag, created_at, updated_at ) " +
-                                        " VALUES " +
-                                        "( " + idx + ", '" +
-                                        minutesParsed + "', " +
-                                        gameId + ", '" +
-                                        seenTime.ToString("yyyy-MM-dd HH:mm:ss") + "', " +
-                                        valuesAsString + ", '" + now + "', '" + now + "');";
-                                    }
-                                }
-                                else
-                                {
-                                    sql = "INSERT into statistics ( " +
-                                    "id, gametime, game_id, seentime, hpn, hg, hpen, hsont, hsofft, hw, hco, hfk, ht, hyc, hrc, ha, hda, hbs, hcl, apn, ag, apen, asont, asofft, aw, aco, afk, at, ayc, arc, aa, ada, abs, acl, created_at, updated_at ) " +
-                                    " VALUES " +
-                                    "( " + idx + ", '" +
-                                    minutesParsed + "', " +
-                                    gameId + ", '" +
-                                    seenTime.ToString("yyyy-MM-dd HH:mm:ss") + "', " +
-                                    valuesAsString + ", '" + now + "', '" + now + "');";
-                                }
-
-
-                                using (DbCommand insert = dbCreator.newCommand(sql))
-                                {
-                                    insert.Connection = dbConnectionList.ElementAt(botIndex);
-                                    insert.ExecuteNonQuery();
-                                }
-                            }
-                        }
-                    }
-                    else
-                    {
-                        Console.WriteLine("Already seen minute " + minutesParsed + " of this game");
-                    }
-                }
-
-            }
-
-            return true;
-        }
-
-        private static int ParseMinutes(string time)
-        {
-            int minutes = 0;
-
-            if (time.ToLower().StartsWith("half"))
-            {
-                minutes = -1;
-            }
-            else if (time.ToLower().StartsWith("full") || time.Trim().StartsWith("End Of Normal Time"))
-            {
-                minutes = -2;
-            }
-            else if (time.Contains(":"))
-            {
-                string mins = Regex.Split(time, ":").ElementAt(0);
-                minutes = int.Parse(mins);
-            }
-            return minutes;
-        }
-
-        public static int AddGame(int homeTeamId, int awayTeamId, int leagueId, DateTime koDate)
-        {
-            int idx = -1;
-            using (DbCommand find = dbCreator.newCommand("SELECT id, team1, kodate, league_id FROM games WHERE team1 = '" + homeTeamId + "' AND team2 = '" + awayTeamId + "';", dbConnectionList.ElementAt(botIndex)))
-            {
-                using (DbDataReader dr = find.ExecuteReader())
-                {
-                    bool hasRows = dr.HasRows;
-
-                    while (dr.Read())  //bug fix for repeated same game added after rematch
-                    {
-
-                        string id = dr[0].ToString();
-                        int thisHomeTeam = int.Parse(dr[1].ToString());
-
-                        string thisKoDate = dr[2].ToString();
-                        int thisLeagueId = int.Parse(dr[3].ToString());
-
-                        DateTime dt = DateTime.Parse(thisKoDate);
-
-                        if (dt.Date == koDate.Date &&
-                            thisHomeTeam == homeTeamId)
-                        {
-                            idx = int.Parse(id);
-                            hasRows = true;
-                            break;
-                        }
-                        else
-                        {
-                            hasRows = false;
-                        }
-                    }
-
-                    dr.Close();
-
-                    if (hasRows == false)
-                    {
-                        using (DbCommand count = dbCreator.newCommand("select max(id) from games;", dbConnectionList.ElementAt(botIndex)))
-                        {
-                            using (DbDataReader dr2 = count.ExecuteReader())
-                            {
-                                dr2.Read();
-                                try
-                                {
-                                    int rows = int.Parse(dr2[0].ToString());
-                                    idx = rows + 1;
-                                }
-                                catch (Exception)
-                                {
-                                    idx = 1;
-                                }
-
-                                dr2.Close();
-
-                                string now = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-
-                                using (DbCommand insert = dbCreator.newCommand("INSERT into games (id, league_id, team1, team2, koDate,  created_at, updated_at  ) VALUES (" + idx + ", " + leagueId + ", " + homeTeamId + ", " + awayTeamId + ", '" + koDate.ToString("yyyy-MM-dd HH:mm:ss") + "', '" + now + "', '" + now + "');", dbConnectionList.ElementAt(botIndex)))
-                                {
-                                    insert.ExecuteNonQuery();
-                                }
-                            }
-                        }
-                    }
-                }
-
-            }
-            return idx;
-        }
-
-        public static int AddLeague(string leagueName)
-        {
-            int idx = -1;
-
-            bool hasRows = false;
-            using (DbCommand find = dbCreator.newCommand("SELECT id, name FROM leagues WHERE name = '" + leagueName + "';", dbConnectionList.ElementAt(botIndex)))
-            {
-                using (DbDataReader dr = find.ExecuteReader())
-                {
-                    hasRows = dr.HasRows;
-
-                    if (hasRows == true)
-                    {
-                        dr.Read();
-                        string id = dr[0].ToString();
-                        string name = dr[1].ToString();
-
-                        if (name == leagueName)
-                        {
-                            idx = int.Parse(id);
-                        }
-                    }
-
-                    dr.Close();
-                }
-            }
-
-            if (hasRows == false)
-            {
-                //see if it exists in the team_associations
-                using (DbCommand findInTeamsTable = dbCreator.newCommand("SELECT league_id, name FROM league_associations WHERE name = '" + leagueName + "';", dbConnectionList.ElementAt(botIndex)))
-                {
-                    using (DbDataReader dr = findInTeamsTable.ExecuteReader())
-                    {
-                        hasRows = dr.HasRows;
-
-                        if (hasRows == true)
-                        {
-                            dr.Read();
-                            string id = dr[0].ToString();
-                            string name = dr[1].ToString();
-
-                            if (name == leagueName)
-                            {
-                                idx = int.Parse(id);
-                            }
-                        }
-
-                        dr.Close();
-                    }
-                }
-            }
-
-            if (hasRows == false)
-            {
-                using (DbCommand count = dbCreator.newCommand("select max(id) from leagues;", dbConnectionList.ElementAt(botIndex)))
-                {
-                    using (DbDataReader dr2 = count.ExecuteReader())
-                    {
-                        dr2.Read();
-                        try
-                        {
-                            int rows = int.Parse(dr2[0].ToString());
-                            idx = rows + 1;
-                        }
-                        catch (Exception)
-                        {
-                            idx = 1;
-                        }
-
-                        dr2.Close();
-                        string now = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-                        using (DbCommand insert = dbCreator.newCommand("INSERT into leagues ( id, name, league_id, created_at, updated_at  ) VALUES (" + idx + ", '" + leagueName + "', " + idx + ", '" + now + "', '" + now + "');", dbConnectionList.ElementAt(botIndex)))
-                        {
-                            insert.ExecuteNonQuery();
-                        }
-                    }
-                }
-            }
-
-            return idx;
-        }
-
+    
         private static void UpdateFromXmlToWeb()
         {
 
@@ -1692,7 +1275,7 @@ namespace BotSpace
                     {
                         try
                         {
-                            result = AddStatistics(values, gameId, time, lastTime, seenTime);
+                            result = dbStuff.AddStatistics(values, gameId, time, lastTime, seenTime);
                         }
                         catch (DbException ne)
                         {
@@ -1714,7 +1297,7 @@ namespace BotSpace
                     {
                         try
                         {
-                            AddStatistics(values, gameId, time, "", seenTime);
+                            dbStuff.AddStatistics(values, gameId, time, "", seenTime);
                         }
                         catch (DbException ne)
                         {
@@ -1768,7 +1351,7 @@ namespace BotSpace
 
                         xdoc = XDocument.Load(xml);
                     }
-                    catch (Exception ce)
+                    catch (Exception )
                     {
                         Console.WriteLine("error: " + xml);
                     }
@@ -1825,10 +1408,6 @@ namespace BotSpace
             {
                 Console.WriteLine("Finally");
             }
-
-
-
-            int confidenceIdx = 0;
 
             var rematchesHome = games.Where(x => x.teamA == teamA && x.teamB == teamB);
             var rematchesAway = games.Where(x => x.teamB == teamA && x.teamA == teamB);
