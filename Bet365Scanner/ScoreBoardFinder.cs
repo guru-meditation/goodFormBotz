@@ -40,13 +40,6 @@ namespace BotSpace
         }
     }
 
-    class GetMatch
-    {
-        public GetMatch()
-        {
-        }
-    }
-
     class ScoreBoardFinder
     {
         WebClient client = null;
