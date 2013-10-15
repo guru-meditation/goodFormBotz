@@ -239,7 +239,7 @@ namespace BotSpace
 
             if (Directory.Exists(xmlPath) == false)
             {
-             //   log.Error("Directory " + xmlPath + " does not exist :(");
+                log.Error("Directory " + xmlPath + " does not exist :(");
                 return;
             }
 
