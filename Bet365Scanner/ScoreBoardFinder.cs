@@ -40,6 +40,13 @@ namespace BotSpace
         }
     }
 
+    class GetMatch
+    {
+        public GetMatch()
+        {
+        }
+    }
+
     class ScoreBoardFinder
     {
         WebClient client = null;
@@ -93,6 +100,7 @@ namespace BotSpace
                     ats.Add(teams[1]);
                 }
 
+                //remove those that are not being played anymore
                 _webBlobStore.RemoveAll(x => hts.Any(y => y == x.HomeTeam) == false);
 
                 foreach (var url in urls)
