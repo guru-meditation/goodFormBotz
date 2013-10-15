@@ -9,6 +9,8 @@ namespace BotSpace
 {
     class DbStuff
     {
+        private static readonly log4net.ILog log = log4net.LogManager.GetLogger
+        (System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
         private DbCreator dbCreator = null;
         private List<DbConnection> dbConnectionList = new List<DbConnection>();
         
@@ -43,7 +45,7 @@ namespace BotSpace
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Error: {0}", ex.ToString());
+                log.Error("Creating new connection " + ex.ToString());
                 dbConnectionList = null;
             }
         }
@@ -303,7 +305,7 @@ namespace BotSpace
 
                         if (hasRows)
                         {
-                            Console.WriteLine("Already seen the minute " + lastMinuteParsed + " of this game");
+                            log.Info("Already seen the minute " + lastMinuteParsed + " of this game");
                             dr.Close();
                             return false;
                         }
@@ -336,7 +338,7 @@ namespace BotSpace
 
                     if (hasRows == false)
                     {
-                        Console.WriteLine("Uploading game time: " + minutesParsed);
+                        log.Info("Uploading game time: " + minutesParsed);
 
                         using (DbCommand count = dbCreator.newCommand("select max(id) from statistics;", dbConnectionList.ElementAt(botIndex)))
                         {
@@ -411,7 +413,7 @@ namespace BotSpace
                     }
                     else
                     {
-                        Console.WriteLine("Already seen minute " + minutesParsed + " of this game");
+                        log.Info("Already seen minute " + minutesParsed + " of this game");
                     }
                 }
 

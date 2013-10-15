@@ -84,7 +84,7 @@ namespace BotSpace
             }
             catch (Exception)
             {
-                Console.WriteLine("=========> Exception thrown trying to find element: " + xpath);
+                log.Error("=========> Exception thrown trying to find element: " + xpath);
             }
 
             return result;
@@ -103,12 +103,12 @@ namespace BotSpace
                 }
                 else
                 {
-                    Console.WriteLine("Couldn't click NULL web element");
+                    log.Error("Couldn't click NULL web element");
                 }
             }
             catch (Exception ce)
             {
-                Console.WriteLine("=========> Exception thrown trying to click element: " + iwe.TagName + " [" + ce + "]");
+                log.Error("=========> Exception thrown trying to click element: " + iwe.TagName + " [" + ce + "]");
             }
 
             System.Threading.Thread.Sleep(2000);
@@ -131,12 +131,12 @@ namespace BotSpace
                 }
                 else
                 {
-                    Console.WriteLine("Couldn't find " + xpath + " to click");
+                    log.Error("Couldn't find " + xpath + " to click");
                 }
             }
             catch (Exception ce)
             {
-                Console.WriteLine("=========> Exception thrown trying to click element: " + xpath + "[" + ce + "]");
+                log.Error("=========> Exception thrown trying to click element: " + xpath + "[" + ce + "]");
             }
 
             return result;
@@ -153,7 +153,7 @@ namespace BotSpace
             }
             catch (Exception)
             {
-                Console.WriteLine("Failed to parse " + statType + " input: " + valToParse);
+                log.Warn("Failed to parse " + statType + " input: " + valToParse);
             }
 
             return result;
@@ -174,7 +174,7 @@ namespace BotSpace
 
             foreach (string arg in args)
             {
-                Console.WriteLine("args[" + r + "] " + arg);
+                log.Info("args[" + r + "] " + arg);
 
                 if (arg.ToLower().Contains("-m:willhill"))
                 {
@@ -281,18 +281,18 @@ namespace BotSpace
 
                     var copyOfTheList = sbf.GetWebBlobs();
 
-                    Console.WriteLine("There are " + copyOfTheList.Count() + " games in the blob list");
+                    log.Debug("There are " + copyOfTheList.Count() + " games in the blob list");
                     if (copyOfTheList.Count() == 0)
                     {
                         var downTime = 20000;
-                        Console.WriteLine("Going to sleep for " + downTime + " miiliseconds");
+                        log.Debug("Going to sleep for " + downTime + " miiliseconds");
                         System.Threading.Thread.Sleep(downTime);
                         continue;
                     }
 
                     foreach (var blob in copyOfTheList)
                     {
-                        Console.WriteLine("On the blob loop...");
+                        log.Debug("On the blob loop...");
 
                         string homeTeamName = blob.HomeTeam;
                         string awayTeamName = blob.AwayTeam;
@@ -382,7 +382,7 @@ namespace BotSpace
                             }
                         }
 
-                        Console.WriteLine("Game:\t\t" + homeTeamName + " v " + awayTeamName);
+                        log.Debug("Game:\t\t" + homeTeamName + " v " + awayTeamName);
 
                         if (String.IsNullOrEmpty(scoreUrl) == false)
                         {
@@ -402,7 +402,7 @@ namespace BotSpace
 
                             if (!clickedOk)
                             {
-                                Console.WriteLine("======> Click failed");
+                                log.Error("======> Click failed");
                             }
 
                             var previewSplits = Regex.Split(previewText, "\r\n").ToList();
@@ -488,13 +488,13 @@ namespace BotSpace
 
                             bool homeTeamLongest = homeTeamName.Length > awayTeamName.Length;
 
-                            Console.WriteLine("League:\t\t" + league + " at " + time);
-                            Console.WriteLine(homeTeamName.PadRight(homeTeamLongest ? homeTeamName.Length + 1 : awayTeamName.Length + 1) + String.Join(" ", hstats.Values));
-                            Console.WriteLine(awayTeamName.PadRight(homeTeamLongest ? homeTeamName.Length + 1 : awayTeamName.Length + 1) + String.Join(" ", astats.Values));
+                            log.Info("League:\t\t" + league + " at " + time);
+                            log.Info(homeTeamName.PadRight(homeTeamLongest ? homeTeamName.Length + 1 : awayTeamName.Length + 1) + String.Join(" ", hstats.Values));
+                            log.Info(awayTeamName.PadRight(homeTeamLongest ? homeTeamName.Length + 1 : awayTeamName.Length + 1) + String.Join(" ", astats.Values));
 
                             if (hstats.Keys.Any(x => x == "-1") || astats.Keys.Any(x => x == "-1"))
                             {
-                                Console.WriteLine("Bad Stat detected.... skipping");
+                                log.Warn("Bad Stat detected.... skipping");
                                 continue;
                             }
 
@@ -527,7 +527,7 @@ namespace BotSpace
                 }
                 catch (Exception ce)
                 {
-                    Console.WriteLine("Exception caught: " + ce);
+                    log.Error("Exception caught: " + ce);
                     if (driver != null)
                     {
                         driver.Quit();
@@ -557,7 +557,7 @@ namespace BotSpace
 
             if (botIndex == 0 && gSkipAddGames == false)
             {
-                Console.WriteLine("Scanning today's games for " + lastDayGamesUpdated.Date);
+                log.Info("Scanning today's games for " + lastDayGamesUpdated.Date);
                 AddTodaysBet365Matches(sleepTime, driver);
             }
 
@@ -583,12 +583,12 @@ namespace BotSpace
                             lastDayGamesUpdated = DateTime.Today;
                         }
 
-                        Console.WriteLine("Scanning today's games for " + lastDayGamesUpdated.Date);
+                        log.Info("Scanning today's games for " + lastDayGamesUpdated.Date);
                         AddTodaysBet365Matches(sleepTime, driver);
                     }
                     else
                     {
-                        Console.WriteLine("Already scanned todays games for " + lastDayGamesUpdated.Date);
+                        log.Info("Already scanned todays games for " + lastDayGamesUpdated.Date);
                     }
 
                     driver.Url = "https://mobile.bet365.com/premium/#type=Splash;key=1;ip=0;lng=1";
@@ -603,7 +603,7 @@ namespace BotSpace
 
                     if (elements.Count() == 0)
                     {
-                        Console.WriteLine("No games in play, going to sleep for a bit....");
+                        log.Debug("No games in play, going to sleep for a bit....");
                         System.Threading.Thread.Sleep(20000);
                         driver.Quit();
                         driver.Dispose();
@@ -619,7 +619,7 @@ namespace BotSpace
                         firstTime = false;
                     }
 
-                    Console.WriteLine("Scanning game " + idx + " of " + elements.Count() + " games in play");
+                    log.Info("Scanning game " + idx + " of " + elements.Count() + " games in play");
 
                     if (idx < elements.Count())
                     {
@@ -636,13 +636,13 @@ namespace BotSpace
 
                         if (cleanScores == null)
                         {
-                            Console.WriteLine("cleanScores == null");
+                            log.Warn("cleanScores == null");
                             
                             ++badLoopCounter;
 
                             if (badLoopCounter == 5)
                             {
-                                Console.WriteLine("Bad loop counter reset...");
+                                log.Warn("Bad loop counter reset...");
                                 
                                 badLoopCounter = 0;
                                 driver.Quit();
@@ -660,8 +660,8 @@ namespace BotSpace
 
                         if (hCardsAndCorners == null)
                         {
-                            Console.WriteLine("hCardsAndCorners == null");
-                            Console.WriteLine("Resetting driver...");
+                            log.Warn("hCardsAndCorners == null");
+                            log.Warn("Resetting driver...");
 
                             ++badLoopCounter;
 
@@ -678,21 +678,15 @@ namespace BotSpace
 
                         //*[@id="team1IconStats"]
                         var aCardsAndCorners = GetValuesById(driver, "team2IconStats", attempts, 3, " ");
-                        if (aCardsAndCorners == null) { Console.WriteLine("aCardsAndCorners == null"); continue; }
+                        if (aCardsAndCorners == null) { log.Warn("aCardsAndCorners == null"); continue; }
 
                         var inPlayTitles = GetValuesByClassName(driver, "InPlayTitle", attempts, 1, new char[] { '@' });
-                        if (inPlayTitles == null) { Console.WriteLine("inPlayTitles == null"); continue; }
-
-                        //var statButton = driver.FindElement(By.ClassName("StatsSelectIcon"));
-                        //statButton.Click();
-                        //System.Threading.Thread.Sleep(3000);
-                        //var popUpMatchStats = GetValuesById(driver, "PopUpMatchStats", attempts, 0, "\r\n");                    
-                        //Console.WriteLine(popUpMatchStats);
+                        if (inPlayTitles == null) { log.Warn("inPlayTitles == null"); continue; }
 
                         bool rballOkay = true;
 
                         var shotsOnTarget = GetValuesById(driver, "stat1", attempts, 3, "\r\n");
-                        if (shotsOnTarget == null) { Console.WriteLine("shotsOnTarget == null"); rballOkay = false; }
+                        if (shotsOnTarget == null) { log.Warn("shotsOnTarget == null"); rballOkay = false; }
 
                         List<string> shotsOffTarget = null;
                         List<string> attacks = null;
@@ -701,13 +695,13 @@ namespace BotSpace
                         if (rballOkay == true)
                         {
                             shotsOffTarget = GetValuesById(driver, "stat2", attempts, 3, "\r\n");
-                            if (shotsOffTarget == null) { Console.WriteLine("shotsOffTarget == null"); rballOkay = false; }
+                            if (shotsOffTarget == null) { log.Warn("shotsOffTarget == null"); rballOkay = false; }
 
                             attacks = GetValuesById(driver, "stat3", attempts, 3, "\r\n");
-                            if (attacks == null) { Console.WriteLine("attacks == null"); rballOkay = false; }
+                            if (attacks == null) { log.Warn("attacks == null"); rballOkay = false; }
 
                             dangerousAttacks = GetValuesById(driver, "stat4", attempts, 3, "\r\n");
-                            if (dangerousAttacks == null) { Console.WriteLine("dangerousAttacks == null"); rballOkay = false; }
+                            if (dangerousAttacks == null) { log.Warn("dangerousAttacks == null"); rballOkay = false; }
                         }
 
                         cleanScores.RemoveAll(x => String.IsNullOrEmpty(x));
@@ -716,7 +710,7 @@ namespace BotSpace
 
                         if (String.IsNullOrEmpty(time))
                         {
-                            Console.WriteLine("Couldn't get time :(");
+                            log.Warn("Couldn't get time :(");
                             continue;
                         }
 
@@ -787,7 +781,7 @@ namespace BotSpace
                 }
                 catch (OpenQA.Selenium.WebDriverException we)
                 {
-                    Console.WriteLine("Exception thrown: " + we);
+                    log.Error("Exception thrown: " + we);
                     driver.Quit();
                     driver.Dispose();
                     driver = null;
@@ -795,7 +789,7 @@ namespace BotSpace
                 }
                 catch (Exception we)
                 {
-                    Console.WriteLine("Exception thrown: " + we);
+                    log.Error("Exception thrown: " + we);
                     driver.Quit();
                     driver.Dispose();
                     driver = null;
@@ -838,7 +832,7 @@ namespace BotSpace
             }
             else
             {
-                Console.WriteLine("Couldn't find Match Markets");
+                log.Error("Couldn't find Match Markets");
                 return;
             }
 
@@ -851,7 +845,7 @@ namespace BotSpace
             }
             else
             {
-                Console.WriteLine("Couldn't find Main");
+                log.Error("Couldn't find Main");
                 return;
             }
 
@@ -864,7 +858,7 @@ namespace BotSpace
             }
             else
             {
-                Console.WriteLine("Couldn't find Full Time Result");
+                log.Error("Couldn't find Full Time Result");
                 return;
             }
 
@@ -919,7 +913,7 @@ namespace BotSpace
                     }
                     else
                     {
-                        Console.WriteLine("Can't get match from " + matchText);
+                        log.Error("Can't get match from " + matchText);
                     }
                 }
 
@@ -935,14 +929,14 @@ namespace BotSpace
 
             foreach (aMatch m in foundMatches)
             {
-                Console.WriteLine(m.team1.PadRight(longestTeam1 + 1) + " " + m.team2.PadRight(longestTeam2 + 1) + " at " + m.koDateTime.TimeOfDay + " in " + m.league);
+                log.Debug(m.team1.PadRight(longestTeam1 + 1) + " " + m.team2.PadRight(longestTeam2 + 1) + " at " + m.koDateTime.TimeOfDay + " in " + m.league);
                 int leagueId = dbStuff.AddLeague(m.league);
                 int hTeamId = dbStuff.AddTeam(m.team1);
                 int aTeamId = dbStuff.AddTeam(m.team2);
                 int gameId = dbStuff.AddGame(hTeamId, aTeamId, leagueId, m.koDateTime);
             }
 
-            Console.WriteLine("");
+            log.Debug("");
         }
 
         private static IWebDriver GetChromeDriver(string agentString)
@@ -967,7 +961,7 @@ namespace BotSpace
             }
             catch (Exception ce)
             {
-                Console.WriteLine("Exception: " + ce);
+                log.Error("Exception: " + ce);
             }
 
             return driver;
@@ -1081,7 +1075,7 @@ namespace BotSpace
 
                 if (lastSnapTime.Split(':').First() == time.Split(':').First())
                 {
-                    Console.WriteLine("Already seen this minute of the " + homeTeamName + " vs " + awayTeamName + " game!");
+                    log.Info("Already seen this minute of the " + homeTeamName + " vs " + awayTeamName + " game!");
                 }
                 else
                 {
@@ -1110,11 +1104,11 @@ namespace BotSpace
 
             int retries = 0;
 
-            Console.WriteLine("Adding " + homeTeam + " [" + hTeamId + "] v " + awayTeam + " [" + aTeamId + "] in league [" + leagueId + "] with game id: " + gameId + " at time: " + time);
+            log.Debug("Adding " + homeTeam + " [" + hTeamId + "] v " + awayTeam + " [" + aTeamId + "] in league [" + leagueId + "] with game id: " + gameId + " at time: " + time);
 
-            Console.WriteLine("Goals Corners");
-            Console.WriteLine(hstats[statType[1]].ToString().PadRight(6) + hstats[statType[6]].ToString());
-            Console.WriteLine(astats[statType[1]].ToString().PadRight(6) + astats[statType[6]].ToString());
+            log.Debug("Goals Corners");
+            log.Debug(hstats[statType[1]].ToString().PadRight(6) + hstats[statType[6]].ToString());
+            log.Debug(astats[statType[1]].ToString().PadRight(6) + astats[statType[6]].ToString());
 
             while (retries < gKeyClashRetries)
             {
@@ -1124,7 +1118,7 @@ namespace BotSpace
                 }
                 catch (DbException ne)
                 {
-                    Console.WriteLine("Retrying....");
+                    log.Warn("Retrying....");
                     retries += 1;
                 }
                 break;
@@ -1144,7 +1138,7 @@ namespace BotSpace
             int aTeamId = dbStuff.AddTeam(awayTeam);
             int gameId = dbStuff.AddGame(hTeamId, aTeamId, leagueId, koDate);
 
-            Console.WriteLine("Adding " + homeTeam + " [" + hTeamId + "] v " + awayTeam + " [" + aTeamId + "] in league [" + leagueId + "] with game id: " + gameId);
+            log.Debug("Adding " + homeTeam + " [" + hTeamId + "] v " + awayTeam + " [" + aTeamId + "] in league [" + leagueId + "] with game id: " + gameId);
             SendStats(snaps, gameId);
         }
 
@@ -1156,7 +1150,7 @@ namespace BotSpace
             {
                 string path = xmlPath;
 
-                Console.WriteLine("Program starting from " + path);
+                log.Info("Program starting from " + path);
 
                 var dirs = Directory.GetDirectories(path);
 
@@ -1168,7 +1162,7 @@ namespace BotSpace
 
                     foreach (var xml in xmls)
                     {
-                        Console.WriteLine("Loading: " + xml);
+                        log.Info("Loading: " + xml);
                         XDocument xdoc = null;
 
                         try
@@ -1177,7 +1171,7 @@ namespace BotSpace
                         }
                         catch (Exception ce)
                         {
-                            Console.WriteLine("Failed to load: " + ce);
+                            log.Error("Failed to load: " + ce);
                             File.Move(xml, xml + ".malformed");
                         }
 
@@ -1194,8 +1188,8 @@ namespace BotSpace
                             awayTeam = DoSubstitutions(awayTeam);
                             league = DoSubstitutions(league);
 
-                            Console.WriteLine(league);
-                            Console.WriteLine(homeTeam + " v " + awayTeam + " " + koDateString);
+                            log.Debug(league);
+                            log.Debug(homeTeam + " v " + awayTeam + " " + koDateString);
 
                             var snaps = game.Descendants("Snap");
 
@@ -1216,7 +1210,7 @@ namespace BotSpace
                                 }
                                 catch
                                 {
-                                    Console.WriteLine("Warning: cannot overwrite: " + uploadedFileName);
+                                    log.Warn("cannot overwrite: " + uploadedFileName);
                                     qwert += 1;
                                 }
                             }
@@ -1227,11 +1221,11 @@ namespace BotSpace
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
+                log.Error("Exception: " + e);
             }
             finally
             {
-                Console.WriteLine("Finally");
+                log.Debug("Finally");
             }
         }
 
@@ -1357,7 +1351,7 @@ namespace BotSpace
                     }
                     catch (Exception )
                     {
-                        Console.WriteLine("error: " + xml);
+                        log.Error("Exception: " + xml);
                     }
 
                     string fileName = Path.GetFileNameWithoutExtension(xml);
@@ -1406,11 +1400,11 @@ namespace BotSpace
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
+                log.Error("Exception: " + e);
             }
             finally
             {
-                Console.WriteLine("Finally");
+                log.Debug("Finally");
             }
 
             var rematchesHome = games.Where(x => x.teamA == teamA && x.teamB == teamB);

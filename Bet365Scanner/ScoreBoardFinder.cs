@@ -42,6 +42,8 @@ namespace BotSpace
 
     class ScoreBoardFinder
     {
+        private static readonly log4net.ILog log = log4net.LogManager.GetLogger
+        (System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
         WebClient client = null;
         List<WebBlob> _webBlobStore = null;
 
@@ -74,11 +76,11 @@ namespace BotSpace
                 var hts = new List<string>();
                 var ats = new List<string>();
 
-                Console.WriteLine("Found " + urls.Count() + " URLs at: " + DateTime.Now);
+                log.Debug("Found " + urls.Count() + " URLs at: " + DateTime.Now);
 
                 if(urls.Count() == 0)
                 {
-                    Console.WriteLine("Sleeping for a bit....");
+                    log.Debug("Sleeping for a bit....");
                     Thread.Sleep(10000);
                 }
 
@@ -112,7 +114,7 @@ namespace BotSpace
                     }
                     catch (Exception)
                     {
-                        Console.WriteLine("Http RAAAAAAAAAAAR");
+                        log.Error("Http RAAAAAAAAAAAR");
                         continue;
                     }
 
@@ -126,7 +128,7 @@ namespace BotSpace
 
                         if (iFrames.Count() == 0)
                         {
-                            //Console.WriteLine("No game iframe found for " + homeTeamName + " v " + awayTeamName);
+                            log.Debug("No game iframe found for " + homeTeamName + " v " + awayTeamName);
                             continue;
                         }
                         else
@@ -156,7 +158,7 @@ namespace BotSpace
 
             if (iLeague.Count() == 0)
             {
-                Console.WriteLine("No league content found");
+                log.Debug("No league content found");
                 return "BAD_LEAGUE";
             }
 
@@ -172,7 +174,7 @@ namespace BotSpace
             }
             catch (Exception)
             {
-                Console.WriteLine(" =========> No league in [" + content + "]");
+                log.Error(" =========> No league in [" + content + "]");
             }
 
             return league;
@@ -193,7 +195,7 @@ namespace BotSpace
             }
             catch (Exception)
             {
-                Console.WriteLine("Http RAAAAAAAAAAAR");
+                log.Error("Http RAAAAAAAAAAAR");
             }
 
             return downloadString;
@@ -216,7 +218,7 @@ namespace BotSpace
             }
             catch (Exception)
             {
-                Console.WriteLine("The matching operation timed out.");
+                log.Error("The matching operation timed out.");
             }
 
             return hrefs;
