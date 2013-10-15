@@ -552,9 +552,6 @@ namespace BotSpace
                 driver = GetChromeDriver(agentString);
             }
 
-       //     driver.Manage().Timeouts().SetPageLoadTimeout(new TimeSpan(0, 0, 30));
-            driver.Manage().Timeouts().ImplicitlyWait(TimeSpan.FromSeconds(10));
-
             if (botIndex == 0 && gSkipAddGames == false)
             {
                 log.Info("Scanning today's games for " + lastDayGamesUpdated.Date);
