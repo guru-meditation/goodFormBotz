@@ -12,6 +12,10 @@ using System.Xml.Linq;
 
 namespace BotSpace
 {
+    using Scanners;
+    using Db;
+    using WebDriver;
+
     public class aMatch
     {
         public string team1;

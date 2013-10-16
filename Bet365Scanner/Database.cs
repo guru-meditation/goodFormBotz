@@ -5,8 +5,10 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace BotSpace
+namespace Db
 {
+    using BotSpace;
+
     public class Database
     {
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger

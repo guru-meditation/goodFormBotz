@@ -7,8 +7,13 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace BotSpace
+namespace Scanners
 {
+    using BotSpace;
+    using Db;
+    using System.Linq.Expressions;
+    using WebDriver;
+
     public class ScanBet365 : Scanner
     {
         private static readonly log4net.ILog log
@@ -23,53 +28,39 @@ namespace BotSpace
         {
             return -1;
         }
-        private void AddTodaysBet365Matches(int sleepTime, DriverWrapper driver)
+
+        private void GetElementAndClick(DriverWrapper driver, string classType, string findString)
+        {
+            var element = driver.GetWebElementFromClassAndDivText(classType, findString);
+
+            if (element != null)
+            {
+                element.Click();
+                driver.DirtySleep(dirtySleep);
+            }
+            else
+            {
+                log.Error("Couldn't find " + findString + "in classType: " + classType);
+                return;
+            }
+        }
+
+        int dirtySleep = 2000;
+
+        private void AddTodaysMatches(int sleepTime, DriverWrapper driver)
         {
             var foundMatches = new List<aMatch>();
 
             driver.Url = "https://mobile.bet365.com/premium/#type=Splash;key=1;ip=0;lng=1";
             driver.DirtySleep(sleepTime);
 
-            int dirtySleep = 2000;
+            dirtySleep = 2000;
 
-            var matchMarket = driver.GetWebElementFromClassAndDivText("Level1", "Match Markets");
-
-            if (matchMarket != null)
-            {
-                matchMarket.Click();
-                driver.DirtySleep(dirtySleep);
-            }
-            else
-            {
-                log.Error("Couldn't find Match Markets");
-                return;
-            }
-
-            var mainGroup = driver.GetWebElementFromClassAndDivText("Level2", "Main");
-
-            if (mainGroup != null)
-            {
-                mainGroup.Click();
-                driver.DirtySleep(dirtySleep);
-            }
-            else
-            {
-                log.Error("Couldn't find Main");
-                return;
-            }
-
-            var fullTimeResult = driver.GetWebElementFromClassAndDivText("genericRow", "Full Time Result");
-
-            if (fullTimeResult != null)
-            {
-                fullTimeResult.Click();
-                driver.ForceSleep(dirtySleep);
-            }
-            else
-            {
-                log.Error("Couldn't find Full Time Result");
-                return;
-            }
+            GetElementAndClick(driver, "Level1", "Match Markets");
+            GetElementAndClick(driver, "Level2", "Main");
+            GetElementAndClick(driver, "genericRow", "Full Time Result");
+            // it takes time for genericRow to expand 
+            driver.ForceSleep(dirtySleep);
 
             int numGenRows = driver.FindElements(By.ClassName("genericRow")).Count();
 
@@ -159,7 +150,7 @@ namespace BotSpace
             if (botIndex == 0 && skipGames == false)
             {
                 log.Info("Scanning today's games for " + lastDayGamesUpdated.Date);
-                AddTodaysBet365Matches(sleepTime, driver);
+                AddTodaysMatches(sleepTime, driver);
             }
 
             lastDayGamesUpdated = DateTime.Today;
@@ -185,7 +176,7 @@ namespace BotSpace
                         }
 
                         log.Info("Scanning today's games for " + lastDayGamesUpdated.Date);
-                        AddTodaysBet365Matches(sleepTime, driver);
+                        AddTodaysMatches(sleepTime, driver);
                     }
                     else
                     {
@@ -291,7 +282,20 @@ namespace BotSpace
                         bool rballOkay = true;
                         // stats are not available for this match
                         var shotsOnTarget = driver.GetValuesById("stat1", attempts, 3, "\r\n");
-                        if (shotsOnTarget == null) { log.Warn("shotsOnTarget == null"); rballOkay = false; }
+                        if (shotsOnTarget == null)
+                        {
+
+                            IWebElement noStats = driver.FindElement(By.Id("noStats"));
+                            if (noStats != null)
+                            {
+                                log.Debug("shotsOnTarget == null Message: " + noStats.Text);
+                            }
+                            else
+                            {
+                                log.Warn("shotsOnTarget == null Expected no statistics but it's not displayed for some other reason");
+                            }
+                            rballOkay = false;
+                        }
 
                         List<string> shotsOffTarget = null;
                         List<string> attacks = null;
@@ -320,31 +324,45 @@ namespace BotSpace
                         }
 
                         var vals = new List<string>();
-                        hstats[statType[10]] = ParseInt(statType[10], hCardsAndCorners.ElementAt(0));
-                        hstats[statType[9]] = ParseInt(statType[9], hCardsAndCorners.ElementAt(1));
-                        hstats[statType[6]] = ParseInt(statType[6], hCardsAndCorners.ElementAt(2));
 
-                        astats[statType[10]] = ParseInt(statType[10], aCardsAndCorners.ElementAt(0));
-                        astats[statType[9]] = ParseInt(statType[9], aCardsAndCorners.ElementAt(1));
-                        astats[statType[6]] = ParseInt(statType[6], aCardsAndCorners.ElementAt(2));
+                        Action<Dictionary<string, int>, StatAlias, List<string>, int> setStat =
+                            (Dictionary<string, int> d, StatAlias alias, List<string> list, int at) =>
+                            {
+                                string statString = stat(alias);
+                                d[statString] = ParseInt(statString, list.ElementAt(at));
+                            };
+
+                        Action<Dictionary<string, int>, StatAlias[], List<string>> setStat2 =
+                            (Dictionary<string, int> d, StatAlias[] alias, List<string> list) =>
+                            {
+                                for (int i = 0; i < alias.Length; ++i)
+                                {
+                                    string statString = stat(alias[i]);
+                                    d[statString] = ParseInt(statString, list.ElementAt(i));
+                                }
+                            };
+
+                        StatAlias[] aliases = { StatAlias.RedCards, StatAlias.YellowCards, StatAlias.Corners };
+
+                        setStat2(hstats, aliases, hCardsAndCorners);
+                        setStat2(astats, aliases, aCardsAndCorners);
 
                         if (rballOkay)
                         {
-                            hstats[statType[3]] = ParseInt(statType[3], shotsOnTarget.ElementAt(0));
-                            astats[statType[3]] = ParseInt(statType[3], shotsOnTarget.ElementAt(2));
+                            aliases = new StatAlias[] { StatAlias.ShotsOnTarget, StatAlias.ShotsOffTarget, StatAlias.Attacks, StatAlias.DangerousAttacks };
 
-                            hstats[statType[4]] = ParseInt(statType[4], shotsOffTarget.ElementAt(0));
-                            astats[statType[4]] = ParseInt(statType[4], shotsOffTarget.ElementAt(2));
+                            Func<List<string>, string> h = x => x.ElementAt(0);
 
-                            hstats[statType[11]] = ParseInt(statType[11], attacks.ElementAt(0));
-                            astats[statType[11]] = ParseInt(statType[11], attacks.ElementAt(2));
+                            setStat2(hstats, aliases, new List<string> { h(shotsOnTarget), h(shotsOffTarget), h(attacks), h(dangerousAttacks) });
 
-                            hstats[statType[12]] = ParseInt(statType[12], dangerousAttacks.ElementAt(0));
-                            astats[statType[12]] = ParseInt(statType[12], dangerousAttacks.ElementAt(2));
+                            Func<List<string>, string> a = x => x.ElementAt(2);
+
+                            setStat2(astats, aliases,
+                                new List<string> { a(shotsOnTarget), a(shotsOffTarget), a(attacks), a(dangerousAttacks) });
                         }
 
-                        hstats[statType[1]] = ParseInt(statType[1], cleanScores.ElementAt(0));
-                        astats[statType[1]] = ParseInt(statType[1], cleanScores.ElementAt(1));
+                        setStat(hstats, StatAlias.Goals, cleanScores, 0);
+                        setStat(astats, StatAlias.Goals, cleanScores, 1);
 
                         var teams = Regex.Split(inPlayTitle, " v ");
 
@@ -374,7 +392,6 @@ namespace BotSpace
 
                         SendToWebDelegate sd = new SendToWebDelegate(SendToWeb);
                         sd.BeginInvoke(league, bOverMidnight ? DateTime.Today - TimeSpan.FromDays(1) : DateTime.Now, homeTeamName, awayTeamName, hstats, astats, time, null, null);
-                        //SendToWeb(league, bOverMidnight ? DateTime.Today - TimeSpan.FromDays(1) : DateTime.Now, homeTeamName, awayTeamName, hstats, astats, time);
 
                         WriteXmlDelegate wd = new WriteXmlDelegate(WriteXml);
                         wd.BeginInvoke(xmlPath, hstats, astats, homeTeamName, awayTeamName, league, time, exists, finalName, null, null);

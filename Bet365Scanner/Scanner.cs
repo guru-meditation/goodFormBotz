@@ -9,11 +9,15 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
 
-namespace BotSpace
+namespace Scanners
 {
+    using BotSpace;
+    using Db;
+    using WebDriver;
+
     public class Scanner
     {
-        private static readonly log4net.ILog log 
+        private static readonly log4net.ILog log
             = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
         protected static Dictionary<string, string> subs = new Dictionary<string, string>()
@@ -34,6 +38,26 @@ namespace BotSpace
              {"Phillipine", "Philippine"}
         };
 
+
+        protected enum StatAlias
+        {
+            Possession = 0,
+            Goals = 1,
+            Penalties = 2,
+            ShotsOnTarget = 3,
+            ShotsOffTarget = 4,
+            Woodwork = 5,
+            Corners = 6,
+            FreeKicks = 7,
+            ThrowIns = 8,
+            YellowCards = 9,
+            RedCards = 10,
+            Attacks = 11,
+            DangerousAttacks = 12,
+            BlockedShots = 13,
+            Clearances = 14
+        };
+
         protected static string[] statType = { "Possession", 
                                               "Goals", 
                                               "Penalties", 
@@ -49,6 +73,11 @@ namespace BotSpace
                                               "DangerousAttacks", 
                                               "BlockedShots", 
                                               "Clearances" };
+
+        protected string stat(StatAlias alias)
+        {
+            return statType[(int)alias];
+        }
 
         protected DriverCreator driverCreator = null;
         protected Database dbStuff = null;
@@ -90,7 +119,7 @@ namespace BotSpace
             }
             return aString;
         }
-      
+
         public delegate void SendToWebDelegate(string league, DateTime koDate, string homeTeam, string awayTeam, Dictionary<string, int> hstats, Dictionary<string, int> astats, string time);
         public delegate void WriteXmlDelegate(string path, Dictionary<string, int> hstats, Dictionary<string, int> astats, string homeTeamName, string awayTeamName, string league, string time, bool exists, string finalName);
 
@@ -197,7 +226,7 @@ namespace BotSpace
 
         private void Upload(string league, DateTime koDate, string homeTeam, string awayTeam, IEnumerable<XElement> snaps)
         {
-            int leagueId = addLeague(league);      
+            int leagueId = addLeague(league);
 
             int hTeamId = dbStuff.AddTeam(homeTeam);
             int aTeamId = dbStuff.AddTeam(awayTeam);
@@ -393,6 +422,6 @@ namespace BotSpace
         }
     }
 
-    
-   
+
+
 }

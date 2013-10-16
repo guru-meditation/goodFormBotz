@@ -8,8 +8,12 @@ using System.Text;
 using System.Text.RegularExpressions;
 
 
-namespace BotSpace
+namespace Scanners
 {
+    using BotSpace;
+    using Db;
+    using WebDriver;
+
     public class ScanWilliamHill : Scanner
     {
         private static readonly log4net.ILog log

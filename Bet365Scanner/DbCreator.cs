@@ -6,8 +6,10 @@ using System.Data.SQLite;
 using System.Linq;
 using System.Text;
 
-namespace BotSpace
+namespace Db
 {
+    using BotSpace;
+
     public abstract class DbCreator
     {
         abstract public DbConnection newConnection(string connectionString);

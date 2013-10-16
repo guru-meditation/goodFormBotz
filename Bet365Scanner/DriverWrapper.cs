@@ -7,8 +7,10 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace BotSpace
+namespace WebDriver
 {
+    using BotSpace;
+
     public class DriverWrapper : IWebDriver
     {
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger
