@@ -72,77 +72,7 @@ namespace BotSpace
         static string xmlPath = ConfigurationSettings.AppSettings["xmlPath"];
         static string sleepTime = ConfigurationSettings.AppSettings["sleeptime"];
 
-      
-        private static String GetElementText(IWebDriver driver, string xpath)
-        {
-            String result = String.Empty;
-
-            try
-            {
-                IWebElement iwe = driver.FindElement(By.XPath(xpath));
-                result = iwe.Text;
-            }
-            catch (Exception)
-            {
-                log.Error("=========> Exception thrown trying to find element: " + xpath);
-            }
-
-            return result;
-        }
-
-        private static bool ClickElement(IWebDriver driver, IWebElement iwe)
-        {
-            bool result = false;
-
-            try
-            {
-                if (iwe != null)
-                {
-                    iwe.Click();
-                    result = true;
-                }
-                else
-                {
-                    log.Error("Couldn't click NULL web element");
-                }
-            }
-            catch (Exception ce)
-            {
-                log.Error("=========> Exception thrown trying to click element: " + iwe.TagName + " [" + ce + "]");
-            }
-
-            System.Threading.Thread.Sleep(2000);
-
-            return result;
-        }
-
-
-        private static bool ClickElement(IWebDriver driver, string xpath)
-        {
-            bool result = false;
-
-            try
-            {
-                IWebElement iwe = driver.FindElement(By.XPath(xpath));
-                if (iwe != null)
-                {
-                    iwe.Click();
-                    result = true;
-                }
-                else
-                {
-                    log.Error("Couldn't find " + xpath + " to click");
-                }
-            }
-            catch (Exception ce)
-            {
-                log.Error("=========> Exception thrown trying to click element: " + xpath + "[" + ce + "]");
-            }
-
-            return result;
-        }
-
-
+           
         private static int ParseInt(string statType, string valToParse)
         {
             int result = -1;
@@ -167,6 +97,7 @@ namespace BotSpace
         static int gKeyClashRetries = 5;
 
         static DbStuff dbStuff = null;
+        static DriverCreator driverCreator = new ChromeDriverCreator();
 
         static void Main(string[] args)
         {
@@ -262,7 +193,7 @@ namespace BotSpace
 
         private static void ScanWilliamHill(int sleepTime)
         {
-            IWebDriver driver = null;
+            DriverWrapper driver = null;
 
             ScoreBoardFinder sbf = new ScoreBoardFinder(sleepTime);
             sbf.Start();
@@ -273,7 +204,7 @@ namespace BotSpace
                 {
                     if (driver == null)
                     {
-                        driver = GetChromeDriver("");
+                        driver = driverCreator.CreateDriver("");
                     }
 
                     var hstats = new Dictionary<string, int>();
@@ -303,7 +234,7 @@ namespace BotSpace
                         driver.Url = scoreUrl;
                         System.Threading.Thread.Sleep(sleepTime);
 
-                        string text = GetElementText(driver, "//*[@id=\"commentaryContent\"]");
+                        string text = driver.GetElementText("//*[@id=\"commentaryContent\"]");
 
                         int totalDAs = -1;
                         int totalAs = -1;
@@ -387,9 +318,9 @@ namespace BotSpace
                         if (String.IsNullOrEmpty(scoreUrl) == false)
                         {
 
-                            string previewText = GetElementText(driver, "//*[@id=\"previewContents\"]");
-                            string time = GetElementText(driver, "//*[@id=\"time\"]");
-                            string period = GetElementText(driver, "//*[@id=\"period\"]");
+                            string previewText = driver.GetElementText("//*[@id=\"previewContents\"]");
+                            string time = driver.GetElementText("//*[@id=\"time\"]");
+                            string period = driver.GetElementText("//*[@id=\"period\"]");
 
                             if (string.IsNullOrEmpty(time))
                             {
@@ -398,7 +329,7 @@ namespace BotSpace
 
                             //"Ivory Coast\r\nTogo\r\n56%\r\n44%"
                             //"TotalNormal Time1st Half2nd Half\r\nIvory Coast 2 0 5 5 1 5 18 22 1 0\r\nTogo 1 0 4 9 0 6 16 21 3 0"
-                            bool clickedOk = ClickElement(driver, "//*[@id=\"statisticsTab\"]");
+                            bool clickedOk = driver.ClickElement("//*[@id=\"statisticsTab\"]");
 
                             if (!clickedOk)
                             {
@@ -410,7 +341,7 @@ namespace BotSpace
                             previewSplits.RemoveAt(previewSplits.Count() - 1);
                             string hPossession = previewSplits.Last().Replace("%", "");
 
-                            string statsText = GetElementText(driver, "//*[@id=\"statsTable\"]/tbody");
+                            string statsText = driver.GetElementText("//*[@id=\"statsTable\"]/tbody");
 
                             string homeStatsText = Regex.Split(statsText, "\r\n").ToList().ElementAt(0);
                             string awayStatsText = Regex.Split(statsText, "\r\n").ToList().ElementAt(1);
@@ -540,7 +471,7 @@ namespace BotSpace
 
         private static void ScanBet365(int sleepTime, int botIndex)
         {
-            IWebDriver driver = null;
+            DriverWrapper driver = null;
             int idx = -1;
             bool firstTime = true;
 
@@ -549,7 +480,7 @@ namespace BotSpace
             if (driver == null)
             {
                 string agentString = "--user-agent=\"Mozilla/5.0 (Linux; U; Android 2.3.6; en-us; Nexus S Build/GRK39F) AppleWebKit/533/1 (KHTML, like Gecko) Version/4.0 Mobile Safari/533.1\"";
-                driver = GetChromeDriver(agentString);
+                driver = driverCreator.CreateDriver(agentString);
             }
 
             if (botIndex == 0 && gSkipAddGames == false)
@@ -570,7 +501,7 @@ namespace BotSpace
                     if (driver == null)
                     {
                         string agentString = "--user-agent=\"Mozilla/5.0 (Linux; U; Android 2.3.6; en-us; Nexus S Build/GRK39F) AppleWebKit/533/1 (KHTML, like Gecko) Version/4.0 Mobile Safari/533.1\"";
-                        driver = GetChromeDriver(agentString);
+                        driver = driverCreator.CreateDriver(agentString);
                     }
 
                     if (DateTime.Today.Equals(lastDayGamesUpdated) == false)
@@ -592,9 +523,9 @@ namespace BotSpace
                     System.Threading.Thread.Sleep(sleepTime);
 
                     //string inPlayXPath = "//*[@id=\"sc_0_L1_1-1-5-0-0-0-0-1-1-0-0-0-0-0-1-0-0-0-0\"]";
-                    IWebElement inPlayElement = GetWebElementFromClassAndDivText(driver, "Level1", "In-Play");
+                    IWebElement inPlayElement = driver.GetWebElementFromClassAndDivText("Level1", "In-Play");
 
-                    ClickElement(driver, inPlayElement);
+                    driver.ClickElement(inPlayElement);
 
                     var elements = driver.FindElements(By.ClassName("IPScoreTitle"));
 
@@ -629,7 +560,7 @@ namespace BotSpace
                         elements.ElementAt(idx).Click();
                         System.Threading.Thread.Sleep(10000);
 
-                        var cleanScores = GetValuesByClassName(driver, "clock-score", attempts, 3, new char[] { ' ', '-', '\r', '\n' });
+                        var cleanScores = driver.GetValuesByClassName("clock-score", attempts, 3, new char[] { ' ', '-', '\r', '\n' });
 
                         if (cleanScores == null)
                         {
@@ -650,11 +581,11 @@ namespace BotSpace
                             continue;
                         }
 
-                        ClickElement(driver, "//*[@id=\"arena\"]");
+                        driver.ClickElement("//*[@id=\"arena\"]");
                         System.Threading.Thread.Sleep(2000);
 
-                        var hCardsAndCorners = GetValuesById(driver, "team1IconStats", attempts, 3, " ");
-
+                        var hCardsAndCorners = driver.GetValuesById("team1IconStats", attempts, 3, " ");
+                       
                         if (hCardsAndCorners == null)
                         {
                             log.Warn("hCardsAndCorners == null");
@@ -674,15 +605,15 @@ namespace BotSpace
                         }
 
                         //*[@id="team1IconStats"]
-                        var aCardsAndCorners = GetValuesById(driver, "team2IconStats", attempts, 3, " ");
+                        var aCardsAndCorners = driver.GetValuesById("team2IconStats", attempts, 3, " ");
                         if (aCardsAndCorners == null) { log.Warn("aCardsAndCorners == null"); continue; }
 
-                        var inPlayTitles = GetValuesByClassName(driver, "InPlayTitle", attempts, 1, new char[] { '@' });
+                        var inPlayTitles = driver.GetValuesByClassName("InPlayTitle", attempts, 1, new char[] { '@' });
                         if (inPlayTitles == null) { log.Warn("inPlayTitles == null"); continue; }
 
                         bool rballOkay = true;
 
-                        var shotsOnTarget = GetValuesById(driver, "stat1", attempts, 3, "\r\n");
+                        var shotsOnTarget = driver.GetValuesById("stat1", attempts, 3, "\r\n");
                         if (shotsOnTarget == null) { log.Warn("shotsOnTarget == null"); rballOkay = false; }
 
                         List<string> shotsOffTarget = null;
@@ -691,13 +622,13 @@ namespace BotSpace
 
                         if (rballOkay == true)
                         {
-                            shotsOffTarget = GetValuesById(driver, "stat2", attempts, 3, "\r\n");
+                            shotsOffTarget = driver.GetValuesById( "stat2", attempts, 3, "\r\n");
                             if (shotsOffTarget == null) { log.Warn("shotsOffTarget == null"); rballOkay = false; }
 
-                            attacks = GetValuesById(driver, "stat3", attempts, 3, "\r\n");
+                            attacks = driver.GetValuesById("stat3", attempts, 3, "\r\n");
                             if (attacks == null) { log.Warn("attacks == null"); rballOkay = false; }
 
-                            dangerousAttacks = GetValuesById(driver, "stat4", attempts, 3, "\r\n");
+                            dangerousAttacks = driver.GetValuesById("stat4", attempts, 3, "\r\n");
                             if (dangerousAttacks == null) { log.Warn("dangerousAttacks == null"); rballOkay = false; }
                         }
 
@@ -794,24 +725,7 @@ namespace BotSpace
             }
         }
 
-        private static IWebElement GetWebElementFromClassAndDivText(IWebDriver driver, string classType, string findString)
-        {
-            IWebElement retVal = null;
-            var thisTypes = driver.FindElements(By.ClassName(classType));
-
-            foreach (var level1 in thisTypes)
-            {
-                if (level1.Text.Trim().Equals(findString))
-                {
-                    retVal = level1;
-                    break;
-                }
-            }
-
-            return retVal;
-        }
-
-        private static void AddTodaysBet365Matches(int sleepTime, IWebDriver driver)
+        private static void AddTodaysBet365Matches(int sleepTime, DriverWrapper driver)
         {
             var foundMatches = new List<aMatch>();
 
@@ -820,7 +734,7 @@ namespace BotSpace
 
             int dirtySleep = 2000;
 
-            var matchMarket = GetWebElementFromClassAndDivText(driver, "Level1", "Match Markets");
+            var matchMarket = driver.GetWebElementFromClassAndDivText("Level1", "Match Markets");
 
             if (matchMarket != null)
             {
@@ -833,7 +747,7 @@ namespace BotSpace
                 return;
             }
 
-            var mainGroup = GetWebElementFromClassAndDivText(driver, "Level2", "Main");
+            var mainGroup = driver.GetWebElementFromClassAndDivText("Level2", "Main");
 
             if (mainGroup != null)
             {
@@ -846,7 +760,7 @@ namespace BotSpace
                 return;
             }
 
-            var fullTimeResult = GetWebElementFromClassAndDivText(driver, "genericRow", "Full Time Result");
+            var fullTimeResult = driver.GetWebElementFromClassAndDivText("genericRow", "Full Time Result");
 
             if (fullTimeResult != null)
             {
@@ -870,16 +784,7 @@ namespace BotSpace
                 System.Threading.Thread.Sleep(dirtySleep);
 
                 var matches = driver.FindElements(By.ClassName("FixtureDescription"));
-
-                //if (matches.Count() > 1)
-                //{
-                //    for (int k = 1; k != matches.Count(); ++k)
-                //    {
-                //        matches.ElementAt(k).Click();
-                //        System.Threading.Thread.Sleep(dirtySleep);
-                //    }
-                //}
-
+                
                 var kickOffs = driver.FindElements(By.ClassName("FixtureStartTime"));
 
                 for (int j = 0; j < matches.Count(); ++j)
@@ -934,68 +839,6 @@ namespace BotSpace
             }
 
             log.Debug("");
-        }
-
-        private static IWebDriver GetChromeDriver(string agentString)
-        {
-            IWebDriver driver = null;
-
-            try
-            {
-
-                if (string.IsNullOrEmpty(agentString) == false)
-                {
-                    ChromeOptions options = new ChromeOptions();
-                    options.AddArgument(agentString);
-                    driver = new ChromeDriver(options);
-                }
-                else
-                {
-                    driver = new ChromeDriver();
-                }
-
-                driver.Manage().Timeouts().ImplicitlyWait(TimeSpan.FromSeconds(10));
-            }
-            catch (Exception ce)
-            {
-                log.Error("Exception: " + ce);
-            }
-
-            return driver;
-        }
-
-        private static List<string> GetValuesById(IWebDriver driver, string searchId, int attempts, int expected, string seperator)
-        {
-            while (attempts-- != 0)
-            {
-                var data = Regex.Split(driver.FindElement(By.Id(searchId)).Text, seperator);
-                var dataList = data.ToList();
-                dataList.RemoveAll(x => String.IsNullOrWhiteSpace(x));
-
-                if (dataList.Count() == expected || expected == 0)
-                {
-                    return dataList;
-                }
-            }
-
-            return null;
-        }
-
-        private static List<string> GetValuesByClassName(IWebDriver driver, string searchId, int attempts, int expected, char[] seperators)
-        {
-            while (attempts-- != 0)
-            {
-                var data = driver.FindElement(By.ClassName(searchId)).Text.Split(seperators);
-                var dataList = data.ToList();
-                dataList.RemoveAll(x => String.IsNullOrEmpty(x));
-
-                if (dataList.Count() == expected)
-                {
-                    return dataList;
-                }
-            }
-
-            return null;
         }
 
         public delegate void SendToWebDelegate(string league, DateTime koDate, string homeTeam, string awayTeam, Dictionary<string, int> hstats, Dictionary<string, int> astats, string time);
