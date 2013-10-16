@@ -127,7 +127,7 @@ namespace BotSpace
             }
             
             DriverCreator driverCreator = new ChromeDriverCreatorWait();
-            DbStuff dbStuff = new DbStuff(dbtype, connectionString, numBots, gOpMode);
+            Database dbStuff = new Database(dbtype, connectionString, numBots, gOpMode);
             Scanner scanner = null;
 
             switch (gOpMode)

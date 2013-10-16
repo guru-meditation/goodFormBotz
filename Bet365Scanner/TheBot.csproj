@@ -81,7 +81,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DbStuff.cs" />
+    <Compile Include="Database.cs" />
     <Compile Include="DbCreator.cs" />
     <Compile Include="DriverWrapper.cs" />
     <Compile Include="Program.cs" />

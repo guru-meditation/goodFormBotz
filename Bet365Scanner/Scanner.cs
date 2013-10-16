@@ -51,12 +51,12 @@ namespace BotSpace
                                               "Clearances" };
 
         protected DriverCreator driverCreator = null;
-        protected DbStuff dbStuff = null;
+        protected Database dbStuff = null;
         protected int keyClashRetries = 5;
         protected bool skipGames = false;
         protected string xmlPath;
 
-        public Scanner(DriverCreator creator, DbStuff db, string xml_path, bool skip_games)
+        public Scanner(DriverCreator creator, Database db, string xml_path, bool skip_games)
         {
             driverCreator = creator;
             dbStuff = db;
@@ -190,7 +190,7 @@ namespace BotSpace
         private static readonly log4net.ILog log
             = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
-        public UpdateFromXmlToWeb(DriverCreator creator, DbStuff db, string xml_path, bool skip_games)
+        public UpdateFromXmlToWeb(DriverCreator creator, Database db, string xml_path, bool skip_games)
             : base(creator, db, xml_path, skip_games)
         {
         }
@@ -382,7 +382,7 @@ namespace BotSpace
 
     public class UploadBet365 : UpdateFromXmlToWeb
     {
-        public UploadBet365(DriverCreator creator, DbStuff db, string xml_path, bool skip_games)
+        public UploadBet365(DriverCreator creator, Database db, string xml_path, bool skip_games)
             : base(creator, db, xml_path, skip_games)
         {
         }

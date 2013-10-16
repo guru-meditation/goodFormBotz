@@ -15,7 +15,7 @@ namespace BotSpace
         private static readonly log4net.ILog log
             = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
-        public ScanWilliamHill(DriverCreator creator, DbStuff db, string xml_path, bool skip_games)
+        public ScanWilliamHill(DriverCreator creator, Database db, string xml_path, bool skip_games)
             : base(creator, db, xml_path, skip_games)
         {
         }

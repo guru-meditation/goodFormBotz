@@ -14,7 +14,7 @@ namespace BotSpace
         private static readonly log4net.ILog log
               = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
-        public ScanBet365(DriverCreator creator, DbStuff db, string xml_path, bool skip_games)
+        public ScanBet365(DriverCreator creator, Database db, string xml_path, bool skip_games)
             : base(creator, db, xml_path, skip_games)
         {
         }
@@ -289,7 +289,7 @@ namespace BotSpace
                         if (inPlayTitles == null) { log.Warn("inPlayTitles == null"); continue; }
 
                         bool rballOkay = true;
-
+                        // stats are not available for this match
                         var shotsOnTarget = driver.GetValuesById("stat1", attempts, 3, "\r\n");
                         if (shotsOnTarget == null) { log.Warn("shotsOnTarget == null"); rballOkay = false; }
 

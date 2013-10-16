@@ -7,7 +7,7 @@ using System.Text.RegularExpressions;
 
 namespace BotSpace
 {
-    public class DbStuff
+    public class Database
     {
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger
         (System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
@@ -17,7 +17,7 @@ namespace BotSpace
         private int botIndex = 0;
         private OperationMode opMode;
 
-        public DbStuff(string dbtype, string connectionString, int numBots, OperationMode operationMode)
+        public Database(string dbtype, string connectionString, int numBots, OperationMode operationMode)
         {
             opMode = operationMode;
 
