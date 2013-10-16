@@ -86,7 +86,9 @@
     <Compile Include="DriverWrapper.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ScanBet365.cs" />
     <Compile Include="Scanner.cs" />
+    <Compile Include="ScannWilliamHill.cs" />
     <Compile Include="ScoreBoardFinder.cs">
       <SubType>Component</SubType>
     </Compile>
