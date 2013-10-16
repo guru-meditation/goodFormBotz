@@ -412,7 +412,7 @@ namespace BotSpace
             var foundMatches = new List<aMatch>();
 
             driver.Url = "https://mobile.bet365.com/premium/#type=Splash;key=1;ip=0;lng=1";
-            System.Threading.Thread.Sleep(sleepTime);
+            driver.DirtySleep(sleepTime);
 
             int dirtySleep = 2000;
 
@@ -421,7 +421,7 @@ namespace BotSpace
             if (matchMarket != null)
             {
                 matchMarket.Click();
-                System.Threading.Thread.Sleep(dirtySleep);
+                driver.DirtySleep(dirtySleep);
             }
             else
             {
@@ -434,7 +434,7 @@ namespace BotSpace
             if (mainGroup != null)
             {
                 mainGroup.Click();
-                System.Threading.Thread.Sleep(dirtySleep);
+                driver.DirtySleep(dirtySleep);
             }
             else
             {
@@ -447,7 +447,7 @@ namespace BotSpace
             if (fullTimeResult != null)
             {
                 fullTimeResult.Click();
-                System.Threading.Thread.Sleep(dirtySleep);
+                driver.ForceSleep(dirtySleep);
             }
             else
             {
@@ -463,7 +463,7 @@ namespace BotSpace
 
                 string leagueText = genItem.Text.Trim();
                 genItem.Click();
-                System.Threading.Thread.Sleep(dirtySleep);
+                driver.DirtySleep(dirtySleep);
 
                 var matches = driver.FindElements(By.ClassName("FixtureDescription"));
 
@@ -503,7 +503,7 @@ namespace BotSpace
 
                 var back = driver.FindElement(By.Id("HeaderBack"));
                 back.Click();
-                System.Threading.Thread.Sleep(dirtySleep);
+                driver.DirtySleep(dirtySleep);
 
             }
 
@@ -577,7 +577,7 @@ namespace BotSpace
                     }
 
                     driver.Url = "https://mobile.bet365.com/premium/#type=Splash;key=1;ip=0;lng=1";
-                    System.Threading.Thread.Sleep(sleepTime);
+                    driver.DirtySleep(sleepTime);
 
                     //string inPlayXPath = "//*[@id=\"sc_0_L1_1-1-5-0-0-0-0-1-1-0-0-0-0-0-1-0-0-0-0\"]";
                     IWebElement inPlayElement = driver.GetWebElementFromClassAndDivText("Level1", "In-Play");
@@ -589,7 +589,7 @@ namespace BotSpace
                     if (elements.Count() == 0)
                     {
                         log.Debug("No games in play, going to sleep for a bit....");
-                        System.Threading.Thread.Sleep(20000);
+                        driver.DirtySleep(20000);
                         driver.Quit();
                         driver.Dispose();
                         driver = null;
@@ -615,8 +615,12 @@ namespace BotSpace
 
                         //*[@id="rw_spl_sc_1-1-5-24705317-2-0-0-1-1-0-0-0-0-0-1-0-0_101"]/div[1]
                         elements.ElementAt(idx).Click();
-                        System.Threading.Thread.Sleep(10000);
+                        //XXX: click causes a nice animation that takes some time,
+                        //XXX: if we forcesleep for shorter time than animation takes then cleanScores will be null!!
+                        //TODO: I changed this to make it faster, but we need to find out a way how to get rid of ForceSleep
+                        driver.ForceSleep(6000);
 
+                        
                         var cleanScores = driver.GetValuesByClassName("clock-score", attempts, 3, new char[] { ' ', '-', '\r', '\n' });
 
                         if (cleanScores == null)
@@ -639,7 +643,7 @@ namespace BotSpace
                         }
 
                         driver.ClickElement("//*[@id=\"arena\"]");
-                        System.Threading.Thread.Sleep(2000);
+                        driver.DirtySleep(2000);
 
                         var hCardsAndCorners = driver.GetValuesById("team1IconStats", attempts, 3, " ");
 
@@ -820,7 +824,7 @@ namespace BotSpace
                     {
                         var downTime = 20000;
                         log.Debug("Going to sleep for " + downTime + " miiliseconds");
-                        System.Threading.Thread.Sleep(downTime);
+                        driver.ForceSleep(downTime);
                         continue;
                     }
 
@@ -835,7 +839,7 @@ namespace BotSpace
                         string scoreUrl = blob.Url;
 
                         driver.Url = scoreUrl;
-                        System.Threading.Thread.Sleep(sleepTime);
+                        driver.DirtySleep(sleepTime);
 
                         string text = driver.GetElementText("//*[@id=\"commentaryContent\"]");
 
