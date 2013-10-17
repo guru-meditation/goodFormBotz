@@ -120,8 +120,8 @@ namespace WebDriver
                 log.Error("=========> Exception thrown trying to click element: " + iwe.TagName + " [" + ce + "]");
             }
 
-            System.Threading.Thread.Sleep(2000);
-
+           // System.Threading.Thread.Sleep(2000);
+            DirtySleep(2000);
             return result;
         }
         public virtual bool ClickElement(string xpath)
@@ -148,7 +148,8 @@ namespace WebDriver
 
             return result;
         }
-        public virtual IWebElement GetWebElementFromClassAndDivText(string classType, string findString)
+
+        public IWebElement GetWebElementFromClassAndDivTextNoWait(string classType, string findString)
         {
             IWebElement retVal = null;
             var thisTypes = driver.FindElements(By.ClassName(classType));
@@ -163,6 +164,11 @@ namespace WebDriver
             }
 
             return retVal;
+        }  
+       
+        public virtual IWebElement GetWebElementFromClassAndDivText(string classType, string findString)
+        {
+            return GetWebElementFromClassAndDivTextNoWait(classType, findString);   
         }
         public virtual List<string> GetValuesById(string searchId, int attempts, int expected, string seperator)
         {
@@ -198,6 +204,12 @@ namespace WebDriver
 
         }
 
+        public virtual bool Wait(Func<bool> f)
+        {
+            DirtySleep(6000);
+            return f();
+        }
+
         public virtual void DirtySleep(int time)
         {
             log.Debug("DirtySleep for :" + time);
@@ -222,6 +234,17 @@ namespace WebDriver
         public override void DirtySleep(int time)
         {
             // don't sleep
+        }
+
+        public override bool Wait(Func<bool> f)
+        {
+            var wait = new WebDriverWait(driver, TimeSpan.FromSeconds(waitTimeSeconds));
+            return wait.Until((drv) =>
+            {
+                return f();
+                
+            }
+                    );
         }
 
         private IWebElement FindElement(By by, int timeoutInSeconds)
@@ -266,7 +289,9 @@ namespace WebDriver
         {
             return FindElement(by, waitTimeSeconds);
         }
-       
+
+        
+
         public override IWebElement GetWebElementFromClassAndDivText(string classType, string findString)
         {          
             var wait = new WebDriverWait(driver, TimeSpan.FromSeconds(20));
