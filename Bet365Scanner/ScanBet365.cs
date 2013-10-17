@@ -14,366 +14,6 @@ namespace Scanners
     using System.Linq.Expressions;
     using WebDriver;
 
-    public abstract class Data
-    {
-    }
-
-    public class FullTimeResult : Data
-    {
-        public string One;
-        public string X;
-        public string Two;
-    }
-
-    public class HalfTimeResult : Data
-    {
-        public string One;
-        public string X;
-        public string Two;
-    }
-
-    public class DoubleChance : Data
-    {
-        public string OneX;
-        public string XTwo;
-        public string OneTwo;
-    }
-
-    public class NthGoal : Data
-    {
-        public string team1;
-        public string NoGoal;
-        public string team2;
-    }
-
-    public class Retry
-    {
-        protected static readonly log4net.ILog log
-         = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
-
-        int maxRetries = 1;
-
-        public Retry(int max_retries)
-        {
-            maxRetries = max_retries;
-        }
-
-        public void execute(Action f)
-        {
-
-            int retries = 0;
-
-            while (true)
-            {
-                //anything in betting tab might disapear due to refresh of the page
-                try
-                {
-                    f();
-                    break; // exit the loop if code completes
-                }
-                catch (StaleElementReferenceException e)
-                {
-                    if (++retries >= maxRetries)
-                    {
-                        log.Warn("Couldn't finish due to StaleElementReferenceException maxRetries reached " + maxRetries);
-                        break;
-                    }
-                    else
-                    {
-                        log.Info("StaleElementReferenceException retrying " + retries);
-                        continue;
-                    }
-                }
-            }
-        }
-    }
-
-    
-
-    public class Context
-    {
-        public DriverWrapper driver;
-        public IWebElement element = null;
-        public List<Data> data = new List<Data>();
-
-        public string team1;
-        public string team2;
-
-        public Context(DriverWrapper dr) { driver = dr; }
-
-        public void PushElement(IWebElement el) { element = el; }
-        public void PopElement() { element = null; }
-
-        public void PushData(Data data) { this.data.Add(data); }
-    }
-
-   
-    public class ValidatePage : IDisposable
-    {
-        protected Context ctx;
-
-        protected virtual void Precondition(Context ctx) { }
-        protected virtual void Postcondition(Context ctx) { }
-
-        public ValidatePage(Context ctx) { this.ctx = ctx; Precondition(ctx); }
-        public void Dispose() { Postcondition(ctx); }
-    }
-
-    public abstract class ExprBase
-    {
-        protected static readonly log4net.ILog log
-           = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
-
-        public abstract void Interpret(Context ctx);
-    }
-
-    public class FullTimeResultExpr : ExprBase
-    {
-        public override void Interpret(Context ctx)
-        {
-            log.Info("FullTimeResult parser");
-            IWebElement element = ctx.element;
-            var cols = element.FindElements(By.ClassName("cpCol3Box"));
-            FullTimeResult data = new FullTimeResult();
-            foreach ( IWebElement col in cols )
-            {
-                string text = col.Text;
-                
-                // "1\r\n 11/10"
-                string[] lines = Regex.Split(text, "\r\n");
-                string odds_name = lines[0];
-                string odds = lines[1];
-
-                log.Debug("Odds: " + odds_name + " at " + odds);
-                
-                switch (odds_name)
-                {
-                    case "1" :
-                        data.One = odds;
-                        break;
-                    case "X" :
-                        data.X = odds;
-                        break;
-                    case "2" :
-                        data.Two = odds;
-                        break;
-                    default:
-                        log.Error("invalid odds name");
-                        break;
-                }               
-            }
-
-            ctx.PushData(data);
-        }
-    }
-
-    public class HalfTimeResultExpr : ExprBase
-    {
-        public override void Interpret(Context ctx)
-        {
-            log.Info("HalfTimeResult parser");
-            IWebElement element = ctx.element;
-            var cols = element.FindElements(By.ClassName("cpCol3Box"));
-            HalfTimeResult data = new HalfTimeResult();
-
-            foreach (IWebElement col in cols)
-            {
-                string text = col.Text;
-
-                string[] lines = Regex.Split(text, "\r\n");
-                string odds_name = lines[0];
-                string odds = lines[1];
-
-                log.Debug("Odds: " + odds_name + " at " + odds);
-
-                switch (odds_name)
-                {
-                    case "1":
-                        data.One = odds;
-                        break;
-                    case "X":
-                        data.X = odds;
-                        break;
-                    case "2":
-                        data.Two = odds;
-                        break;
-                    default:
-                        log.Error("invalid odds name");
-                        break;
-                }
-            }
-
-            ctx.PushData(data);
-        }
-    }
-
-    public class DoubleChanceExpr : ExprBase
-    {
-        public override void Interpret(Context ctx)
-        {
-            log.Info("DoubleChance parser");
-            IWebElement element = ctx.element;
-            var cols = element.FindElements(By.ClassName("cpCol3Box"));
-            DoubleChance data = new DoubleChance();
-
-            foreach (IWebElement col in cols)
-            {
-                string text = col.Text;
-
-                string[] lines = Regex.Split(text, "\r\n");
-                string odds_name = lines[0];
-                string odds = lines[1];
-
-                log.Debug("Odds: " + odds_name + " at " + odds);
-
-                switch (odds_name)
-                {
-                    case "1X":
-                        data.OneX = odds;
-                        break;
-                    case "X2":
-                        data.XTwo = odds;
-                        break;
-                    case "12":
-                        data.OneTwo = odds;
-                        break;
-                    default:
-                        log.Error("invalid odds name");
-                        break;
-                }
-            }
-
-            ctx.PushData(data);
-        }
-    }
-
-    public class NthGoalExpr : ExprBase
-    {
-        int N = 0;
-
-        public NthGoalExpr(int n) { N = n; }
-
-        public override void Interpret(Context ctx)
-        {
-            log.Info("NthGoal parser N = "+N);
-           
-            IWebElement element = ctx.element;
-
-            var cols = element.FindElements(By.ClassName("CouponRow"));
-            NthGoal data = new NthGoal();
-
-            foreach (IWebElement col in cols)
-            {
-                string odds_name = col.Text;
-                //odds_name contains odds as well we need to get rid of the odds part
-                string odds = col.FindElement(By.ClassName("Odds")).Text;
-
-                odds_name = odds_name.Substring(0, odds_name.IndexOf(odds));
-
-                log.Debug("Odds: " + odds_name + " at " + odds);
-
-                if (odds_name == ctx.team1)
-                {
-                    data.team1 = odds;
-                }
-                else if (odds_name == ctx.team2)
-                {
-                    data.team2 = odds;
-                }
-                else
-                {
-                    data.NoGoal = odds;
-                }
-                
-            }
-            log.Debug("Odds: " + data.team1 + " " + data.team2 + " " + data.NoGoal);
-            
-            ctx.PushData(data);
-        }
-    }
-
-    public class BettingTab : ExprBase
-    {
-        Dictionary<string, ExprBase> dispatch = new Dictionary<string, ExprBase>();
-        public BettingTab()
-        {
-            dispatch.Add("Fulltime Result", new FullTimeResultExpr());
-            dispatch.Add("Half Time Result", new HalfTimeResultExpr());
-            dispatch.Add("Double Chance", new DoubleChanceExpr());
-            dispatch.Add("1st Goal", new NthGoalExpr(1));
-            dispatch.Add("2nd Goal", new NthGoalExpr(2));
-            dispatch.Add("3rd Goal", new NthGoalExpr(3));
-            
-        }
-
-        public override void Interpret(Context ctx)
-        {
-            Retry r = new Retry(3);
-
-            r.execute(() =>
-            {
-                var betting_tab = ctx.driver.FindElement(By.Id("BettingTab"));
-                var sections = betting_tab.FindElements(By.ClassName("Section"));
-
-                foreach (IWebElement section in sections)
-                {
-                    IWebElement fixture_descr = section.FindElement(By.ClassName("FixtureDescription"));
-                    string name = fixture_descr.Text;
-
-                    //name can be 1st Goal or 2nd Goal or 3rd Goal or 4th Goal .. Nth Goal
-                    int pos = name.LastIndexOf("th Goal");
-
-                    ExprBase expr = null;
-                    bool found = false;
-
-                    if (pos != -1)
-                    {
-                        int N = System.Convert.ToInt32(name.Substring(pos));
-                        expr = new NthGoalExpr(N);
-                        found = true;
-                    }
-                    else
-                    {
-                        found = dispatch.TryGetValue(name, out expr);
-                    }
-                    ctx.PushElement(section);
-                    if (found) expr.Interpret(ctx);
-                    ctx.PopElement();
-
-
-
-
-
-
-
-
-
-
-
-                }
-
-            }
-               );
-        }
-    }
-
-    public class InPlayMatchPage : ExprBase
-    {
-        List<ExprBase> match = new List<ExprBase> { new BettingTab() };
-
-        public override void Interpret(Context ctx)
-        {
-            using (new ValidatePage(ctx))
-            {
-                foreach (ExprBase page in match)
-                {
-                    page.Interpret(ctx);
-                }
-            }
-        }
-    }
-
-
     public class ScanBet365 : Scanner
     {
         private static readonly log4net.ILog log
@@ -498,7 +138,6 @@ namespace Scanners
             int botIndex = 0;
             int idx = -1;
             bool firstTime = true;
-            skipGames = true;
 
             DateTime lastDayGamesUpdated = DateTime.MinValue;
 
@@ -551,11 +190,16 @@ namespace Scanners
                     IWebElement inPlayElement = driver.GetWebElementFromClassAndDivText("Level1", "In-Play");
 
                     driver.ClickElement(inPlayElement);
-                    driver.ForceSleep(2000);
 
+                    var elements = driver.FindElements(By.ClassName("genericRow")).ToList();
 
-                    var elements = driver.FindElements(By.ClassName("IPScoreTitle"));
-                 
+                    int firstNonMatch = elements.IndexOf(elements.First(x => x.Text.Contains(" v ") == false));
+
+                    if (firstNonMatch != -1)
+                    {
+                        elements.RemoveRange(firstNonMatch, elements.Count() - firstNonMatch);
+                    }
+
                     if (elements.Count() == 0)
                     {
                         log.Debug("No games in play, going to sleep for a bit....");
@@ -584,51 +228,12 @@ namespace Scanners
                         int attempts = 3;
 
                         //*[@id="rw_spl_sc_1-1-5-24705317-2-0-0-1-1-0-0-0-0-0-1-0-0_101"]/div[1]
-                        IWebElement el = elements.ElementAt(idx);
-                        el.Click();
-
-                        //log.Info("Element: " + el.Text + " is displayed: " + el.Displayed);
-
-                        var inPlayTitles = driver.GetValuesByClassName("InPlayTitle", attempts, 1, new char[] { '@' });
-                        if (inPlayTitles == null) { log.Warn("inPlayTitles == null"); continue; }
-                        string inPlayTitle = inPlayTitles.ElementAt(0);
-                        var teams = Regex.Split(inPlayTitle, " v ");
-
-                        string homeTeamName = teams.ElementAt(0);
-                        string awayTeamName = teams.ElementAt(1);
-
-                        // Collect the odds
-                        try
-                        {
-                            Context ctx = new Context(driver);
-                            // Add team names
-                            ctx.team1 = homeTeamName;
-                            ctx.team2 = awayTeamName;
-
-                            InPlayMatchPage match_page = new InPlayMatchPage();
-
-                            match_page.Interpret(ctx);
-
-                        }
-                        catch (Exception e)
-                        {
-                            log.Error("Exception : " + e);
-                        }
-
-                     
-                        driver.Wait( () => 
-                        {
-                            return driver.FindElement(By.ClassName("clock-score")).Displayed &&
-                                driver.FindElement(By.ClassName("clock-score")).Enabled &&
-                                driver.FindElement(By.Id("arena")).Displayed &&
-                                driver.FindElement(By.Id("team1IconStats")).Displayed;
-                        } );
-
-                   
+                        elements.ElementAt(idx).Click();
                         //XXX: click causes a nice animation that takes some time,
                         //XXX: if we forcesleep for shorter time than animation takes then cleanScores will be null!!
                         //TODO: I changed this to make it faster, but we need to find out a way how to get rid of ForceSleep
-                        driver.ForceSleep(2000);
+                        driver.ForceSleep(6000);
+
 
                         var cleanScores = driver.GetValuesByClassName("clock-score", attempts, 3, new char[] { ' ', '-', '\r', '\n' });
 
@@ -678,6 +283,9 @@ namespace Scanners
                         var aCardsAndCorners = driver.GetValuesById("team2IconStats", attempts, 3, " ");
                         if (aCardsAndCorners == null) { log.Warn("aCardsAndCorners == null"); continue; }
 
+                        var inPlayTitles = driver.GetValuesByClassName("InPlayTitle", attempts, 1, new char[] { '@' });
+                        if (inPlayTitles == null) { log.Warn("inPlayTitles == null"); continue; }
+
                         bool rballOkay = true;
                         // stats are not available for this match
                         var shotsOnTarget = driver.GetValuesById("stat1", attempts, 3, "\r\n");
@@ -714,7 +322,7 @@ namespace Scanners
 
                         cleanScores.RemoveAll(x => String.IsNullOrEmpty(x));
                         string time = cleanScores.ElementAt(2);
-
+                        string inPlayTitle = inPlayTitles.ElementAt(0);
 
                         if (String.IsNullOrEmpty(time))
                         {
@@ -763,9 +371,10 @@ namespace Scanners
                         setStat(hstats, StatAlias.Goals, cleanScores, 0);
                         setStat(astats, StatAlias.Goals, cleanScores, 1);
 
-                     
+                        var teams = Regex.Split(inPlayTitle, " v ");
 
-                     
+                        string homeTeamName = teams.ElementAt(0);
+                        string awayTeamName = teams.ElementAt(1);
 
                         string today = DateTime.Now.ToString("ddMMyy");
                         string league = "All";
