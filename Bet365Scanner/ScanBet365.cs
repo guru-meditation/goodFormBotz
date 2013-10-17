@@ -191,7 +191,14 @@ namespace Scanners
 
                     driver.ClickElement(inPlayElement);
 
-                    var elements = driver.FindElements(By.ClassName("IPScoreTitle"));
+                    var elements = driver.FindElements(By.ClassName("genericRow")).ToList();
+
+                    int firstNonMatch = elements.IndexOf(elements.First(x => x.Text.Contains(" v ") == false));
+
+                    if (firstNonMatch != -1)
+                    {
+                        elements.RemoveRange(firstNonMatch, elements.Count() - firstNonMatch);
+                    }
 
                     if (elements.Count() == 0)
                     {
