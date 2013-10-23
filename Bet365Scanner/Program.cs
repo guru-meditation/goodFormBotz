@@ -58,7 +58,7 @@ namespace BotSpace
         static void Main(string[] args)
         {
             int r = 0;
-
+            
             foreach (string arg in args)
             {
                 log.Info("args[" + r + "] " + arg);
