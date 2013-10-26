@@ -10,15 +10,12 @@ using System.Text.RegularExpressions;
 namespace WebDriver
 {
     using BotSpace;
-    using OpenQA.Selenium.Remote;
-    using System.Diagnostics.Contracts;
 
     public class DriverWrapper : IWebDriver
     {
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger
         (System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
-
-        public IWebDriver driver = null;
+        protected IWebDriver driver = null;
 
         public System.Collections.ObjectModel.ReadOnlyCollection<string> WindowHandles
         {
@@ -85,7 +82,7 @@ namespace WebDriver
         {
             return driver.FindElements(by);
         }
-      
+
         public virtual String GetElementText(string xpath)
         {
             String result = String.Empty;
@@ -249,8 +246,6 @@ namespace WebDriver
             }
                     );
         }
-
-        
 
         private IWebElement FindElement(By by, int timeoutInSeconds)
         {
