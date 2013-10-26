@@ -234,6 +234,8 @@ namespace WebDriver
         public override void DirtySleep(int time)
         {
             // don't sleep
+            //do sleeeep! not sure why this breakz
+            System.Threading.Thread.Sleep(time);
         }
 
         public override bool Wait(Func<bool> f)
