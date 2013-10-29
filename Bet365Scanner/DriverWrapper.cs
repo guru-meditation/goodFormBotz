@@ -15,7 +15,13 @@ namespace WebDriver
     {
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger
         (System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
-        protected IWebDriver driver = null;
+        private IWebDriver driver = null;
+
+        public IWebDriver Driver
+        {
+            get { return driver; }
+            set { driver = value; }
+        }
 
         public System.Collections.ObjectModel.ReadOnlyCollection<string> WindowHandles
         {
@@ -99,7 +105,8 @@ namespace WebDriver
 
             return result;
         }
-        public virtual bool ClickElement(IWebElement iwe)
+        
+        public virtual bool ClickElement(IWebElement iwe, int timeToWait)
         {
             bool result = false;
 
@@ -120,10 +127,18 @@ namespace WebDriver
                 log.Error("=========> Exception thrown trying to click element: " + iwe.TagName + " [" + ce + "]");
             }
 
-           // System.Threading.Thread.Sleep(2000);
-            DirtySleep(2000);
+            DirtySleep(timeToWait);
+
             return result;
         }
+
+        private bool ScreenContainsInPlayMatch(int timeout)
+        {
+
+            return true;
+        }
+
+
         public virtual bool ClickElement(string xpath)
         {
             bool result = false;
@@ -164,28 +179,48 @@ namespace WebDriver
             }
 
             return retVal;
-        }  
-       
+        }
+
         public virtual IWebElement GetWebElementFromClassAndDivText(string classType, string findString)
         {
-            return GetWebElementFromClassAndDivTextNoWait(classType, findString);   
+            return GetWebElementFromClassAndDivTextNoWait(classType, findString);
         }
-        public virtual List<string> GetValuesById(string searchId, int attempts, int expected, string seperator)
-        {
-            while (attempts-- != 0)
-            {
-                var data = Regex.Split(driver.FindElement(By.Id(searchId)).Text, seperator);
-                var dataList = data.ToList();
-                dataList.RemoveAll(x => String.IsNullOrWhiteSpace(x));
 
-                if (dataList.Count() == expected || expected == 0)
+        public virtual List<string> GetValuesById(string searchId, int timeout, int expected, string seperator)
+        {
+            List<string> dataList = null;
+            var wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
+
+            string temp = "";
+
+            try
+            {
+                wait.Until<Boolean>((d) =>
                 {
-                    return dataList;
-                }
+                    bool retVal = false;
+                    var elems = d.FindElements(By.Id(searchId)).ToList();
+                    
+                    if (elems.Count != 0)
+                    {
+                        temp = elems.First().Text;
+                        dataList = Regex.Split(driver.FindElement(By.Id(searchId)).Text, seperator).ToList();
+                        dataList.RemoveAll(x => String.IsNullOrWhiteSpace(x));
+
+                        retVal =  dataList.Count() == expected || expected == 0;
+                    }
+
+                    return retVal;
+                });
+
+            }
+            catch (Exception ce)
+            {
+
             }
 
-            return null;
+            return dataList;
         }
+
         public virtual List<string> GetValuesByClassName(string searchId, int attempts, int expected, char[] seperators)
         {
             while (attempts-- != 0)
@@ -224,6 +259,9 @@ namespace WebDriver
 
     public class DriverWrapperWait : DriverWrapper
     {
+        private static readonly log4net.ILog log = log4net.LogManager.GetLogger
+        (System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+
         int waitTimeSeconds = 20;
 
         public DriverWrapperWait(IWebDriver dr)
@@ -234,17 +272,63 @@ namespace WebDriver
         public override void DirtySleep(int time)
         {
             // don't sleep
-            //do sleeeep! not sure why this breakz
-            System.Threading.Thread.Sleep(time);
+        }
+
+        public override bool ClickElement(IWebElement iwe, int timeToWait)
+        {
+            var elementsBefore = Driver.FindElements(By.XPath("//*")).Count;
+            
+            bool result = false;
+
+            try
+            {
+                    iwe.Click();
+                    result = true;
+            }
+            catch (Exception ce)
+            {
+                  log.Debug("Exception: " + ce);
+                  result = false;
+            }
+
+            if (result)
+            {
+                var wait = new WebDriverWait(Driver, TimeSpan.FromSeconds(timeToWait));
+
+                try
+                {
+                    return wait.Until(drv =>
+                    {
+                        var elements = drv.FindElements(By.XPath("//*")).Count;
+
+                        if (elements != elementsBefore)
+                        {
+                            log.Debug("Not waiting in ClickElement");
+                            return true;
+                        }
+
+                        log.Debug("Waiting in ClickElement" );
+
+                        return false;
+                    }
+                    );
+                }
+                catch (Exception)
+                {
+                    result = false;
+                }
+            }
+
+            return result;
         }
 
         public override bool Wait(Func<bool> f)
         {
-            var wait = new WebDriverWait(driver, TimeSpan.FromSeconds(waitTimeSeconds));
+            var wait = new WebDriverWait(Driver, TimeSpan.FromSeconds(waitTimeSeconds));
             return wait.Until((drv) =>
             {
                 return f();
-                
+
             }
                     );
         }
@@ -253,7 +337,7 @@ namespace WebDriver
         {
             if (timeoutInSeconds > 0)
             {
-                var wait = new WebDriverWait(driver, TimeSpan.FromSeconds(timeoutInSeconds));
+                var wait = new WebDriverWait(Driver, TimeSpan.FromSeconds(timeoutInSeconds));
                 return wait.Until((drv) =>
                 {
                     var element = drv.FindElement(by);
@@ -264,11 +348,12 @@ namespace WebDriver
             }
             return base.FindElement(by);
         }
+
         private System.Collections.ObjectModel.ReadOnlyCollection<IWebElement> FindElements(By by, int timeoutInSeconds)
         {
             if (timeoutInSeconds > 0)
             {
-                var wait = new WebDriverWait(driver, TimeSpan.FromSeconds(timeoutInSeconds));
+                var wait = new WebDriverWait(Driver, TimeSpan.FromSeconds(timeoutInSeconds));
                 return wait.Until(drv =>
                 {
                     var elements = drv.FindElements(by);
@@ -287,60 +372,63 @@ namespace WebDriver
         {
             return FindElements(by, waitTimeSeconds);
         }
+
         public override IWebElement FindElement(By by)
         {
             return FindElement(by, waitTimeSeconds);
         }
 
-        
+
 
         public override IWebElement GetWebElementFromClassAndDivText(string classType, string findString)
-        {          
-            var wait = new WebDriverWait(driver, TimeSpan.FromSeconds(20));
+        {
+            var wait = new WebDriverWait(Driver, TimeSpan.FromSeconds(20));
             return wait.Until(drv =>
             {
                 return base.GetWebElementFromClassAndDivText(classType, findString);
             }
             );
         }
-        public override List<string> GetValuesById(string searchId, int attempts, int expected, string seperator)
-        {
-            var wait = new WebDriverWait(driver, TimeSpan.FromSeconds(20));
-            try
-            {
-                return wait.Until(drv =>
-                {
-                    while (attempts-- != 0)
-                    {
-                        var data = Regex.Split(driver.FindElement(By.Id(searchId)).Text, seperator);
-                        var dataList = data.ToList();
-                        dataList.RemoveAll(x => String.IsNullOrWhiteSpace(x));
 
-                        if (dataList.Count() == expected || expected == 0)
-                        {
-                            return dataList;
-                        }
-                        return null;
-                    }
-                    throw new Exception("Enough Attempts");
-                }
-                    );
-            }
-            catch (Exception)
-            {
-                return null;
-            }
-        }
+        //public override List<string> GetValuesById(string searchId, int attempts, int expected, string seperator)
+        //{
+        //    var wait = new WebDriverWait(driver, TimeSpan.FromSeconds(20));
+        //    try
+        //    {
+        //        return wait.Until(drv =>
+        //        {
+        //            while (attempts-- != 0)
+        //            {
+        //                var data = Regex.Split(driver.FindElement(By.Id(searchId)).Text, seperator);
+        //                var dataList = data.ToList();
+        //                dataList.RemoveAll(x => String.IsNullOrWhiteSpace(x));
+
+        //                if (dataList.Count() == expected || expected == 0)
+        //                {
+        //                    return dataList;
+        //                }
+        //                return null;
+        //            }
+        //            throw new Exception("Enough Attempts");
+        //        }
+        //            );
+        //    }
+        //    catch (Exception)
+        //    {
+        //        return null;
+        //    }
+        //}
+
         public override List<string> GetValuesByClassName(string searchId, int attempts, int expected, char[] seperators)
         {
-            var wait = new WebDriverWait(driver, TimeSpan.FromSeconds(20));
+            var wait = new WebDriverWait(Driver, TimeSpan.FromSeconds(20));
             try
             {
                 return wait.Until(drv =>
                 {
                     while (attempts-- != 0)
                     {
-                        var data = driver.FindElement(By.ClassName(searchId)).Text.Split(seperators);
+                        var data = Driver.FindElement(By.ClassName(searchId)).Text.Split(seperators);
                         var dataList = data.ToList();
                         dataList.RemoveAll(x => String.IsNullOrEmpty(x));
 

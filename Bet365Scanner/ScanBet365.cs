@@ -11,6 +11,7 @@ namespace Scanners
 {
     using BotSpace;
     using Db;
+    using OpenQA.Selenium.Support.UI;
     using System.Linq.Expressions;
     using WebDriver;
 
@@ -132,7 +133,7 @@ namespace Scanners
 
         public override void scan(int sleepTime)
         {
-            DriverWrapper driver = null;
+            DriverWrapper driverWrapper = null;
 
             //TODO: this was always set to 0 in original code
             int botIndex = 0;
@@ -141,16 +142,16 @@ namespace Scanners
 
             DateTime lastDayGamesUpdated = DateTime.MinValue;
 
-            if (driver == null)
+            if (driverWrapper == null)
             {
                 string agentString = "--user-agent=\"Mozilla/5.0 (Linux; U; Android 2.3.6; en-us; Nexus S Build/GRK39F) AppleWebKit/533/1 (KHTML, like Gecko) Version/4.0 Mobile Safari/533.1\"";
-                driver = driverCreator.CreateDriver(agentString);
+                driverWrapper = driverCreator.CreateDriver(agentString);
             }
 
             if (botIndex == 0 && skipGames == false)
             {
                 log.Info("Scanning today's games for " + lastDayGamesUpdated.Date);
-                AddTodaysMatches(sleepTime, driver);
+                AddTodaysMatches(sleepTime, driverWrapper);
             }
 
             lastDayGamesUpdated = DateTime.Today;
@@ -162,10 +163,10 @@ namespace Scanners
                 idx++;
                 try
                 {
-                    if (driver == null)
+                    if (driverWrapper == null)
                     {
                         string agentString = "--user-agent=\"Mozilla/5.0 (Linux; U; Android 2.3.6; en-us; Nexus S Build/GRK39F) AppleWebKit/533/1 (KHTML, like Gecko) Version/4.0 Mobile Safari/533.1\"";
-                        driver = driverCreator.CreateDriver(agentString);
+                        driverWrapper = driverCreator.CreateDriver(agentString);
                     }
 
                     if (DateTime.Today.Equals(lastDayGamesUpdated) == false)
@@ -176,22 +177,24 @@ namespace Scanners
                         }
 
                         log.Info("Scanning today's games for " + lastDayGamesUpdated.Date);
-                        AddTodaysMatches(sleepTime, driver);
+                        AddTodaysMatches(sleepTime, driverWrapper);
                     }
                     else
                     {
                         log.Info("Already scanned todays games for " + lastDayGamesUpdated.Date);
                     }
 
-                    driver.Url = "https://mobile.bet365.com/premium/#type=Splash;key=1;ip=0;lng=1";
-                    driver.DirtySleep(sleepTime);
+                    driverWrapper.Url = "https://mobile.bet365.com/premium/#type=Splash;key=1;ip=0;lng=1";
+                    driverWrapper.DirtySleep(sleepTime);
 
                     //string inPlayXPath = "//*[@id=\"sc_0_L1_1-1-5-0-0-0-0-1-1-0-0-0-0-0-1-0-0-0-0\"]";
-                    IWebElement inPlayElement = driver.GetWebElementFromClassAndDivText("Level1", "In-Play");
+                    IWebElement inPlayElement = driverWrapper.GetWebElementFromClassAndDivText("Level1", "In-Play");
 
-                    driver.ClickElement(inPlayElement);
+                    driverWrapper.ClickElement(inPlayElement, 10);
 
-                    var elements = driver.FindElements(By.ClassName("genericRow")).ToList();
+                    var elements = driverWrapper.FindElements(By.ClassName("genericRow")).ToList();
+
+                    log.Warn("Generic Rows: " + elements.Count);
 
                     int firstNonMatch = elements.IndexOf(elements.First(x => x.Text.Contains(" v ") == false));
 
@@ -200,13 +203,20 @@ namespace Scanners
                         elements.RemoveRange(firstNonMatch, elements.Count() - firstNonMatch);
                     }
 
+                    log.Warn("Generic Rows Inplay: " + elements.Count);
+
+                    foreach (var ele in elements)
+                    {
+                        log.Warn(ele.Text);
+                    }
+
                     if (elements.Count() == 0)
                     {
                         log.Debug("No games in play, going to sleep for a bit....");
-                        driver.DirtySleep(20000);
-                        driver.Quit();
-                        driver.Dispose();
-                        driver = null;
+                        driverWrapper.DirtySleep(20000);
+                        driverWrapper.Quit();
+                        driverWrapper.Dispose();
+                        driverWrapper = null;
                         firstTime = true;
                         continue;
                     }
@@ -226,18 +236,34 @@ namespace Scanners
                         var astats = new Dictionary<string, int>();
 
                         int attempts = 3;
+                        //el.style[$.feat.cssPrefix+"Transform"] = "translate" + translateOpen + distanceToMove.x + "px," + distanceToMove.y + "px" + translateClose;
+                        //-webkit-transform: translate(-50%, 0px);
 
                         //*[@id="rw_spl_sc_1-1-5-24705317-2-0-0-1-1-0-0-0-0-0-1-0-0_101"]/div[1]
                         elements.ElementAt(idx).Click();
                         //XXX: click causes a nice animation that takes some time,
                         //XXX: if we forcesleep for shorter time than animation takes then cleanScores will be null!!
                         //TODO: I changed this to make it faster, but we need to find out a way how to get rid of ForceSleep
-                        driver.ForceSleep(6000);
 
+                        var wait = new WebDriverWait(driverWrapper, TimeSpan.FromSeconds(20));
 
-                        var cleanScores = driver.GetValuesByClassName("clock-score", attempts, 3, new char[] { ' ', '-', '\r', '\n' });
+                        var clockText = "";
 
-                        if (cleanScores == null)
+                        try
+                        {
+                            wait.Until<Boolean>((d) =>
+                            {
+                                bool retVal = false;
+                                var clocks = d.FindElements(By.Id("mlClock"));
+                                if (clocks.Count != 0)
+                                {
+                                    clockText = clocks[0].Text;
+                                    retVal =  clockText.Contains(':');
+                                }
+                                return retVal;
+                            });
+                        }
+                        catch (Exception ce)
                         {
                             log.Warn("cleanScores == null");
 
@@ -248,20 +274,55 @@ namespace Scanners
                                 log.Warn("Bad loop counter reset...");
 
                                 badLoopCounter = 0;
-                                driver.Quit();
-                                driver.Dispose();
-                                driver = null;
+                                driverWrapper.Quit();
+                                driverWrapper.Dispose();
+                                driverWrapper = null;
                             }
 
                             continue;
                         }
 
-                        driver.ClickElement("//*[@id=\"arena\"]");
-                        driver.DirtySleep(2000);
+                        wait.Until<Boolean>((d) =>
+                        {
+                            return d.FindElement(By.Id("arena")).GetAttribute("style") == "height: 144px;";
+                        });
 
-                        var hCardsAndCorners = driver.GetValuesById("team1IconStats", attempts, 3, " ");
 
-                        if (hCardsAndCorners == null)
+                        IJavaScriptExecutor js = driverWrapper.Driver as IJavaScriptExecutor;
+                        js.ExecuteScript("document.getElementsByClassName('carousel')[0].setAttribute('style', '-webkit-transform: translate(-50%, 0px);')");
+
+                        
+
+//                        driverWrapper.ClickElement("//*[@id=\"arena\"]");
+//driverWrapper.ForceSleep(4000);
+//driverWrapper.ClickElement("//*[@id=\"arena\"]");
+//driverWrapper.ForceSleep(4000);
+
+                        string hCardsAndCornersText = "";
+                        string aCardsAndCornersText = "";
+
+                        wait.Until<Boolean>((d) =>
+                        {
+                            var elems = d.FindElements(By.Id("team1IconStats"));
+                            if( elems.Count != 0)
+                            {
+                                hCardsAndCornersText = elems.First().Text; 
+                            }
+                            return hCardsAndCornersText.Split(' ').Count() == 3;
+                        });
+
+                        wait.Until<Boolean>((d) =>
+                        {
+                            var elems = d.FindElements(By.Id("team2IconStats"));
+                            if (elems.Count != 0)
+                            {
+                                aCardsAndCornersText = elems.First().Text;
+                            }
+                            return aCardsAndCornersText.Split(' ').Count() == 3;
+                        });
+
+                        if (hCardsAndCornersText == "" ||
+                            aCardsAndCornersText == "")
                         {
                             log.Warn("hCardsAndCorners == null");
                             log.Warn("Resetting driver...");
@@ -271,28 +332,30 @@ namespace Scanners
                             if (badLoopCounter == 5)
                             {
                                 badLoopCounter = 0;
-                                driver.Quit();
-                                driver.Dispose();
-                                driver = null;
+                                driverWrapper.Quit();
+                                driverWrapper.Dispose();
+                                driverWrapper = null;
                             }
 
                             continue;
                         }
 
-                        //*[@id="team1IconStats"]
-                        var aCardsAndCorners = driver.GetValuesById("team2IconStats", attempts, 3, " ");
-                        if (aCardsAndCorners == null) { log.Warn("aCardsAndCorners == null"); continue; }
-
-                        var inPlayTitles = driver.GetValuesByClassName("InPlayTitle", attempts, 1, new char[] { '@' });
+                        var inPlayTitles = driverWrapper.GetValuesByClassName("InPlayTitle", attempts, 1, new char[] { '@' });
                         if (inPlayTitles == null) { log.Warn("inPlayTitles == null"); continue; }
 
                         bool rballOkay = true;
                         // stats are not available for this match
-                        var shotsOnTarget = driver.GetValuesById("stat1", attempts, 3, "\r\n");
+
+                        List<string> shotsOnTarget = null;
+                        List<string> shotsOffTarget = null;
+                        List<string> attacks = null;
+                        List<string> dangerousAttacks = null;
+
+                        shotsOffTarget = driverWrapper.GetValuesById("stat1", attempts, 3, "\r\n");
+
                         if (shotsOnTarget == null)
                         {
-
-                            IWebElement noStats = driver.FindElement(By.Id("noStats"));
+                            IWebElement noStats = driverWrapper.FindElement(By.Id("noStats"));
                             if (noStats != null)
                             {
                                 log.Debug("shotsOnTarget == null Message: " + noStats.Text);
@@ -301,42 +364,35 @@ namespace Scanners
                             {
                                 log.Warn("shotsOnTarget == null Expected no statistics but it's not displayed for some other reason");
                             }
+
                             rballOkay = false;
                         }
 
-                        List<string> shotsOffTarget = null;
-                        List<string> attacks = null;
-                        List<string> dangerousAttacks = null;
+                        log.Warn("Rball 1 = " + rballOkay);
 
                         if (rballOkay == true)
                         {
-                            shotsOffTarget = driver.GetValuesById("stat2", attempts, 3, "\r\n");
+                            shotsOffTarget = driverWrapper.GetValuesById("stat2", attempts, 3, "\r\n");
                             if (shotsOffTarget == null) { log.Warn("shotsOffTarget == null"); rballOkay = false; }
 
-                            attacks = driver.GetValuesById("stat3", attempts, 3, "\r\n");
+                            attacks = driverWrapper.GetValuesById("stat3", attempts, 3, "\r\n");
                             if (attacks == null) { log.Warn("attacks == null"); rballOkay = false; }
 
-                            dangerousAttacks = driver.GetValuesById("stat4", attempts, 3, "\r\n");
+                            dangerousAttacks = driverWrapper.GetValuesById("stat4", attempts, 3, "\r\n");
                             if (dangerousAttacks == null) { log.Warn("dangerousAttacks == null"); rballOkay = false; }
                         }
 
-                        cleanScores.RemoveAll(x => String.IsNullOrEmpty(x));
-                        string time = cleanScores.ElementAt(2);
-                        string inPlayTitle = inPlayTitles.ElementAt(0);
+                        log.Warn("Rball 2 = " + rballOkay);
 
-                        if (String.IsNullOrEmpty(time))
-                        {
-                            log.Warn("Couldn't get time :(");
-                            continue;
-                        }
+                        string inPlayTitle = inPlayTitles.ElementAt(0);
 
                         var vals = new List<string>();
 
-                        Action<Dictionary<string, int>, StatAlias, List<string>, int> setStat =
-                            (Dictionary<string, int> d, StatAlias alias, List<string> list, int at) =>
+                        Action<Dictionary<string, int>, StatAlias, string, int> setStat =
+                            (Dictionary<string, int> d, StatAlias alias, string val, int at) =>
                             {
                                 string statString = stat(alias);
-                                d[statString] = ParseInt(statString, list.ElementAt(at));
+                                d[statString] = ParseInt(statString, val);
                             };
 
                         Action<Dictionary<string, int>, StatAlias[], List<string>> setStat2 =
@@ -351,8 +407,10 @@ namespace Scanners
 
                         StatAlias[] aliases = { StatAlias.RedCards, StatAlias.YellowCards, StatAlias.Corners };
 
-                        setStat2(hstats, aliases, hCardsAndCorners);
-                        setStat2(astats, aliases, aCardsAndCorners);
+                        setStat2(hstats, aliases, hCardsAndCornersText.Split(' ').ToList());
+                        setStat2(astats, aliases, aCardsAndCornersText.Split(' ').ToList());
+
+                        log.Warn("Rball 3 = " + rballOkay);
 
                         if (rballOkay)
                         {
@@ -368,8 +426,10 @@ namespace Scanners
                                 new List<string> { a(shotsOnTarget), a(shotsOffTarget), a(attacks), a(dangerousAttacks) });
                         }
 
-                        setStat(hstats, StatAlias.Goals, cleanScores, 0);
-                        setStat(astats, StatAlias.Goals, cleanScores, 1);
+                        var team1score = driverWrapper.FindElement(By.Id("team1score")).Text;
+                        var team2score = driverWrapper.FindElement(By.Id("team2score")).Text;
+                        setStat(hstats, StatAlias.Goals, team1score, 0);
+                        setStat(astats, StatAlias.Goals, team2score, 1);
 
                         var teams = Regex.Split(inPlayTitle, " v ");
 
@@ -386,6 +446,7 @@ namespace Scanners
 
                         //edge case of games going over midnight
                         bool bOverMidnight = false;
+                        
                         if (exists == false)
                         {
                             string anotherName = Path.Combine(xmlPath, league, homeTeamName + " v " + awayTeamName + "_" + yesterday + ".xml");
@@ -397,11 +458,14 @@ namespace Scanners
                             }
                         }
 
-                        SendToWebDelegate sd = new SendToWebDelegate(SendToWeb);
-                        sd.BeginInvoke(league, bOverMidnight ? DateTime.Today - TimeSpan.FromDays(1) : DateTime.Now, homeTeamName, awayTeamName, hstats, astats, time, null, null);
+                        log.Warn("Rball 4 = " + rballOkay);
 
+                        //SendToWebDelegate sd = new SendToWebDelegate(SendToWeb);
+                        //sd.BeginInvoke(league, bOverMidnight ? DateTime.Today - TimeSpan.FromDays(1) : DateTime.Now, homeTeamName, awayTeamName, hstats, astats, time, null, null);
+                        SendToWeb(league, bOverMidnight ? DateTime.Today - TimeSpan.FromDays(1) : DateTime.Now, homeTeamName, awayTeamName, hstats, astats, clockText);
+                        
                         WriteXmlDelegate wd = new WriteXmlDelegate(WriteXml);
-                        wd.BeginInvoke(xmlPath, hstats, astats, homeTeamName, awayTeamName, league, time, exists, finalName, null, null);
+                        wd.BeginInvoke(xmlPath, hstats, astats, homeTeamName, awayTeamName, league, clockText, exists, finalName, null, null);
                     }
                     else
                     {
@@ -411,17 +475,17 @@ namespace Scanners
                 catch (OpenQA.Selenium.WebDriverException we)
                 {
                     log.Error("Exception thrown: " + we);
-                    driver.Quit();
-                    driver.Dispose();
-                    driver = null;
+                    driverWrapper.Quit();
+                    driverWrapper.Dispose();
+                    driverWrapper = null;
 
                 }
                 catch (Exception we)
                 {
                     log.Error("Exception thrown: " + we);
-                    driver.Quit();
-                    driver.Dispose();
-                    driver = null;
+                    driverWrapper.Quit();
+                    driverWrapper.Dispose();
+                    driverWrapper = null;
                 }
             }
         }
