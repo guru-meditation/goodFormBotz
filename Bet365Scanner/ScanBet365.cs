@@ -227,10 +227,10 @@ namespace Scanners
                     int elementCount = 0;
                     elements.ForEach(x =>
                     {
-                        if (idx == elementCount) 
-                            log.Warn(x.Text); 
-                        else 
-                            log.Debug(x.Text); 
+                        if (idx == elementCount)
+                            log.Warn(x.Text);
+                        else { }
+                           // log.Debug(x.Text); 
                         ++elementCount;
                         });
 

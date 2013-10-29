@@ -131,7 +131,14 @@ namespace BotSpace
             }
             
             DriverCreator driverCreator = new ChromeDriverCreatorWait();
-            Database dbStuff = new Database(dbtype, connectionString, numBots, gOpMode);
+            Database dbStuff = new Database(dbtype, connectionString, gOpMode);
+
+            while (dbStuff.Connect() == false)
+            {
+                log.Warn("Cannot connect to DB... retrying in 10 seconds");
+                System.Threading.Thread.Sleep(10000);
+            }
+
             Scanner scanner = null;
 
             switch (gOpMode)

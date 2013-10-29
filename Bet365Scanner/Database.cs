@@ -16,11 +16,12 @@ namespace Db
         private DbCreator dbCreator = null;
         private List<DbConnection> dbConnectionList = new List<DbConnection>();
         
-        private int botIndex = 0;
         private OperationMode opMode;
 
-        public Database(string dbtype, string connectionString, int numBots, OperationMode operationMode)
+        public Database(string dbtype, string connectionString, OperationMode operationMode)
         {
+            dbConnectionString = connectionString;
+
             opMode = operationMode;
 
             switch (dbtype)
@@ -36,20 +37,27 @@ namespace Db
                     break;
             }
 
+            
+        }
+
+        public bool Connect()
+        {
+            bool retVal = false;
+
             try
             {
-                for (int i = 0; i != numBots; ++i)
-                {
-                    DbConnection connection = dbCreator.newConnection(connectionString);
+                    DbConnection connection = dbCreator.newConnection(dbConnectionString);
                     connection.Open();
                     dbConnectionList.Add(connection);
-                }
+                    retVal = true;
             }
             catch (Exception ex)
             {
                 log.Error("Creating new connection " + ex.ToString());
                 dbConnectionList = null;
             }
+
+            return retVal;
         }
 
         public int AddTeam(string team)
@@ -57,7 +65,7 @@ namespace Db
             int idx = -1;
             bool hasRows = false;
 
-            using (DbCommand findInTeamsTable = dbCreator.newCommand("SELECT id, name FROM teams WHERE name = '" + team + "';", dbConnectionList.ElementAt(botIndex)))
+            using (DbCommand findInTeamsTable = dbCreator.newCommand("SELECT id, name FROM teams WHERE name = '" + team + "';", dbConnectionList.ElementAt(0)))
             {
                 using (DbDataReader dr = findInTeamsTable.ExecuteReader())
                 {
@@ -81,7 +89,7 @@ namespace Db
             if (hasRows == false)
             {
                 //see if it exists in the team_associations
-                using (DbCommand findInTeamsTable = dbCreator.newCommand("SELECT team_id, name FROM team_associations WHERE name = '" + team + "';", dbConnectionList.ElementAt(botIndex)))
+                using (DbCommand findInTeamsTable = dbCreator.newCommand("SELECT team_id, name FROM team_associations WHERE name = '" + team + "';", dbConnectionList.ElementAt(0)))
                 {
                     using (DbDataReader dr = findInTeamsTable.ExecuteReader())
                     {
@@ -106,7 +114,7 @@ namespace Db
 
             if (hasRows == false)
             {
-                using (DbCommand count = dbCreator.newCommand("select max(id) from teams", dbConnectionList.ElementAt(botIndex)))
+                using (DbCommand count = dbCreator.newCommand("select max(id) from teams", dbConnectionList.ElementAt(0)))
                 {
                     using (DbDataReader dr2 = count.ExecuteReader())
                     {
@@ -126,7 +134,7 @@ namespace Db
 
                         string now = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
 
-                        using (DbCommand insert = dbCreator.newCommand("INSERT into teams ( id, name, created_at, updated_at ) VALUES (" + idx + ", '" + team + "', '" + now + "', '" + now + "');", dbConnectionList.ElementAt(botIndex)))
+                        using (DbCommand insert = dbCreator.newCommand("INSERT into teams ( id, name, created_at, updated_at ) VALUES (" + idx + ", '" + team + "', '" + now + "', '" + now + "');", dbConnectionList.ElementAt(0)))
                         {
                             insert.ExecuteNonQuery();
                         }
@@ -139,7 +147,7 @@ namespace Db
         public int AddGame(int homeTeamId, int awayTeamId, int leagueId, DateTime koDate)
         {
             int idx = -1;
-            using (DbCommand find = dbCreator.newCommand("SELECT id, team1, kodate, league_id FROM games WHERE team1 = '" + homeTeamId + "' AND team2 = '" + awayTeamId + "';", dbConnectionList.ElementAt(botIndex)))
+            using (DbCommand find = dbCreator.newCommand("SELECT id, team1, kodate, league_id FROM games WHERE team1 = '" + homeTeamId + "' AND team2 = '" + awayTeamId + "';", dbConnectionList.ElementAt(0)))
             {
                 using (DbDataReader dr = find.ExecuteReader())
                 {
@@ -173,7 +181,7 @@ namespace Db
 
                     if (hasRows == false)
                     {
-                        using (DbCommand count = dbCreator.newCommand("select max(id) from games;", dbConnectionList.ElementAt(botIndex)))
+                        using (DbCommand count = dbCreator.newCommand("select max(id) from games;", dbConnectionList.ElementAt(0)))
                         {
                             using (DbDataReader dr2 = count.ExecuteReader())
                             {
@@ -192,7 +200,7 @@ namespace Db
 
                                 string now = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
 
-                                using (DbCommand insert = dbCreator.newCommand("INSERT into games (id, league_id, team1, team2, koDate,  created_at, updated_at  ) VALUES (" + idx + ", " + leagueId + ", " + homeTeamId + ", " + awayTeamId + ", '" + koDate.ToString("yyyy-MM-dd HH:mm:ss") + "', '" + now + "', '" + now + "');", dbConnectionList.ElementAt(botIndex)))
+                                using (DbCommand insert = dbCreator.newCommand("INSERT into games (id, league_id, team1, team2, koDate,  created_at, updated_at  ) VALUES (" + idx + ", " + leagueId + ", " + homeTeamId + ", " + awayTeamId + ", '" + koDate.ToString("yyyy-MM-dd HH:mm:ss") + "', '" + now + "', '" + now + "');", dbConnectionList.ElementAt(0)))
                                 {
                                     insert.ExecuteNonQuery();
                                 }
@@ -210,7 +218,7 @@ namespace Db
             int idx = -1;
 
             bool hasRows = false;
-            using (DbCommand find = dbCreator.newCommand("SELECT id, name FROM leagues WHERE name = '" + leagueName + "';", dbConnectionList.ElementAt(botIndex)))
+            using (DbCommand find = dbCreator.newCommand("SELECT id, name FROM leagues WHERE name = '" + leagueName + "';", dbConnectionList.ElementAt(0)))
             {
                 using (DbDataReader dr = find.ExecuteReader())
                 {
@@ -235,7 +243,7 @@ namespace Db
             if (hasRows == false)
             {
                 //see if it exists in the team_associations
-                using (DbCommand findInTeamsTable = dbCreator.newCommand("SELECT league_id, name FROM league_associations WHERE name = '" + leagueName + "';", dbConnectionList.ElementAt(botIndex)))
+                using (DbCommand findInTeamsTable = dbCreator.newCommand("SELECT league_id, name FROM league_associations WHERE name = '" + leagueName + "';", dbConnectionList.ElementAt(0)))
                 {
                     using (DbDataReader dr = findInTeamsTable.ExecuteReader())
                     {
@@ -260,7 +268,7 @@ namespace Db
 
             if (hasRows == false)
             {
-                using (DbCommand count = dbCreator.newCommand("select max(id) from leagues;", dbConnectionList.ElementAt(botIndex)))
+                using (DbCommand count = dbCreator.newCommand("select max(id) from leagues;", dbConnectionList.ElementAt(0)))
                 {
                     using (DbDataReader dr2 = count.ExecuteReader())
                     {
@@ -277,7 +285,7 @@ namespace Db
 
                         dr2.Close();
                         string now = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-                        using (DbCommand insert = dbCreator.newCommand("INSERT into leagues ( id, name, league_id, created_at, updated_at  ) VALUES (" + idx + ", '" + leagueName + "', " + idx + ", '" + now + "', '" + now + "');", dbConnectionList.ElementAt(botIndex)))
+                        using (DbCommand insert = dbCreator.newCommand("INSERT into leagues ( id, name, league_id, created_at, updated_at  ) VALUES (" + idx + ", '" + leagueName + "', " + idx + ", '" + now + "', '" + now + "');", dbConnectionList.ElementAt(0)))
                         {
                             insert.ExecuteNonQuery();
                         }
@@ -299,7 +307,7 @@ namespace Db
             {
                 int lastMinuteParsed = ParseMinutes(lastMinute);
 
-                using (DbCommand find = dbCreator.newCommand("SELECT id, game_id FROM statistics WHERE game_id = " + gameId + " AND gametime = " + lastMinuteParsed + ";", dbConnectionList.ElementAt(botIndex)))
+                using (DbCommand find = dbCreator.newCommand("SELECT id, game_id FROM statistics WHERE game_id = " + gameId + " AND gametime = " + lastMinuteParsed + ";", dbConnectionList.ElementAt(0)))
                 {
                     using (DbDataReader dr = find.ExecuteReader())
                     {
@@ -317,7 +325,7 @@ namespace Db
                 }
             }
 
-            using (DbCommand find = dbCreator.newCommand("SELECT id, game_id FROM statistics WHERE game_id = " + gameId + " AND gametime = " + minutesParsed + ";", dbConnectionList.ElementAt(botIndex)))
+            using (DbCommand find = dbCreator.newCommand("SELECT id, game_id FROM statistics WHERE game_id = " + gameId + " AND gametime = " + minutesParsed + ";", dbConnectionList.ElementAt(0)))
             {
                 using (DbDataReader dr = find.ExecuteReader())
                 {
@@ -342,7 +350,7 @@ namespace Db
                     {
                         log.Info("Uploading game time: " + minutesParsed);
 
-                        using (DbCommand count = dbCreator.newCommand("select max(id) from statistics;", dbConnectionList.ElementAt(botIndex)))
+                        using (DbCommand count = dbCreator.newCommand("select max(id) from statistics;", dbConnectionList.ElementAt(0)))
                         {
                             using (DbDataReader dr2 = count.ExecuteReader())
                             {
@@ -363,7 +371,7 @@ namespace Db
                                 string now = DateTime.Now.ToString("yyyy-MM-dd");
                                 string valuesAsString = string.Join(", ", values);
 
-                                dbConnectionList.ElementAt(botIndex).CreateCommand();
+                                dbConnectionList.ElementAt(0).CreateCommand();
 
                                 string sql = "";
 
@@ -407,7 +415,7 @@ namespace Db
 
                                 using (DbCommand insert = dbCreator.newCommand(sql))
                                 {
-                                    insert.Connection = dbConnectionList.ElementAt(botIndex);
+                                    insert.Connection = dbConnectionList.ElementAt(0);
                                     insert.ExecuteNonQuery();
                                 }
                             }
@@ -444,5 +452,7 @@ namespace Db
             return minutes;
         }
 
+
+        public string dbConnectionString { get; set; }
     }
 }
