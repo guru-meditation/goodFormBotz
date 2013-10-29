@@ -236,17 +236,11 @@ namespace Scanners
                         var astats = new Dictionary<string, int>();
 
                         int attempts = 3;
-                        //el.style[$.feat.cssPrefix+"Transform"] = "translate" + translateOpen + distanceToMove.x + "px," + distanceToMove.y + "px" + translateClose;
-                        //-webkit-transform: translate(-50%, 0px);
 
                         //*[@id="rw_spl_sc_1-1-5-24705317-2-0-0-1-1-0-0-0-0-0-1-0-0_101"]/div[1]
                         elements.ElementAt(idx).Click();
-                        //XXX: click causes a nice animation that takes some time,
-                        //XXX: if we forcesleep for shorter time than animation takes then cleanScores will be null!!
-                        //TODO: I changed this to make it faster, but we need to find out a way how to get rid of ForceSleep
 
                         var wait = new WebDriverWait(driverWrapper, TimeSpan.FromSeconds(20));
-
                         var clockText = "";
 
                         try
@@ -263,7 +257,7 @@ namespace Scanners
                                 return retVal;
                             });
                         }
-                        catch (Exception ce)
+                        catch (Exception)
                         {
                             log.Warn("cleanScores == null");
 
@@ -287,16 +281,8 @@ namespace Scanners
                             return d.FindElement(By.Id("arena")).GetAttribute("style") == "height: 144px;";
                         });
 
-
                         IJavaScriptExecutor js = driverWrapper.Driver as IJavaScriptExecutor;
                         js.ExecuteScript("document.getElementsByClassName('carousel')[0].setAttribute('style', '-webkit-transform: translate(-50%, 0px);')");
-
-                        
-
-//                        driverWrapper.ClickElement("//*[@id=\"arena\"]");
-//driverWrapper.ForceSleep(4000);
-//driverWrapper.ClickElement("//*[@id=\"arena\"]");
-//driverWrapper.ForceSleep(4000);
 
                         string hCardsAndCornersText = "";
                         string aCardsAndCornersText = "";
@@ -351,7 +337,7 @@ namespace Scanners
                         List<string> attacks = null;
                         List<string> dangerousAttacks = null;
 
-                        shotsOffTarget = driverWrapper.GetValuesById("stat1", attempts, 3, "\r\n");
+                        shotsOnTarget = driverWrapper.GetValuesById("stat1", attempts, 3, "\r\n");
 
                         if (shotsOnTarget == null)
                         {
