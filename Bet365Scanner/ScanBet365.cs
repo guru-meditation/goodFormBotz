@@ -109,8 +109,9 @@ namespace Scanners
                     }
                 }
 
-                var back = driver.FindElement(By.Id("HeaderBack"));
-                back.Click();
+                IJavaScriptExecutor js = driver.Driver as IJavaScriptExecutor;
+                js.ExecuteScript("document.getElementById('HeaderBack').click()");
+
                 driver.DirtySleep(dirtySleep);
 
             }
@@ -205,11 +206,6 @@ namespace Scanners
 
                     log.Warn("Generic Rows Inplay: " + elements.Count);
 
-                    foreach (var ele in elements)
-                    {
-                        log.Warn(ele.Text);
-                    }
-
                     if (elements.Count() == 0)
                     {
                         log.Debug("No games in play, going to sleep for a bit....");
@@ -227,6 +223,16 @@ namespace Scanners
                         idx = random.Next(0, elements.Count());
                         firstTime = false;
                     }
+
+                    int elementCount = 0;
+                    elements.ForEach(x =>
+                    {
+                        if (idx == elementCount) 
+                            log.Warn(x.Text); 
+                        else 
+                            log.Debug(x.Text); 
+                        ++elementCount;
+                        });
 
                     log.Info("Scanning game " + idx + " of " + elements.Count() + " games in play");
 
@@ -330,12 +336,11 @@ namespace Scanners
                         if (inPlayTitles == null) { log.Warn("inPlayTitles == null"); continue; }
 
                         bool rballOkay = true;
-                        // stats are not available for this match
 
-                        List<string> shotsOnTarget = null;
-                        List<string> shotsOffTarget = null;
-                        List<string> attacks = null;
-                        List<string> dangerousAttacks = null;
+                        List<string> shotsOnTarget      = null;
+                        List<string> shotsOffTarget     = null;
+                        List<string> attacks            = null;
+                        List<string> dangerousAttacks   = null;
 
                         shotsOnTarget = driverWrapper.GetValuesById("stat1", attempts, 3, "\r\n");
 
