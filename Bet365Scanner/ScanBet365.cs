@@ -359,8 +359,6 @@ namespace Scanners
                             rballOkay = false;
                         }
 
-                        log.Warn("Rball 1 = " + rballOkay);
-
                         if (rballOkay == true)
                         {
                             shotsOffTarget = driverWrapper.GetValuesById("stat2", attempts, 3, "\r\n");
@@ -372,8 +370,6 @@ namespace Scanners
                             dangerousAttacks = driverWrapper.GetValuesById("stat4", attempts, 3, "\r\n");
                             if (dangerousAttacks == null) { log.Warn("dangerousAttacks == null"); rballOkay = false; }
                         }
-
-                        log.Warn("Rball 2 = " + rballOkay);
 
                         string inPlayTitle = inPlayTitles.ElementAt(0);
 
@@ -400,8 +396,6 @@ namespace Scanners
 
                         setStat2(hstats, aliases, hCardsAndCornersText.Split(' ').ToList());
                         setStat2(astats, aliases, aCardsAndCornersText.Split(' ').ToList());
-
-                        log.Warn("Rball 3 = " + rballOkay);
 
                         if (rballOkay)
                         {
@@ -449,11 +443,9 @@ namespace Scanners
                             }
                         }
 
-                        log.Warn("Rball 4 = " + rballOkay);
-
-                        //SendToWebDelegate sd = new SendToWebDelegate(SendToWeb);
-                        //sd.BeginInvoke(league, bOverMidnight ? DateTime.Today - TimeSpan.FromDays(1) : DateTime.Now, homeTeamName, awayTeamName, hstats, astats, time, null, null);
-                        SendToWeb(league, bOverMidnight ? DateTime.Today - TimeSpan.FromDays(1) : DateTime.Now, homeTeamName, awayTeamName, hstats, astats, clockText);
+                        SendToWebDelegate sd = new SendToWebDelegate(SendToWeb);
+                        sd.BeginInvoke(league, bOverMidnight ? DateTime.Today - TimeSpan.FromDays(1) : DateTime.Now, homeTeamName, awayTeamName, hstats, astats, clockText, null, null);
+                        //SendToWeb(league, bOverMidnight ? DateTime.Today - TimeSpan.FromDays(1) : DateTime.Now, homeTeamName, awayTeamName, hstats, astats, clockText);
                         
                         WriteXmlDelegate wd = new WriteXmlDelegate(WriteXml);
                         wd.BeginInvoke(xmlPath, hstats, astats, homeTeamName, awayTeamName, league, clockText, exists, finalName, null, null);
