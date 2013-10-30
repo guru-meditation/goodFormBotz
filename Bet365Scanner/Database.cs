@@ -44,16 +44,35 @@ namespace Db
         {
             bool retVal = false;
 
+            DbConnection connection = null;
+            
             try
             {
-                    DbConnection connection = dbCreator.newConnection(dbConnectionString);
-                    connection.Open();
-                    dbConnectionList.Add(connection);
-                    retVal = true;
+                    connection = dbCreator.newConnection(dbConnectionString);
+
+                    if (connection != null)
+                    {
+                        connection.Open();
+                        dbConnectionList.Add(connection);
+                        retVal = true;
+                    }
+
             }
             catch (Exception ex)
             {
                 log.Error("Creating new connection " + ex.ToString());
+
+                if (connection != null)
+                {
+                    if (connection.State != System.Data.ConnectionState.Closed)
+                    {
+                        log.Debug("Closing DB Connection...");
+                        connection.Close();
+                    }
+                   
+                    connection.Dispose();
+                }
+
                 dbConnectionList = null;
             }
 

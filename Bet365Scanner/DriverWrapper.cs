@@ -215,8 +215,9 @@ namespace WebDriver
             }
             catch (Exception ce)
             {
-
+                dataList = null;
             }
+
 
             return dataList;
         }
