@@ -198,7 +198,7 @@ namespace Scanners
                 {
                     dbStuff.AddStatistics(allStats, gameId, time, "", koDate);
                 }
-                catch (DbException ne)
+                catch (DbException)
                 {
                     log.Warn("Retrying....");
                     retries += 1;
@@ -281,7 +281,7 @@ namespace Scanners
                         {
                             result = dbStuff.AddStatistics(values, gameId, time, lastTime, seenTime);
                         }
-                        catch (DbException ne)
+                        catch (DbException)
                         {
                             retries += 1;
                         }
@@ -303,7 +303,7 @@ namespace Scanners
                         {
                             dbStuff.AddStatistics(values, gameId, time, "", seenTime);
                         }
-                        catch (DbException ne)
+                        catch (DbException)
                         {
                             retries += 1;
                         }

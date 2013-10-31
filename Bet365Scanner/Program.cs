@@ -44,11 +44,11 @@ namespace BotSpace
 
         public static string willHillUrl = "http://sports.williamhill.com/bet/en-gb/betlive/9";
 
-        static string site = ConfigurationSettings.AppSettings["site"];
-        static string connectionString = ConfigurationSettings.AppSettings["connection1"];
-        static string dbtype = ConfigurationSettings.AppSettings["dbtype"];
-        static string xmlPath = ConfigurationSettings.AppSettings["xmlPath"];
-        static string sleepTime = ConfigurationSettings.AppSettings["sleeptime"];
+        static string site              = ConfigurationManager.AppSettings["site"];
+        static string connectionString  = ConfigurationManager.AppSettings["connection1"];
+        static string dbtype            = ConfigurationManager.AppSettings["dbtype"];
+        static string xmlPath           = ConfigurationManager.AppSettings["xmlPath"];
+        static string sleepTime         = ConfigurationManager.AppSettings["sleeptime"];
 
         static OperationMode gOpMode = OperationMode.Bet365Scan;
         static int numBots = 1;

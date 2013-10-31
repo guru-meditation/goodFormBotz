@@ -53,7 +53,7 @@ namespace Db
                     if (connection != null)
                     {
                         connection.Open();
-                        dbConnectionList.Add(connection);
+                        
                         retVal = true;
                     }
 
@@ -72,9 +72,9 @@ namespace Db
                    
                     connection.Dispose();
                 }
-
-                dbConnectionList = null;
             }
+
+            if(retVal) dbConnectionList.Add(connection);
 
             return retVal;
         }

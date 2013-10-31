@@ -36,8 +36,7 @@ namespace Scanners
 
             if (element != null)
             {
-                element.Click();
-                driver.DirtySleep(dirtySleep);
+                driver.ClickElement(element, dirtySleep);
             }
             else
             {
@@ -185,29 +184,19 @@ namespace Scanners
                         log.Info("Already scanned todays games for " + lastDayGamesUpdated.Date);
                     }
 
+                    //load the main page
                     driverWrapper.Url = "https://mobile.bet365.com/premium/#type=Splash;key=1;ip=0;lng=1";
-                    driverWrapper.DirtySleep(sleepTime);
 
-                    //string inPlayXPath = "//*[@id=\"sc_0_L1_1-1-5-0-0-0-0-1-1-0-0-0-0-0-1-0-0-0-0\"]";
-                    IWebElement inPlayElement = driverWrapper.GetWebElementFromClassAndDivText("Level1", "In-Play");
+                    var waiter = new WebDriverWait(driverWrapper, TimeSpan.FromSeconds(60));
+                    IWebElement inPlayElement = null;
 
-                    driverWrapper.ClickElement(inPlayElement, 10);
-
-                    var elements = driverWrapper.FindElements(By.ClassName("genericRow")).ToList();
-
-                    log.Warn("Generic Rows: " + elements.Count);
-
-                    int firstNonMatch = elements.IndexOf(elements.First(x => x.Text.Contains(" v ") == false));
-
-                    if (firstNonMatch != -1)
+                    try
                     {
-                        elements.RemoveRange(firstNonMatch, elements.Count() - firstNonMatch);
+                        inPlayElement = waiter.Until(ExpectedBotCondition.PageHasClassWithText("Level1", "In-Play"));
                     }
-
-                    log.Warn("Generic Rows Inplay: " + elements.Count);
-
-                    if (elements.Count() == 0)
+                    catch (WebDriverTimeoutException)
                     {
+
                         log.Debug("No games in play, going to sleep for a bit....");
                         driverWrapper.DirtySleep(20000);
                         driverWrapper.Quit();
@@ -217,26 +206,46 @@ namespace Scanners
                         continue;
                     }
 
+                    List<IWebElement> genericRowElements = null;
+
+                    if (inPlayElement != null)
+                    {
+
+                        driverWrapper.ClickElement(inPlayElement, 10);
+                        genericRowElements = driverWrapper.FindElements(By.ClassName("genericRow")).ToList();
+
+                        log.Warn("Generic Rows: " + genericRowElements.Count);
+
+                        int firstNonMatch = genericRowElements.IndexOf(genericRowElements.First(x => x.Text.Contains(" v ") == false));
+                        if (firstNonMatch != -1)
+                        {
+                            genericRowElements.RemoveRange(firstNonMatch, genericRowElements.Count() - firstNonMatch);
+                        }
+
+                        log.Warn("Generic Rows Inplay: " + genericRowElements.Count);
+                    }
+
                     if (firstTime)
                     {
                         Random random = new Random();
-                        idx = random.Next(0, elements.Count());
+                        idx = random.Next(0, genericRowElements.Count());
                         firstTime = false;
                     }
 
                     int elementCount = 0;
-                    elements.ForEach(x =>
+
+                    genericRowElements.ForEach(x =>
                     {
                         if (idx == elementCount)
                             log.Warn(x.Text);
                         else { }
-                           // log.Debug(x.Text); 
+                        // log.Debug(x.Text); 
                         ++elementCount;
-                        });
+                    });
 
-                    log.Info("Scanning game " + idx + " of " + elements.Count() + " games in play");
+                    log.Info("Scanning game " + idx + " of " + genericRowElements.Count() + " games in play");
 
-                    if (idx < elements.Count())
+                    if (idx < genericRowElements.Count())
                     {
                         var hstats = new Dictionary<string, int>();
                         var astats = new Dictionary<string, int>();
@@ -244,21 +253,21 @@ namespace Scanners
                         int attempts = 3;
 
                         //*[@id="rw_spl_sc_1-1-5-24705317-2-0-0-1-1-0-0-0-0-0-1-0-0_101"]/div[1]
-                        elements.ElementAt(idx).Click();
+                        genericRowElements.ElementAt(idx).Click();
 
-                        var wait = new WebDriverWait(driverWrapper, TimeSpan.FromSeconds(20));
+                        waiter = new WebDriverWait(driverWrapper, TimeSpan.FromSeconds(20));
                         var clockText = "";
 
                         try
                         {
-                            wait.Until<Boolean>((d) =>
+                            waiter.Until<Boolean>((d) =>
                             {
                                 bool retVal = false;
                                 var clocks = d.FindElements(By.Id("mlClock"));
                                 if (clocks.Count != 0)
                                 {
                                     clockText = clocks[0].Text;
-                                    retVal =  clockText.Contains(':');
+                                    retVal = clockText.Contains(':');
                                 }
                                 return retVal;
                             });
@@ -282,10 +291,11 @@ namespace Scanners
                             continue;
                         }
 
-                        wait.Until<Boolean>((d) =>
+                        waiter.Until<Boolean>((d) =>
                         {
                             return d.FindElement(By.Id("arena")).GetAttribute("style") == "height: 144px;";
                         });
+
 
                         IJavaScriptExecutor js = driverWrapper.Driver as IJavaScriptExecutor;
                         js.ExecuteScript("document.getElementsByClassName('carousel')[0].setAttribute('style', '-webkit-transform: translate(-50%, 0px);')");
@@ -293,17 +303,17 @@ namespace Scanners
                         string hCardsAndCornersText = "";
                         string aCardsAndCornersText = "";
 
-                        wait.Until<Boolean>((d) =>
+                        waiter.Until<Boolean>((d) =>
                         {
                             var elems = d.FindElements(By.Id("team1IconStats"));
-                            if( elems.Count != 0)
+                            if (elems.Count != 0)
                             {
-                                hCardsAndCornersText = elems.First().Text; 
+                                hCardsAndCornersText = elems.First().Text;
                             }
                             return hCardsAndCornersText.Split(' ').Count() == 3;
                         });
 
-                        wait.Until<Boolean>((d) =>
+                        waiter.Until<Boolean>((d) =>
                         {
                             var elems = d.FindElements(By.Id("team2IconStats"));
                             if (elems.Count != 0)
@@ -337,10 +347,10 @@ namespace Scanners
 
                         bool rballOkay = true;
 
-                        List<string> shotsOnTarget      = null;
-                        List<string> shotsOffTarget     = null;
-                        List<string> attacks            = null;
-                        List<string> dangerousAttacks   = null;
+                        List<string> shotsOnTarget = null;
+                        List<string> shotsOffTarget = null;
+                        List<string> attacks = null;
+                        List<string> dangerousAttacks = null;
 
                         shotsOnTarget = driverWrapper.GetValuesById("stat1", attempts, 3, "\r\n");
 
@@ -431,7 +441,7 @@ namespace Scanners
 
                         //edge case of games going over midnight
                         bool bOverMidnight = false;
-                        
+
                         if (exists == false)
                         {
                             string anotherName = Path.Combine(xmlPath, league, homeTeamName + " v " + awayTeamName + "_" + yesterday + ".xml");
@@ -446,7 +456,7 @@ namespace Scanners
                         SendToWebDelegate sd = new SendToWebDelegate(SendToWeb);
                         sd.BeginInvoke(league, bOverMidnight ? DateTime.Today - TimeSpan.FromDays(1) : DateTime.Now, homeTeamName, awayTeamName, hstats, astats, clockText, null, null);
                         //SendToWeb(league, bOverMidnight ? DateTime.Today - TimeSpan.FromDays(1) : DateTime.Now, homeTeamName, awayTeamName, hstats, astats, clockText);
-                        
+
                         WriteXmlDelegate wd = new WriteXmlDelegate(WriteXml);
                         wd.BeginInvoke(xmlPath, hstats, astats, homeTeamName, awayTeamName, league, clockText, exists, finalName, null, null);
                     }
@@ -472,7 +482,5 @@ namespace Scanners
                 }
             }
         }
-
     }
-
 }
