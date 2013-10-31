@@ -11,6 +11,27 @@ namespace BotSpace
     {
             private ExpectedBotCondition(){}
 
+
+            public static Func<IWebDriver, Boolean> ElementCountHasIncreased(int oldElementCount)
+            {
+                return (driver) =>
+                {
+                    bool retVal = false;
+
+                    if (retVal)
+                    {
+                        var elements = driver.FindElements(By.XPath("//*")).Count;
+                        
+                        if (elements > oldElementCount)
+                        {
+                            retVal = true;
+                        }
+                    }
+
+                    return retVal;
+                };
+            }
+
             public static Func<IWebDriver, IWebElement> PageHasClassWithText(string className, string title)
             {
                 return (driver) => 
@@ -22,6 +43,24 @@ namespace BotSpace
                         if (iwe.Text == title)
                         {
                             retval = iwe;
+                        }
+                    }
+
+                    return retval;
+                };
+            }
+
+            public static Func<IWebDriver, Boolean> PageHasClassContainingString(string className, string text)
+            {
+                return (driver) =>
+                {
+                    Boolean retval = false;
+                    var iwe = driver.FindElement(By.ClassName(className));
+                    if (iwe != null)
+                    {
+                        if (iwe.Text.Contains(text))
+                        {
+                            retval = true;
                         }
                     }
 

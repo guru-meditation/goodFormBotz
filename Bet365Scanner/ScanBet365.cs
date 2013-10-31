@@ -36,7 +36,7 @@ namespace Scanners
 
             if (element != null)
             {
-                driver.ClickElement(element, dirtySleep);
+                driver.ClickElement(element);
             }
             else
             {
@@ -45,8 +45,6 @@ namespace Scanners
             }
         }
 
-        int dirtySleep = 2000;
-
         private void AddTodaysMatches(int sleepTime, DriverWrapper driver)
         {
             var foundMatches = new List<aMatch>();
@@ -54,11 +52,15 @@ namespace Scanners
             driver.Url = "https://mobile.bet365.com/premium/#type=Splash;key=1;ip=0;lng=1";
             driver.DirtySleep(sleepTime);
 
-            dirtySleep = 2000;
+            int dirtySleep = 2000;
 
             GetElementAndClick(driver, "Level1", "Match Markets");
+            System.Threading.Thread.Sleep(dirtySleep);
             GetElementAndClick(driver, "Level2", "Main");
+            System.Threading.Thread.Sleep(dirtySleep);
             GetElementAndClick(driver, "genericRow", "Full Time Result");
+            System.Threading.Thread.Sleep(dirtySleep);
+
             // it takes time for genericRow to expand 
             driver.ForceSleep(dirtySleep);
 
@@ -210,13 +212,16 @@ namespace Scanners
 
                     if (inPlayElement != null)
                     {
+                        driverWrapper.ClickElement(inPlayElement);
 
-                        driverWrapper.ClickElement(inPlayElement, 10);
+                        bool inPlayGamesOnScreen = waiter.Until(ExpectedBotCondition.PageHasClassContainingString("genericRow", " v "));
+                        
                         genericRowElements = driverWrapper.FindElements(By.ClassName("genericRow")).ToList();
 
                         log.Warn("Generic Rows: " + genericRowElements.Count);
 
                         int firstNonMatch = genericRowElements.IndexOf(genericRowElements.First(x => x.Text.Contains(" v ") == false));
+                        
                         if (firstNonMatch != -1)
                         {
                             genericRowElements.RemoveRange(firstNonMatch, genericRowElements.Count() - firstNonMatch);

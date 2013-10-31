@@ -25,53 +25,53 @@ namespace BotSpace
             // don't sleep
         }
 
-        public override bool ClickElement(IWebElement iwe, int timeToWait)
-        {
-            var elementsBefore = Driver.FindElements(By.XPath("//*")).Count;
+        //public override bool ClickElement(IWebElement iwe, int timeToWait)
+        //{
+        //    var elementsBefore = Driver.FindElements(By.XPath("//*")).Count;
 
-            bool result = false;
+        //    bool result = false;
 
-            try
-            {
-                iwe.Click();
-                result = true;
-            }
-            catch (Exception ce)
-            {
-                log.Debug("Exception: " + ce);
-                result = false;
-            }
+        //    try
+        //    {
+        //        iwe.Click();
+        //        result = true;
+        //    }
+        //    catch (Exception ce)
+        //    {
+        //        log.Debug("Exception: " + ce);
+        //        result = false;
+        //    }
 
-            if (result)
-            {
-                var wait = new WebDriverWait(Driver, TimeSpan.FromSeconds(timeToWait));
+        //    if (result)
+        //    {
+        //        var wait = new WebDriverWait(Driver, TimeSpan.FromSeconds(timeToWait));
 
-                try
-                {
-                    return wait.Until(drv =>
-                    {
-                        var elements = drv.FindElements(By.XPath("//*")).Count;
+        //        try
+        //        {
+        //            return wait.Until(drv =>
+        //            {
+        //                var elements = drv.FindElements(By.XPath("//*")).Count;
 
-                        if (elements != elementsBefore)
-                        {
-                            log.Debug("Not waiting in ClickElement");
-                            return true;
-                        }
+        //                if (elements != elementsBefore)
+        //                {
+        //                    log.Debug("Not waiting in ClickElement");
+        //                    return true;
+        //                }
 
-                        log.Debug("Waiting in ClickElement");
+        //                log.Debug("Waiting in ClickElement");
 
-                        return false;
-                    }
-                    );
-                }
-                catch (Exception)
-                {
-                    result = false;
-                }
-            }
+        //                return false;
+        //            }
+        //            );
+        //        }
+        //        catch (Exception)
+        //        {
+        //            result = false;
+        //        }
+        //    }
 
-            return result;
-        }
+        //    return result;
+        //}
 
         public override bool Wait(Func<bool> f)
         {

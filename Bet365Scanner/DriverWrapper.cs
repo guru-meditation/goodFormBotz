@@ -106,7 +106,7 @@ namespace WebDriver
             return result;
         }
         
-        public virtual bool ClickElement(IWebElement iwe, int timeToWait)
+        public virtual bool ClickElement(IWebElement iwe)
         {
             bool result = false;
 
@@ -126,8 +126,6 @@ namespace WebDriver
             {
                 log.Error("=========> Exception thrown trying to click element: " + iwe.TagName + " [" + ce + "]");
             }
-
-            DirtySleep(timeToWait);
 
             return result;
         }
