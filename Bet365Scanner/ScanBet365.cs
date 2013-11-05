@@ -12,6 +12,7 @@ namespace Scanners
     using BotSpace;
     using Db;
     using OpenQA.Selenium.Support.UI;
+    using System.Drawing.Imaging;
     using System.Linq.Expressions;
     using WebDriver;
 
@@ -200,7 +201,6 @@ namespace Scanners
                     {
 
                         log.Debug("No games in play, going to sleep for a bit....");
-                        driverWrapper.DirtySleep(20000);
                         driverWrapper.Quit();
                         driverWrapper.Dispose();
                         driverWrapper = null;
@@ -263,6 +263,36 @@ namespace Scanners
                         waiter = new WebDriverWait(driverWrapper, TimeSpan.FromSeconds(20));
                         var clockText = "";
 
+                        //try
+                        //{
+                        //    ((ITakesScreenshot)(driverWrapper.Driver)).GetScreenshot().SaveAsFile("test.png", ImageFormat.Png);
+                        //}
+                        //catch (Exception ce)
+                        //{
+                        //    log.Debug(ce);
+                        //}
+
+                        //driverWrapper.ForceSleep(8000);
+
+                        //try
+                        //{
+                        //    IJavaScriptExecutor js2 = driverWrapper.Driver as IJavaScriptExecutor;
+                        //    js2.ExecuteScript("document.getElementById('arena').setAttribute('style', 'height: 144px;')");
+                        //}
+                        //catch (Exception ce)
+                        //{
+                        //    log.Warn(ce);
+                        //}
+
+                        //try
+                        //{
+                        //    ((ITakesScreenshot)(driverWrapper.Driver)).GetScreenshot().SaveAsFile("test2.png", ImageFormat.Png);
+                        //}
+                        //catch (Exception ce)
+                        //{
+                        //    log.Debug(ce);
+                        //}
+
                         try
                         {
                             waiter.Until<Boolean>((d) =>
@@ -277,9 +307,9 @@ namespace Scanners
                                 return retVal;
                             });
                         }
-                        catch (Exception)
+                        catch (Exception vr)
                         {
-                            log.Warn("cleanScores == null");
+                            log.Warn("cleanScores == null -  " + vr);
 
                             ++badLoopCounter;
 
@@ -469,6 +499,12 @@ namespace Scanners
                     {
                         idx = -1;
                     }
+                }
+                catch (System.Net.WebException we)
+                {
+                    log.Warn("Caught Web Exception: " + we);
+                    continue;
+
                 }
                 catch (OpenQA.Selenium.WebDriverException we)
                 {

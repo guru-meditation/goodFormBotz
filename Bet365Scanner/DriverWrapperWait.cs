@@ -25,54 +25,6 @@ namespace BotSpace
             // don't sleep
         }
 
-        //public override bool ClickElement(IWebElement iwe, int timeToWait)
-        //{
-        //    var elementsBefore = Driver.FindElements(By.XPath("//*")).Count;
-
-        //    bool result = false;
-
-        //    try
-        //    {
-        //        iwe.Click();
-        //        result = true;
-        //    }
-        //    catch (Exception ce)
-        //    {
-        //        log.Debug("Exception: " + ce);
-        //        result = false;
-        //    }
-
-        //    if (result)
-        //    {
-        //        var wait = new WebDriverWait(Driver, TimeSpan.FromSeconds(timeToWait));
-
-        //        try
-        //        {
-        //            return wait.Until(drv =>
-        //            {
-        //                var elements = drv.FindElements(By.XPath("//*")).Count;
-
-        //                if (elements != elementsBefore)
-        //                {
-        //                    log.Debug("Not waiting in ClickElement");
-        //                    return true;
-        //                }
-
-        //                log.Debug("Waiting in ClickElement");
-
-        //                return false;
-        //            }
-        //            );
-        //        }
-        //        catch (Exception)
-        //        {
-        //            result = false;
-        //        }
-        //    }
-
-        //    return result;
-        //}
-
         public override bool Wait(Func<bool> f)
         {
             var wait = new WebDriverWait(Driver, TimeSpan.FromSeconds(waitTimeSeconds));
@@ -80,8 +32,7 @@ namespace BotSpace
             {
                 return f();
 
-            }
-                    );
+            });
         }
 
         private IWebElement FindElement(By by, int timeoutInSeconds)

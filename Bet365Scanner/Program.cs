@@ -59,6 +59,8 @@ namespace BotSpace
         {
             int r = 0;
 
+            bool phantomMode = false;
+
             foreach (string arg in args)
             {
                 log.Info("args[" + r + "] " + arg);
@@ -110,6 +112,12 @@ namespace BotSpace
                     ScratchPad();
                     return;
                 }
+
+                if (arg.ToLower().Contains("-m:phantom"))
+                {
+                    phantomMode = true;
+                }
+
                 ++r;
             }
             
@@ -129,8 +137,18 @@ namespace BotSpace
                 log.Error("Directory " + xmlPath + " does not exist :(");
                 return;
             }
-            
-            DriverCreator driverCreator = new ChromeDriverCreatorWait();
+
+            DriverCreator driverCreator = null;
+
+            if (phantomMode)
+            {
+                driverCreator = new PhantomDriverCreatorCreatorWait();
+            }
+            else
+            {
+                driverCreator = new ChromeDriverCreatorWait();
+            }
+
             Database dbStuff = new Database(dbtype, connectionString, gOpMode);
 
             while (dbStuff.Connect() == false)
