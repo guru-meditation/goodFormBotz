@@ -10,6 +10,11 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
 
+using System.ServiceModel;
+using System.ServiceModel.Description;
+using System.ServiceModel.Web;
+using Newtonsoft.Json;
+
 namespace BotSpace
 {
     using Scanners;
@@ -37,6 +42,76 @@ namespace BotSpace
         UploadBet365
     }
 
+    public class GlobalData
+    {
+        private static GlobalData instance;
+        public Database dbStuff { get; set; }
+
+        private GlobalData() { }
+
+        public static GlobalData Instance
+        {
+            get
+            {
+                if (instance == null)
+                {
+                    instance = new GlobalData();
+                }
+                return instance;
+            }
+        }
+    }
+
+    [ServiceContract]
+    public interface IService
+    {
+        [OperationContract]
+        [WebGet]
+        string GetGoalsAndCornersPred(string game_id);
+
+        [OperationContract]
+        [WebInvoke]
+        string EchoWithPost(string s);
+    }
+
+    public class PredRow
+    {
+        public string RowId  { get; set; }
+    };
+
+    public class Service : IService
+    {
+        Database dbStuff;
+        Service()
+        {
+            GlobalData gd = GlobalData.Instance;
+            dbStuff = gd.dbStuff;
+        }
+       
+        public string GetGoalsAndCornersPred(string game_id)
+        {
+            string league_id = null;
+
+            dbStuff.RunSQL("SELECT league_id FROM games WHERE id = " + game_id + ";",
+                (dr) =>
+                {
+                    league_id = dr[0].ToString();
+                }
+            );
+              
+
+            PredRow row = new PredRow();
+            row.RowId = league_id;
+            
+            return JsonConvert.SerializeObject(row, Formatting.Indented);
+        }
+
+        public string EchoWithPost(string s)
+        {
+            return "You said " + s;
+        }
+    }
+
     public class TheBot
     {
         private static readonly log4net.ILog log
@@ -61,6 +136,7 @@ namespace BotSpace
 
             bool phantomMode = false;
 
+          
             foreach (string arg in args)
             {
                 log.Info("args[" + r + "] " + arg);
@@ -151,11 +227,35 @@ namespace BotSpace
 
             Database dbStuff = new Database(dbtype, connectionString, gOpMode);
 
+            GlobalData gd = GlobalData.Instance;
+            gd.dbStuff = dbStuff;
+
             while (dbStuff.Connect() == false)
             {
                 log.Warn("Cannot connect to DB... retrying in 10 seconds");
                 System.Threading.Thread.Sleep(10000);
             }
+
+
+            WebServiceHost host = new WebServiceHost(typeof(Service), new Uri("http://localhost:8000/"));
+
+            try
+            {
+                ServiceEndpoint ep = host.AddServiceEndpoint(typeof(IService), new WebHttpBinding(), "");
+                host.Open();
+                using (ChannelFactory<IService> cf = new ChannelFactory<IService>(new WebHttpBinding(), "http://localhost:8000"))
+                {
+                    cf.Endpoint.Behaviors.Add(new WebHttpBehavior());
+
+                    IService channel = cf.CreateChannel();
+                }
+            }
+            catch (CommunicationException cex)
+            {
+                Console.WriteLine("An exception occurred: {0}", cex.Message);
+                host.Abort();
+            }
+
 
             Scanner scanner = null;
 
@@ -177,7 +277,7 @@ namespace BotSpace
             }
 
             scanner.scan(sleep);
-
+            host.Close();
         }     
      
         class Game

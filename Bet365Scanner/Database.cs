@@ -79,6 +79,23 @@ namespace Db
             return retVal;
         }
 
+
+        public void RunSQL(string sql, Action<DbDataReader> a)
+        {
+            using (DbCommand cmd = dbCreator.newCommand(sql, dbConnectionList.ElementAt(0)))
+            {
+                using (DbDataReader dr = cmd.ExecuteReader())
+                {
+                    while (dr.Read())  //bug fix for repeated same game added after rematch
+                    {
+                       a(dr);  
+                    }
+
+                    dr.Close();
+                }
+            }
+        }
+
         public int AddTeam(string team)
         {
             int idx = -1;
