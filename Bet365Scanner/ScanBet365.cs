@@ -157,9 +157,9 @@ namespace Scanners
                 AddTodaysMatches(sleepTime, driverWrapper);
             }
 
-            lastDayGamesUpdated = DateTime.Today;
-
+            lastDayGamesUpdated = DateTime.Today.ToUniversalTime();
             int badLoopCounter = 0;
+            string botID = System.Guid.NewGuid().ToString();
 
             while (true)
             {
@@ -172,11 +172,11 @@ namespace Scanners
                         driverWrapper = driverCreator.CreateDriver(agentString);
                     }
 
-                    if (DateTime.Today.Equals(lastDayGamesUpdated) == false)
+                    if (DateTime.Today.ToUniversalTime().Equals(lastDayGamesUpdated) == false)
                     {
-                        if (DateTime.Now.TimeOfDay > TimeSpan.FromHours(3))
+                        if (DateTime.Now.ToUniversalTime().TimeOfDay > TimeSpan.FromHours(3))
                         {
-                            lastDayGamesUpdated = DateTime.Today;
+                            lastDayGamesUpdated = DateTime.Today.ToUniversalTime();
                         }
 
                         log.Info("Scanning today's games for " + lastDayGamesUpdated.Date);
@@ -195,7 +195,9 @@ namespace Scanners
 
                     try
                     {
-                        inPlayElement = waiter.Until(ExpectedBotCondition.PageHasClassWithText("Level1", "In-Play"));
+
+                        inPlayElement = waiter.Until(ExpectedBotCondition.GetDivContainingText("In-Play"));
+                        //inPlayElement = waiter.Until(ExpectedBotCondition.PageHasClassWithText("Level1", "In-Play"));
                     }
                     catch (WebDriverTimeoutException)
                     {
@@ -230,6 +232,8 @@ namespace Scanners
                         log.Warn("Generic Rows Inplay: " + genericRowElements.Count);
                     }
 
+                    getMyWork(botID);
+
                     if (firstTime)
                     {
                         Random random = new Random();
@@ -248,7 +252,7 @@ namespace Scanners
                         ++elementCount;
                     });
 
-                    log.Info("Scanning game " + idx + " of " + genericRowElements.Count() + " games in play");
+                    log.Info("Scanning game " + idx + " of " + genericRowElements.Count() + " games in play at " + DateTime.Now.ToUniversalTime());
 
                     if (idx < genericRowElements.Count())
                     {
@@ -259,20 +263,22 @@ namespace Scanners
 
                         //*[@id="rw_spl_sc_1-1-5-24705317-2-0-0-1-1-0-0-0-0-0-1-0-0_101"]/div[1]
                         genericRowElements.ElementAt(idx).Click();
-
+                        
                         waiter = new WebDriverWait(driverWrapper, TimeSpan.FromSeconds(20));
                         var clockText = "";
+                        /*
+                        driverWrapper.ForceSleep(8000);
 
-                        //try
-                        //{
-                        //    ((ITakesScreenshot)(driverWrapper.Driver)).GetScreenshot().SaveAsFile("test.png", ImageFormat.Png);
-                        //}
-                        //catch (Exception ce)
-                        //{
-                        //    log.Debug(ce);
-                        //}
+                        try
+                        {
+                            ((ITakesScreenshot)(driverWrapper.Driver)).GetScreenshot().SaveAsFile("test.png", ImageFormat.Png);
+                        }
+                        catch (Exception ce)
+                        {
+                            log.Debug(ce);
+                        }
 
-                        //driverWrapper.ForceSleep(8000);
+                        driverWrapper.ForceSleep(8000);
 
                         //try
                         //{
@@ -284,15 +290,15 @@ namespace Scanners
                         //    log.Warn(ce);
                         //}
 
-                        //try
-                        //{
-                        //    ((ITakesScreenshot)(driverWrapper.Driver)).GetScreenshot().SaveAsFile("test2.png", ImageFormat.Png);
-                        //}
-                        //catch (Exception ce)
-                        //{
-                        //    log.Debug(ce);
-                        //}
-
+                        try
+                        {
+                            ((ITakesScreenshot)(driverWrapper.Driver)).GetScreenshot().SaveAsFile("test2.png", ImageFormat.Png);
+                        }
+                        catch (Exception ce)
+                        {
+                            log.Debug(ce);
+                        }
+                        */
                         try
                         {
                             waiter.Until<Boolean>((d) =>
@@ -466,10 +472,10 @@ namespace Scanners
                         string homeTeamName = teams.ElementAt(0);
                         string awayTeamName = teams.ElementAt(1);
 
-                        string today = DateTime.Now.ToString("ddMMyy");
+                        string today = DateTime.Now.ToUniversalTime().ToString("ddMMyy");
                         string league = "All";
 
-                        string yesterday = (DateTime.Today - TimeSpan.FromDays(1)).ToString("ddMMyy");
+                        string yesterday = (DateTime.Today.ToUniversalTime() - TimeSpan.FromDays(1)).ToString("ddMMyy");
                         string finalName = Path.Combine(xmlPath, league, homeTeamName + " v " + awayTeamName + "_" + today + ".xml");
 
                         bool exists = File.Exists(finalName);
@@ -489,7 +495,7 @@ namespace Scanners
                         }
 
                         SendToWebDelegate sd = new SendToWebDelegate(SendToWeb);
-                        sd.BeginInvoke(league, bOverMidnight ? DateTime.Today - TimeSpan.FromDays(1) : DateTime.Now, homeTeamName, awayTeamName, hstats, astats, clockText, null, null);
+                        sd.BeginInvoke(league, bOverMidnight ? DateTime.Today.ToUniversalTime() - TimeSpan.FromDays(1) : DateTime.Now.ToUniversalTime(), homeTeamName, awayTeamName, hstats, astats, clockText, null, null);
                         //SendToWeb(league, bOverMidnight ? DateTime.Today - TimeSpan.FromDays(1) : DateTime.Now, homeTeamName, awayTeamName, hstats, astats, clockText);
 
                         WriteXmlDelegate wd = new WriteXmlDelegate(WriteXml);
@@ -509,19 +515,30 @@ namespace Scanners
                 catch (OpenQA.Selenium.WebDriverException we)
                 {
                     log.Error("Exception thrown: " + we);
-                    driverWrapper.Quit();
-                    driverWrapper.Dispose();
-                    driverWrapper = null;
+                    if (driverWrapper != null)
+                    {
+                        driverWrapper.Quit();
+                        driverWrapper.Dispose();
+                        driverWrapper = null;
+                    }
 
                 }
                 catch (Exception we)
                 {
                     log.Error("Exception thrown: " + we);
-                    driverWrapper.Quit();
-                    driverWrapper.Dispose();
-                    driverWrapper = null;
+                    if (driverWrapper != null)
+                    {
+                        driverWrapper.Quit();
+                        driverWrapper.Dispose();
+                        driverWrapper = null;
+                    }
                 }
             }
+        }
+
+        private void getMyWork(string botID)
+        {
+            
         }
     }
 }
