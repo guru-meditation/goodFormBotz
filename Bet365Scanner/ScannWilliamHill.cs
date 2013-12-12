@@ -262,8 +262,8 @@ namespace Scanners
                                 continue;
                             }
 
-                            string today = DateTime.Now.ToString("ddMMyy");
-                            string yesterday = (DateTime.Today - TimeSpan.FromDays(1)).ToString("ddMMyy");
+                            string today = DateTime.Now.ToUniversalTime().ToString("ddMMyy");
+                            string yesterday = (DateTime.Today.ToUniversalTime() - TimeSpan.FromDays(1)).ToString("ddMMyy");
                             string finalName = Path.Combine(xmlPath, league, homeTeamName + " v " + awayTeamName + "_" + today + ".xml");
 
                             bool exists = File.Exists(finalName);
@@ -282,7 +282,7 @@ namespace Scanners
                             }
 
                             SendToWebDelegate sd = new SendToWebDelegate(SendToWeb);
-                            sd.BeginInvoke(league, bOverMidnight ? DateTime.Today - TimeSpan.FromDays(1) : DateTime.Now, homeTeamName, awayTeamName, hstats, astats, time, null, null);
+                            sd.BeginInvoke(league, bOverMidnight ? DateTime.Today.ToUniversalTime() - TimeSpan.FromDays(1) : DateTime.Now.ToUniversalTime(), homeTeamName, awayTeamName, hstats, astats, time, null, null);
 
                             WriteXmlDelegate wd = new WriteXmlDelegate(WriteXml);
                             wd.BeginInvoke(xmlPath, hstats, astats, homeTeamName, awayTeamName, league, time, exists, finalName, null, null);

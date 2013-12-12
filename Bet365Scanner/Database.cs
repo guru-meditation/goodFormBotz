@@ -79,6 +79,23 @@ namespace Db
             return retVal;
         }
 
+
+        public void RunSQL(string sql, Action<DbDataReader> a)
+        {
+            using (DbCommand cmd = dbCreator.newCommand(sql, dbConnectionList.ElementAt(0)))
+            {
+                using (DbDataReader dr = cmd.ExecuteReader())
+                {
+                    while (dr.Read())  //bug fix for repeated same game added after rematch
+                    {
+                       a(dr);  
+                    }
+
+                    dr.Close();
+                }
+            }
+        }
+
         public int AddTeam(string team)
         {
             int idx = -1;
@@ -151,7 +168,7 @@ namespace Db
 
                         dr2.Close();
 
-                        string now = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+                        string now = DateTime.Now.ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss");
 
                         using (DbCommand insert = dbCreator.newCommand("INSERT into teams ( id, name, created_at, updated_at ) VALUES (" + idx + ", '" + team + "', '" + now + "', '" + now + "');", dbConnectionList.ElementAt(0)))
                         {
@@ -217,7 +234,7 @@ namespace Db
 
                                 dr2.Close();
 
-                                string now = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+                                string now = DateTime.Now.ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss");
 
                                 using (DbCommand insert = dbCreator.newCommand("INSERT into games (id, league_id, team1, team2, koDate,  created_at, updated_at  ) VALUES (" + idx + ", " + leagueId + ", " + homeTeamId + ", " + awayTeamId + ", '" + koDate.ToString("yyyy-MM-dd HH:mm:ss") + "', '" + now + "', '" + now + "');", dbConnectionList.ElementAt(0)))
                                 {
@@ -303,7 +320,7 @@ namespace Db
                         }
 
                         dr2.Close();
-                        string now = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+                        string now = DateTime.Now.ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss");
                         using (DbCommand insert = dbCreator.newCommand("INSERT into leagues ( id, name, league_id, created_at, updated_at  ) VALUES (" + idx + ", '" + leagueName + "', " + idx + ", '" + now + "', '" + now + "');", dbConnectionList.ElementAt(0)))
                         {
                             insert.ExecuteNonQuery();
@@ -313,6 +330,38 @@ namespace Db
             }
 
             return idx;
+        }
+
+        public Dictionary<string, DateTime> GetActiveBotStates(string myBotName)
+        {
+            var botDictionary = new Dictionary<string, DateTime>();
+            bool updateBot = false;
+            using (DbCommand find = dbCreator.newCommand("SELECT * from bots"))
+            {
+                using (DbDataReader dr = find.ExecuteReader())
+                {
+                    bool hasRows = dr.HasRows;
+
+                    while (dr.Read())  //bug fix for repeated same game added after rematch
+                    {
+                        string botName = dr[1].ToString();
+                        var watchDogTime = DateTime.Parse(dr[2].ToString());
+
+                        if (botName == myBotName)
+                        {
+                            updateBot = true;
+                        }
+
+                        botDictionary.Add(botName, watchDogTime);
+                    }
+                }
+            }
+
+
+
+
+
+            return null;
         }
 
         public bool AddStatistics(List<int> values, int gameId, string minutes, string lastMinute, DateTime seenTime)
@@ -387,7 +436,7 @@ namespace Db
 
                                 dr2.Close();
 
-                                string now = DateTime.Now.ToString("yyyy-MM-dd");
+                                string now = DateTime.Now.ToUniversalTime().ToString("yyyy-MM-dd");
                                 string valuesAsString = string.Join(", ", values);
 
                                 dbConnectionList.ElementAt(0).CreateCommand();

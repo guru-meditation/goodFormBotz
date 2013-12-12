@@ -142,7 +142,7 @@ namespace Scanners
 
             XElement snap = new XElement("Snap", home, away);
             snap.SetAttributeValue("Time", time);
-            snap.SetAttributeValue("Seen", DateTime.Now.ToString("MM/dd/yy H:mm:ss"));
+            snap.SetAttributeValue("Seen", DateTime.Now.ToUniversalTime().ToString("MM/dd/yy H:mm:ss"));
 
             if (exists == false)
             {
