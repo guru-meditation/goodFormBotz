@@ -10,11 +10,6 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
 
-using System.ServiceModel;
-using System.ServiceModel.Description;
-using System.ServiceModel.Web;
-using Newtonsoft.Json;
-
 namespace BotSpace
 {
     using Scanners;
@@ -42,113 +37,7 @@ namespace BotSpace
         UploadWilliamHill,
         UploadBet365
     }
-
-    public class GlobalData
-    {
-        private static GlobalData instance;
-        public Database dbStuff { get; set; }
-
-        private GlobalData() { }
-
-        public static GlobalData Instance
-        {
-            get
-            {
-                if (instance == null)
-                {
-                    instance = new GlobalData();
-                }
-                return instance;
-            }
-        }
-    }
-
-    [ServiceContract]
-    public interface IService
-    {
-        [OperationContract]
-        [WebGet]
-        string GetGoalsAndCornersPred(string game_id);
-
-        [OperationContract]
-        [WebInvoke]
-        string EchoWithPost(string s);
-    }
-
-    public class PredRow
-    {
-        public string RowId  { get; set; }
-    };
-
-    public class GameResults
-    {
-        public string homeTeam;
-        public string awayTeam;
-        public string homeGoals;
-        public string awayGoals;
-        public string homeCorners;
-        public string awayCorners;
-    };
-
-    public class Service : IService
-    {
-        private static readonly log4net.ILog log
-           = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
-
-        Database dbStuff;
-        Service()
-        {
-            GlobalData gd = GlobalData.Instance;
-            dbStuff = gd.dbStuff;
-        }
-       
-        public string GetGoalsAndCornersPred(string game_id)
-        {
-            string league_id = null;
-
-            //get league id
-            dbStuff.RunSQL("SELECT league_id FROM games WHERE id = " + game_id + ";",
-                (dr) =>
-                {
-                    league_id = dr[0].ToString();
-                }
-            );
-
-            ArrayList results = new ArrayList();
-
-            //get goals, corners from all games in a league_id
-            dbStuff.RunSQL("select t1.name, t2.name, max(s.hg), max(s.ag), max(s.hco), max(s.aco)"
-            + " from statistics s, games g, teams t1, teams t2"
-            + " where g.league_id = "
-            + league_id
-            + " and s.game_id = g.id and t1.id = g.team1 and t2.id = g.team2 group by s.game_id;",
-                (dr) =>
-                {
-                    GameResults res = new GameResults();
-                    res.homeTeam = dr[0].ToString();
-                    res.awayTeam = dr[1].ToString();
-                    res.homeGoals = dr[2].ToString();
-                    res.awayGoals = dr[3].ToString();
-                    res.homeCorners = dr[4].ToString();
-                    res.awayCorners = dr[4].ToString();
-                    results.Add(res);
-                }
-            );
-
-            log.Debug("Number of games : " + results.Count);
-
-            PredRow row = new PredRow();
-            row.RowId = league_id;
-            
-            return JsonConvert.SerializeObject(row, Formatting.Indented);
-        }
-
-        public string EchoWithPost(string s)
-        {
-            return "You said " + s;
-        }
-    }
-
+   
     public class TheBot
     {
         private static readonly log4net.ILog log
@@ -274,24 +163,7 @@ namespace BotSpace
             }
 
 
-            WebServiceHost host = new WebServiceHost(typeof(Service), new Uri("http://localhost:8000/"));
-
-            try
-            {
-                ServiceEndpoint ep = host.AddServiceEndpoint(typeof(IService), new WebHttpBinding(), "");
-                host.Open();
-                using (ChannelFactory<IService> cf = new ChannelFactory<IService>(new WebHttpBinding(), "http://localhost:8000"))
-                {
-                    cf.Endpoint.Behaviors.Add(new WebHttpBehavior());
-
-                    IService channel = cf.CreateChannel();
-                }
-            }
-            catch (CommunicationException cex)
-            {
-                Console.WriteLine("An exception occurred: {0}", cex.Message);
-                host.Abort();
-            }
+         
 
 
             Scanner scanner = null;
@@ -314,7 +186,6 @@ namespace BotSpace
             }
 
             scanner.scan(sleep);
-            host.Close();
         }     
      
         class Game
