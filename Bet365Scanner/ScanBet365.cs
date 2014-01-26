@@ -170,6 +170,11 @@ namespace Scanners
                     {
                         string agentString = "--user-agent=\"Mozilla/5.0 (Linux; U; Android 2.3.6; en-us; Nexus S Build/GRK39F) AppleWebKit/533/1 (KHTML, like Gecko) Version/4.0 Mobile Safari/533.1\"";
                         driverWrapper = driverCreator.CreateDriver(agentString);
+                        if (driverWrapper == null)
+                        {
+                            log.Error("Failed to make a Selenium Driver");
+                            continue;
+                        }
                     }
 
                     if (DateTime.Today.ToUniversalTime().Equals(lastDayGamesUpdated) == false)
@@ -232,9 +237,16 @@ namespace Scanners
                         log.Warn("Generic Rows Inplay: " + genericRowElements.Count);
                     }
 
-                    getMyWork(botID);
+                    IEnumerable<string> gamesAsText = genericRowElements.Select(x => x.Text);
+                    int attemtps = 3;
+                    do
+                    {
+                        idx = dbStuff.GetActiveBotStates(gamesAsText);
+                        --attemtps;
+                    }
+                    while (idx == -1 && attemtps != 0);
 
-                    if (firstTime)
+                    if (idx == -1)
                     {
                         Random random = new Random();
                         idx = random.Next(0, genericRowElements.Count());
@@ -299,6 +311,7 @@ namespace Scanners
                             log.Debug(ce);
                         }
                         */
+
                         try
                         {
                             waiter.Until<Boolean>((d) =>
@@ -383,7 +396,7 @@ namespace Scanners
                             continue;
                         }
 
-                        var inPlayTitles = driverWrapper.GetValuesByClassName("InPlayTitle", attempts, 1, new char[] { '@' });
+                        var inPlayTitles = driverWrapper.GetValuesByClassName("EventViewTitle", attempts, 1, new char[] { '@' });
                         if (inPlayTitles == null) { log.Warn("inPlayTitles == null"); continue; }
 
                         bool rballOkay = true;

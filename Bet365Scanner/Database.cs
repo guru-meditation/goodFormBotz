@@ -8,6 +8,9 @@ using System.Text.RegularExpressions;
 namespace Db
 {
     using BotSpace;
+    using Npgsql;
+    using NpgsqlTypes;
+    using System.Data;
 
     public class Database
     {
@@ -332,36 +335,91 @@ namespace Db
             return idx;
         }
 
-        public Dictionary<string, DateTime> GetActiveBotStates(string myBotName)
+        public int GetActiveBotStates(IEnumerable<string> games)
         {
-            var botDictionary = new Dictionary<string, DateTime>();
-            bool updateBot = false;
-            using (DbCommand find = dbCreator.newCommand("SELECT * from bots"))
+            String lastGameScanned = "";
+            String nextGameToScan = "";
+            DataSet ds = new DataSet();
+            DbTransaction transaction = null;
+            int idx = -2;
+
+            transaction = dbCreator.newTransaction(dbConnectionList.ElementAt(0));
+
+            using (var da = dbCreator.newAdapter("select * from bots", dbConnectionList.ElementAt(0)))
             {
-                using (DbDataReader dr = find.ExecuteReader())
+                da.InsertCommand = dbCreator.newCommand("insert into bots(bot_id, updated_at, created_at) " +
+                                                        " values (:a, :b, :c)", dbConnectionList.ElementAt(0));
+                try
                 {
-                    bool hasRows = dr.HasRows;
+                    da.InsertCommand.Parameters.Add(new NpgsqlParameter("a", NpgsqlDbType.Varchar));
+                    da.InsertCommand.Parameters.Add(new NpgsqlParameter("b", NpgsqlDbType.Timestamp));
+                    da.InsertCommand.Parameters.Add(new NpgsqlParameter("c", NpgsqlDbType.Timestamp));
+                    da.InsertCommand.Parameters[0].Direction = ParameterDirection.Input;
+                    da.InsertCommand.Parameters[1].Direction = ParameterDirection.Input;
+                    da.InsertCommand.Parameters[2].Direction = ParameterDirection.Input;
+                    da.InsertCommand.Parameters[0].SourceColumn = "bot_id";
+                    da.InsertCommand.Parameters[1].SourceColumn = "updated_at";
+                    da.InsertCommand.Parameters[2].SourceColumn = "created_at";
 
-                    while (dr.Read())  //bug fix for repeated same game added after rematch
+                    da.InsertCommand.Transaction = transaction;
+
+                    da.Fill(ds);
+
+                    DataTable dt = ds.Tables[0];
+
+                    da.DeleteCommand = dbCreator.newCommand("TRUNCATE TABLE bots", dbConnectionList.ElementAt(0));
+                    da.DeleteCommand.Transaction = transaction;
+                    da.DeleteCommand.ExecuteNonQuery();
+
+                    var gameColumn = dt.Rows.Cast<DataRow>().Select(row => row[0].ToString()).ToArray();
+                    var tsColumn = dt.Rows.Cast<DataRow>().Select(row => row[1].ToString()).ToArray();
+
+                    idx = Array.FindIndex(tsColumn, row => row.ToString() == DateTime.MinValue.ToString());
+
+                    if (tsColumn.Count() == idx)
                     {
-                        string botName = dr[1].ToString();
-                        var watchDogTime = DateTime.Parse(dr[2].ToString());
-
-                        if (botName == myBotName)
-                        {
-                            updateBot = true;
-                        }
-
-                        botDictionary.Add(botName, watchDogTime);
+                        idx = -1;
                     }
+
+                    var scanNextGame = lastGameScanned == ""; //cheeky!
+
+                    int counter = 0;
+                    foreach (var game in games)
+                    {
+                        DataRow dr = dt.NewRow();
+
+                        dr["bot_id"] = game;
+                        dr["updated_at"] = counter == idx + 1 ? DateTime.MinValue : DateTime.Now;
+                        dr["created_at"] = counter == idx + 1 ? DateTime.MinValue : DateTime.Now;
+
+                        dt.Rows.Add(dr);
+                        ++counter;
+                    }
+
+                    DataSet ds2 = ds.GetChanges();
+                    da.Update(ds2);
+                    ds.Merge(ds2);
+                    ds.AcceptChanges();
+                }
+                catch (Exception ce)
+                {
+                    log.Warn("FAILED to get a LOCK on the DB:(");
+
+                    if (transaction != null)
+                    {
+                        transaction.Rollback();
+                        transaction = null;
+                    }
+                    idx = -2;
+                }
+                finally
+                {
+                    if(transaction != null)
+                        transaction.Commit();
                 }
             }
-
-
-
-
-
-            return null;
+            
+            return idx + 1;
         }
 
         public bool AddStatistics(List<int> values, int gameId, string minutes, string lastMinute, DateTime seenTime)

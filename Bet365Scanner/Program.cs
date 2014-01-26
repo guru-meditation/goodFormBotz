@@ -9,12 +9,12 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
-
+/*
 using System.ServiceModel;
 using System.ServiceModel.Description;
 using System.ServiceModel.Web;
 using Newtonsoft.Json;
-
+*/
 namespace BotSpace
 {
     using Scanners;
@@ -42,7 +42,7 @@ namespace BotSpace
         UploadWilliamHill,
         UploadBet365
     }
-
+    /*
     public class GlobalData
     {
         private static GlobalData instance;
@@ -148,7 +148,7 @@ namespace BotSpace
             return "You said " + s;
         }
     }
-
+    */
     public class TheBot
     {
         private static readonly log4net.ILog log
@@ -264,8 +264,8 @@ namespace BotSpace
 
             Database dbStuff = new Database(dbtype, connectionString, gOpMode);
 
-            GlobalData gd = GlobalData.Instance;
-            gd.dbStuff = dbStuff;
+            //GlobalData gd = GlobalData.Instance;
+            //gd.dbStuff = dbStuff;
 
             while (dbStuff.Connect() == false)
             {
@@ -274,7 +274,8 @@ namespace BotSpace
             }
 
 
-            WebServiceHost host = new WebServiceHost(typeof(Service), new Uri("http://localhost:8000/"));
+            /*
+             * WebServiceHost host = new WebServiceHost(typeof(Service), new Uri("http://localhost:8000/"));
 
             try
             {
@@ -292,7 +293,7 @@ namespace BotSpace
                 Console.WriteLine("An exception occurred: {0}", cex.Message);
                 host.Abort();
             }
-
+            */
 
             Scanner scanner = null;
 
@@ -314,7 +315,7 @@ namespace BotSpace
             }
 
             scanner.scan(sleep);
-            host.Close();
+            //host.Close();
         }     
      
         class Game

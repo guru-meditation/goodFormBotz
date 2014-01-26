@@ -15,7 +15,7 @@ namespace FormzTool
     public partial class FormzDBEditor : Form
     {
         static NpgsqlConnection pgConnection = null;
-        string connectionString = "Database=d7menjp3rap4ts;Server=ec2-54-235-155-182.compute-1.amazonaws.com;Port=5432;User Id=leupjwfvjinxsi;Password=HACn2POfVhsUY9S5HUsV7DhgS_;SSL=true";
+        string connectionString = "Database=d7menjp3rap4ts;Server=ec2-54-235-155-182.compute-1.amazonaws.com;Port=5432;User Id=leupjwfvjinxsi;Password=HACn2POfVhsUY9S5HUsV7DhgS_;SSL=true;CommandTimeout=600;Timeout=600";
         //string connectionString = "Database=deg5ivhqu73n1i;Server=ec2-54-243-181-184.compute-1.amazonaws.com;Port=5432;User Id=mjkscoveqvuszj;Password=qj1TBKCPuVxeCAR2sT79uIHAqT;SSL=true";
 
         public FormzDBEditor()
@@ -26,11 +26,21 @@ namespace FormzTool
             {
                 pgConnection = new NpgsqlConnection(connectionString);
                 pgConnection.Open();
+                pgConnection.StateChange += pgConnection_StateChange;
             }
             catch (Exception ex)
             {
                 Console.WriteLine("Error: {0}", ex.ToString());
                 pgConnection = null;
+            }
+        }
+
+        void pgConnection_StateChange(object sender, StateChangeEventArgs e)
+        {
+            if(e.CurrentState == ConnectionState.Broken || 
+                e.CurrentState == ConnectionState.Closed)
+            {
+                MessageBox.Show("Connection = "+ e.CurrentState);
             }
         }
 
