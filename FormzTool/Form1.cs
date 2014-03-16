@@ -1,14 +1,14 @@
 ﻿using Npgsql;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
-using System.Drawing;
+using System.IO;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using System.Windows.Forms;
+
 
 namespace FormzTool
 {
@@ -16,7 +16,6 @@ namespace FormzTool
     {
         static NpgsqlConnection pgConnection = null;
         string connectionString = "Database=d7menjp3rap4ts;Server=ec2-54-235-155-182.compute-1.amazonaws.com;Port=5432;User Id=leupjwfvjinxsi;Password=HACn2POfVhsUY9S5HUsV7DhgS_;SSL=true;CommandTimeout=600;Timeout=600";
-        //string connectionString = "Database=deg5ivhqu73n1i;Server=ec2-54-243-181-184.compute-1.amazonaws.com;Port=5432;User Id=mjkscoveqvuszj;Password=qj1TBKCPuVxeCAR2sT79uIHAqT;SSL=true";
 
         public FormzDBEditor()
         {
@@ -37,10 +36,10 @@ namespace FormzTool
 
         void pgConnection_StateChange(object sender, StateChangeEventArgs e)
         {
-            if(e.CurrentState == ConnectionState.Broken || 
+            if (e.CurrentState == ConnectionState.Broken ||
                 e.CurrentState == ConnectionState.Closed)
             {
-                MessageBox.Show("Connection = "+ e.CurrentState);
+                MessageBox.Show("Connection = " + e.CurrentState);
             }
         }
 
@@ -70,6 +69,7 @@ namespace FormzTool
             public string hco;
             public string aco;
             public string seenTime;
+            public string kodate;
         }
 
         private void GetOldTeam(string teamName, int box = 1)
@@ -102,21 +102,11 @@ namespace FormzTool
                 return;
             }
 
-            string sql = "select teams.name, leagues.name, games.id from games join teams on games.team2 = teams.id join leagues on games.league_id = leagues.id where games.id in ( SELECT id FROM games WHERE team1 = '" + id + "');";
+            string sql = "select teams.name, leagues.name, games.id from games join teams on games.team2 = teams.id join leagues on games.league_id = leagues.id where games.id in ( SELECT id FROM games WHERE team1 = '" + id + "') order by games.kodate desc;";
 
             int maxHomeTeamLength = teamName.Length;
             int maxAwayTeamLength = teamName.Length;
 
-            //List<string> homeTeams = new List<string>() { "Home:" };
-            //List<string> awayTeams = new List<string>() { "Away:" };
-            //List<string> leagues = new List<string>() { "League:" };
-            //List<string> gameIds = new List<string>() { "Id:" };
-            //List<string> hgsList = new List<string>() { "HG:" };
-            //List<string> agsList = new List<string>() { "AG:" };
-            //List<string> hcsList = new List<string>() { "HC:" };
-            //List<string> acsList = new List<string>() { "AC:" };
-            //List<string> seenTimes = new List<string>() { "Seen:" };
-            //List<string> respGameIds = new List<string>() { "RespGameIds:" };
             List<Match> matches = new List<Match>();
 
             Match title = new Match();
@@ -158,7 +148,7 @@ namespace FormzTool
                 }
             }
 
-            string sql2 = "select teams.name, leagues.name, games.id from games join teams on games.team1 = teams.id join leagues on games.league_id = leagues.id where games.id in ( SELECT id FROM games WHERE team2 = '" + id + "');";
+            string sql2 = "select teams.name, leagues.name, games.id from games join teams on games.team1 = teams.id join leagues on games.league_id = leagues.id where games.id in ( SELECT id FROM games WHERE team2 = '" + id + "') order by games.kodate desc;";
 
             using (NpgsqlCommand find = new NpgsqlCommand(sql2, pgConnection))
             {
@@ -192,7 +182,12 @@ namespace FormzTool
             }
             else if (getStats.Checked)
             {
-                string sql5 = "select g1.id from games g1 left join statistics s1 on g1.id = s1.game_id where s1.id is null";
+                var gameIds = matches.Select(x => x.gameId).ToList();
+                gameIds.RemoveAt(0);
+
+                string gameIdsString = String.Join(",", gameIds);
+
+                string sql5 = "select g1.id from games g1 left join statistics s1 on g1.id = s1.game_id where s1.id is null and g1.id in  (  " + gameIdsString + " )";
                 var empties = new List<string>();
 
                 using (NpgsqlCommand find = new NpgsqlCommand(sql5, pgConnection))
@@ -210,14 +205,8 @@ namespace FormzTool
 
                 string hg, ag, hc, ac, ls, g_id;
 
-                var gameIds = matches.Select(x => x.gameId);
-
-                var copyOfGameIds = gameIds.ToArray().ToList();
-                copyOfGameIds.RemoveAt(0);
-                string gameIdsString = String.Join(",", copyOfGameIds);
-
                 string sql4 = "select hg, ag, hco, aco, gametime, game_id from " +
-                              "(select game_id, gametime, hg, ag, hco, aco, max(gametime) over (partition by game_id) max_gameTime from statistics where game_id in  (  " + gameIdsString + " ) )" +
+                              "(select game_id, gametime, hg, ag, hco, aco, max(gametime) over (partition by game_id) max_gameTime from statistics where game_id in  (  " + gameIdsString + " ))" +
                               " a where game_id in  (  " + gameIdsString + " ) AND gametime = max_GameTime";
 
                 using (NpgsqlCommand find = new NpgsqlCommand(sql4, pgConnection))
@@ -264,16 +253,16 @@ namespace FormzTool
             {
                 if (getStats.Checked)
                 {
-                        tMatchBox.Items.Add(matches[i].gameId.PadRight(longestGameId + 1) + " "
-                            + matches[i].homeTeam.PadRight(longestHomeTeam + 1) + " "
-                            + matches[i].awayTeam.PadRight(longestAwayTeam) + " "
-                            + matches[i].league.PadRight(longestLeagueId + 2) + " "
-                            + matches[i].hgs.PadRight(longesthg + 1) + " "
-                            + matches[i].ags.PadRight(longestag + 1) + " "
-                            + matches[i].hco.PadRight(longesthc + 1) + " "
-                            + matches[i].aco.PadRight(longestac + 1) + " "
-                            + matches[i].seenTime);
-                    
+                    tMatchBox.Items.Add(matches[i].gameId.PadRight(longestGameId + 1) + " "
+                        + matches[i].homeTeam.PadRight(longestHomeTeam + 1) + " "
+                        + matches[i].awayTeam.PadRight(longestAwayTeam) + " "
+                        + matches[i].league.PadRight(longestLeagueId + 2) + " "
+                        + matches[i].hgs.PadRight(longesthg + 1) + " "
+                        + matches[i].ags.PadRight(longestag + 1) + " "
+                        + matches[i].hco.PadRight(longesthc + 1) + " "
+                        + matches[i].aco.PadRight(longestac + 1) + " "
+                        + matches[i].seenTime);
+
                 }
                 else
                 {
@@ -284,52 +273,6 @@ namespace FormzTool
                 }
             }
 
-            //var homeGoals = matches.Select(x => x.hgs);
-            //var homeGoalsAsInts = new List<int>();
-            //homeGoals.ToList().ForEach(x => homeGoalsAsInts.Add(int.Parse(x)));
-            //int totalHGs = homeGoalsAsInts.Sum();
-
-            //var awayGoals = matches.Select(x => x.ags);
-            //var awayGoalsAsInts = new List<int>();
-            //awayGoals.ToList().ForEach(x => awayGoalsAsInts.Add(int.Parse(x)));
-            //int totalAGs = awayGoalsAsInts.Sum();
-
-            //int totalScore = totalHGs + totalAGs;
-            //int totalHomeGames = homeGoals.Count();
-            //int totalAwayGames = awayGoals.Count();
-            //int totalGames = totalHomeGames + totalAwayGames;
-
-            //var tempList = new List<int>();
-            //tempList.AddRange( homeGoalsAsInts);
-            //tempList.AddRange( awayGoalsAsInts );
-
-            //double meanGs = tempList.Average();
-
-            //int avGoalsAtHome = 1;
-            //int avGoalsAtAway = 1;
-            //list int attackStrength = 3; /// Total number of goals scored by each team, divided by the average number of goals expected by any team
-            //list int defenceWeakness = 3; /// Total number of goals conceded by each team, divided by the average number of goals expected by any team
-
-            //var teams = new List<string>();
-            //teams.AddRange(matches.Select(x => x.homeTeam));
-            //teams.AddRange(matches.Select(x => x.awayTeam));
-            //var distinctTeams = teams.Distinct();
-
-            //var GoalsH = new int[,] {};
-            //var GoalsA = new int[,] {};
-
-            //int hIdx = 0;
-            //foreach (var hTeam in distinctTeams)
-            //{
-            //    int aIdx = 0;
-
-            //    foreach (var aTeam in distinctTeams)
-            //    {
-            //        GoalsH[hIdx, aIdx] = avGoalsAtHome * 
-            //        GoalsA[hIdx, aIdx] = 1;        
-            //    }
-            //}
-   
             idBox2.Text = id;
         }
 
@@ -341,37 +284,7 @@ namespace FormzTool
 
             hg = ""; ag = ""; hc = ""; ac = ""; ls = "";
 
-            //using (NpgsqlCommand find = new NpgsqlCommand(sql2, pgConnection))
-            //{
-            //    using (NpgsqlDataReader dr = find.ExecuteReader())
-            //    {
-            //        if (dr.HasRows == true)
-            //        {
-            //            dr.Read();
-            //            lastTime = dr[0].ToString();
-            //        }
-            //    }
-            //}
-
-            //if (lastTime != "")
             {
-                //if (lastTime != "-2")
-                //{
-                //    string sql3 = "select max(gametime) from statistics where game_id = '" + gameId + "';";
-
-                //    using (NpgsqlCommand find = new NpgsqlCommand(sql3, pgConnection))
-                //    {
-                //        using (NpgsqlDataReader dr = find.ExecuteReader())
-                //        {
-                //            if (dr.HasRows == true)
-                //            {
-                //                dr.Read();
-                //                lastTime = dr[0].ToString();
-                //            }
-                //        }
-                //    }
-                //}
-
                 string sql4 = "select hg, ag, hco, aco from statistics where game_id = '" + gameId + "' AND ( gametime=-2 OR gametime = (select max(gametime) from statistics where game_id = '" + gameId + "'));";
 
                 using (NpgsqlCommand find = new NpgsqlCommand(sql4, pgConnection))
@@ -779,7 +692,6 @@ namespace FormzTool
             return gameIds.ToArray();
         }
 
-
         private void button1_Click(object sender, EventArgs e)
         {
             int numItems = matchBox2.Items.Count;
@@ -855,11 +767,6 @@ namespace FormzTool
             }
 
             GetOldTeam(teamBox1.Text);
-        }
-
-        private void button2_Click(object sender, EventArgs e)
-        {
-           
         }
 
         private static void ExecuteNonQuery(string sql)
@@ -1049,11 +956,6 @@ namespace FormzTool
 
         }
 
-        private void dupGames_Click(object sender, EventArgs e)
-        {
-            
-        }
-
         private static List<string> OneColumnQuery(string sql2)
         {
             var ids = new List<string>();
@@ -1076,69 +978,57 @@ namespace FormzTool
             return ids;
         }
 
-        private void specialButton_Click(object sender, EventArgs e)
-        {
-
-
-
-        }
-
         private void todayButton_Click(object sender, EventArgs e)
         {
             matchBox.Items.Clear();
 
             string now = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss").Substring(0, 10);
-            string sql2 = "select id from games where to_char(kodate, 'YYYY-MM-DD') like '" + now + "%';";
+            string sql2 = "select id from games where to_char(kodate, 'YYYY-MM-DD') like '" + now + "%'";
 
             var ids = OneColumnQuery(sql2);
 
             Console.WriteLine(ids);
 
-            List<string> homeTeams = new List<string>() { "Home:" };
-            List<string> awayTeams = new List<string>() { "Away:" };
-            List<string> leagues = new List<string>() { "League:" };
-            List<string> kickOffTimes = new List<string>() { "Kick Off:" };
-            List<string> gameIds = new List<string>() { "Id:" };
-            gameIds.AddRange(ids);
+            List<Match> matches = new List<Match>();
 
-            string someIds = String.Join(",", ids);
+            matches.Add(new Match() { homeTeam = "Home:", awayTeam = "Away:", league = "League:", kodate = "Kick Off:", gameId = "Id:" });
 
-            //foreach (var id in ids)
+            string temp = "select g1.id, t1.name, t2.name, l1.name, g1.kodate from games g1 join teams t1 on g1.team1 = t1.id join teams t2 on g1.team2 = t2.id join leagues l1 on g1.league_id = l1.id where g1.id in (" + sql2 + ") order by g1.kodate asc; ";
+            using (NpgsqlCommand find = new NpgsqlCommand(temp, pgConnection))
             {
-                //2013-03-22 00:00:00 -0700
-
-                string temp = "select t1.name, t2.name, l1.name, g1.kodate from games g1 join teams t1 on g1.team1 = t1.id join teams t2 on g1.team2 = t2.id join leagues l1 on g1.league_id = l1.id where g1.id in (" + someIds + "); ";
-                using (NpgsqlCommand find = new NpgsqlCommand(temp, pgConnection))
+                using (NpgsqlDataReader dr = find.ExecuteReader())
                 {
-                    using (NpgsqlDataReader dr = find.ExecuteReader())
+                    while (dr.Read())
                     {
-                        while (dr.Read())
+                        var m = new Match()
                         {
-                            homeTeams.Add(dr[0].ToString());
-                            awayTeams.Add(dr[1].ToString());
-                            leagues.Add(dr[2].ToString());
-                            kickOffTimes.Add(dr[3].ToString());
-                        }
+                            gameId = dr[0].ToString(),
+                            homeTeam = dr[1].ToString(),
+                            awayTeam = dr[2].ToString(),
+                            league = dr[3].ToString(),
+                            kodate = dr[4].ToString()
+                        };
+                        matches.Add(m);
                     }
                 }
             }
 
-            int longestHomeTeam = homeTeams.Max(x => x.Length);
-            int longestAwayTeam = awayTeams.Max(x => x.Length);
-            int longestGameId = gameIds.Max(x => x.Length);
-            int longestLeague = leagues.Max(x => x.Length);
+            int longestHomeTeam = matches.Select(x => x.homeTeam).Max(x => x.Length);
+            int longestAwayTeam = matches.Select(x => x.awayTeam).Max(x => x.Length);
+            int longestGameId = matches.Select(x => x.gameId).Max(x => x.Length);
+            int longestLeague = matches.Select(x => x.league).Max(x => x.Length);
 
             var tempList = new List<string>();
 
-            for (int i = 0; i < homeTeams.Count(); ++i)
+            for (int i = 0; i < matches.Count(); ++i)
             {
-                string temp = gameIds[i].PadRight(longestGameId + 1) + " " + homeTeams[i].PadRight(longestHomeTeam + 1) + " " + awayTeams[i].PadRight(longestAwayTeam) + " " + leagues[i].PadRight(longestLeague) + " " + (i == 0 ? kickOffTimes[i] : kickOffTimes[i].Substring(11, 5));
-                tempList.Add(temp);
+                string temp2 = matches[i].gameId.PadRight(longestGameId + 1) + " " + matches[i].homeTeam.PadRight(longestHomeTeam + 1) + " " + matches[i].awayTeam.PadRight(longestAwayTeam) + " " + matches[i].league.PadRight(longestLeague) + " " + (i == 0 ? matches[i].kodate : matches[i].kodate.Substring(11, 5));
+                tempList.Add(temp2);
             }
 
             string lineOne = tempList.ElementAt(0);
             tempList.RemoveAt(0);
-            tempList.Sort((x, y) => x.Substring(longestGameId).CompareTo(y.Substring(longestGameId)));
+            //tempList.Sort((x, y) => x.Substring(longestGameId).CompareTo(y.Substring(longestGameId)));
 
             tempList.Insert(0, lineOne);
 
@@ -1174,18 +1064,22 @@ namespace FormzTool
                 string homeTeam = selectedText.Substring(homeIdx, awayIdx - homeIdx).Trim();
                 string awayTeam = selectedText.Substring(awayIdx, leagueIdx - awayIdx).Trim();
 
-                GetOldTeam(awayTeam, 2);
-                GetOldTeam(homeTeam);
+                try
+                {
+                    GetOldTeam(awayTeam, 2);
+                    GetOldTeam(homeTeam);
+                }
+                catch(Exception ce )
+                {
+
+                    Console.WriteLine(ce);
+                }
             }
 
             if (checkBox1.Checked)
             {
             }
 
-        }
-
-        private void tomo_button1_Click(object sender, EventArgs e)
-        {
         }
 
         private void removeDuplicateTeamsToolStripMenuItem_Click(object sender, EventArgs e)
@@ -1298,16 +1192,34 @@ namespace FormzTool
 
             for (int j = 0; j != team1s.Count(); ++j)
             {
-                string sql2 = "select id from games where team1='" + team1s.ElementAt(j)
+                string sql2 = "select id, league_id from games where team1='" + team1s.ElementAt(j)
                             + "' and team2='" + team2s.ElementAt(j)
                             + "' and to_char(kodate, 'DD/MM/YYYY') = '" + kodates.ElementAt(j).Substring(0, 10) + "';";
 
-                var ids = OneColumnQuery(sql2);
+                var idsAndLeagues = new List<Tuple<string, string>>();
+
+                using (NpgsqlCommand find = new NpgsqlCommand(sql2, pgConnection))
+                {
+                    using (NpgsqlDataReader dr = find.ExecuteReader())
+                    {
+                        bool hasRows = dr.HasRows;
+
+                        if (hasRows == true)
+                        {
+                            while (dr.Read())
+                            {
+                                idsAndLeagues.Add(new Tuple<string, string>(dr[0].ToString(), dr[1].ToString()));
+                            }
+                        }
+                    }
+                }
+
 
                 var justDelete = new List<string>();
 
-                foreach (var id in ids)
+                for (int t = 0; t < idsAndLeagues.Count(); ++t)
                 {
+                    var id = idsAndLeagues.ElementAt(t).Item1;
                     var counts = OneColumnQuery("select count(*) from statistics where game_id = '" + id + "';");
                     if (counts.ElementAt(0) == "0")
                     {
@@ -1315,14 +1227,24 @@ namespace FormzTool
                     }
                 }
 
-                if (ids.Count() > 1)
+                if (idsAndLeagues.Count() > 1)
                 {
-                    string primaryId = ids.ElementAt(0);
-                    for (int i = 1; i != ids.Count(); ++i)
+                    string primaryId = "";
+                    if (idsAndLeagues.Any(x => x.Item2 != "-1"))
                     {
-                        string sqlTeam1 = "update statistics set game_id='" + primaryId + "' where game_id='" + ids.ElementAt(i) + "';";
-                        string sqlDeleteTeam = "delete from games where id='" + ids.ElementAt(i) + "';";
-                        if (justDelete.Contains(ids.ElementAt(i)) == false)
+                        primaryId = idsAndLeagues.Where(x => x.Item2 != "-1").First().Item1;
+                    }
+
+                    if (primaryId == "")
+                    {
+                        primaryId = idsAndLeagues.ElementAt(0).Item1;
+                    }
+
+                    for (int i = 1; i != idsAndLeagues.Count(); ++i)
+                    {
+                        string sqlTeam1 = "update statistics set game_id='" + primaryId + "' where game_id='" + idsAndLeagues.ElementAt(i).Item1 + "';";
+                        string sqlDeleteTeam = "delete from games where id='" + idsAndLeagues.ElementAt(i).Item1 + "';";
+                        if (justDelete.Contains(idsAndLeagues.ElementAt(i).Item1) == false)
                         {
                             ExecuteNonQuery(sqlTeam1);
                         }
@@ -1345,7 +1267,6 @@ namespace FormzTool
 
         private void tomorrowsGamesToolStripMenuItem_Click(object sender, EventArgs e)
         {
-
             matchBox.Items.Clear();
 
             string now = (DateTime.Today + TimeSpan.FromDays(1)).ToString("yyyy-MM-dd HH:mm:ss").Substring(0, 10);
@@ -1409,10 +1330,69 @@ namespace FormzTool
             }
         }
 
-        private void label3_Click(object sender, EventArgs e)
+        private void fixBET365LeaguesToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            string sql = "select id, team1, team2, kodate from games where league_id = -1;";
 
+            var bet365games = new List<string>();
+
+            using (NpgsqlCommand find = new NpgsqlCommand(sql, pgConnection))
+            {
+                using (NpgsqlDataReader dr = find.ExecuteReader())
+                {
+                    bool hasRows = dr.HasRows;
+
+                    if (hasRows == true)
+                    {
+                        while (dr.Read())
+                        {
+                            bet365games.Add(dr[0].ToString() + "," + dr[1].ToString() + "," + dr[2].ToString() + "," + dr[3].ToString());
+                        }
+                    }
+                }
+            }
+
+            var fails = 0;
+
+            foreach (var game in bet365games)
+            {
+                var splits = game.Split(',');
+
+                string team1LeaguesSQL = "select league_id from games where team1 = " + splits[1] + " order by kodate desc;";
+                string team2LeaguesSQL = "select league_id from games where team2 = " + splits[2] + " order by kodate desc;";
+
+                var team1Leagues = OneColumnQuery(team1LeaguesSQL).Distinct().Where(x => x != "-1");
+                var team2Leagues = OneColumnQuery(team2LeaguesSQL).Distinct().Where(x => x != "-1"); ;
+
+                var common = team1Leagues.Intersect(team2Leagues);
+
+                if (common.Count() != 0)
+                {
+                    var newLeague = common.First();
+                    var sqlUpdate = "update games set league_id = '" + newLeague + "' where id = " + splits[0] + ";";
+
+                    ExecuteNonQuery(sqlUpdate);
+                }
+                else
+                {
+                    fails++;
+                }
+            }
+
+            Console.WriteLine(fails);
         }
 
+        private void doSums_Click(object sender, EventArgs e)
+        {
+            string selectedText = matchBox.GetItemText(matchBox.Items[matchBox.SelectedIndex]);
+            string id = Regex.Split(selectedText, " ").ElementAt(0);
+
+            WebRequest req = WebRequest.Create("http://127.0.0.1:8000/GetGoalsAndCornersPred?gameId=" + id);
+            WebResponse resp = req.GetResponse();
+
+            System.IO.StreamReader sr = new System.IO.StreamReader(resp.GetResponseStream());
+
+            MessageBox.Show(sr.ReadToEnd().Trim());
+        }
     }
 }

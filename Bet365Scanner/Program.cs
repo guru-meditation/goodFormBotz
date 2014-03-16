@@ -24,9 +24,29 @@ namespace BotSpace
 
     public class aMatch
     {
+        public int id;
         public string team1;
         public string team2;
         public string league;
+        public string cornerLine;
+        public string homeAsianCornerPrice;
+        public string awayAsianCornerPrice;
+        public string homeRaceTo3CornersPrice;
+        public string awayRaceTo3CornersPrice;
+        public string neitherRaceTo3CornersPrice;
+        public string homeRaceTo5CornersPrice;
+        public string awayRaceTo5CornersPrice;
+        public string neitherRaceTo5CornersPrice;
+        public string homeRaceTo7CornersPrice;
+        public string awayRaceTo7CornersPrice;
+        public string neitherRaceTo7CornersPrice;
+        public string homeRaceTo9CornersPrice;
+        public string awayRaceTo9CornersPrice;
+        public string neitherRaceTo9CornersPrice;
+        public string homeWinPrice;
+        public string drawPrice;
+        public string awayWinPrice;
+
         public DateTime koDateTime;
 
         public override string ToString()

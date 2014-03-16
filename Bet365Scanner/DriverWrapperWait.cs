@@ -22,7 +22,7 @@ namespace BotSpace
 
         public override void DirtySleep(int time)
         {
-            // don't sleep
+            ForceSleep(time);
         }
 
         public override bool Wait(Func<bool> f)
@@ -66,7 +66,7 @@ namespace BotSpace
                     return elements;
                 }
                     );
-            }
+            } 
             return base.FindElements(by);
         }
 

@@ -169,7 +169,7 @@ namespace WebDriver
 
             foreach (var level1 in thisTypes)
             {
-                if (level1.Text.Trim().Equals(findString))
+                if (level1.Text.Trim().Equals(findString) || findString == "*")
                 {
                     retVal = level1;
                     break;

@@ -186,6 +186,8 @@ namespace Db
         public int AddGame(int homeTeamId, int awayTeamId, int leagueId, DateTime koDate)
         {
             int idx = -1;
+            int thisLeagueId = -2;
+
             using (DbCommand find = dbCreator.newCommand("SELECT id, team1, kodate, league_id FROM games WHERE team1 = '" + homeTeamId + "' AND team2 = '" + awayTeamId + "';", dbConnectionList.ElementAt(0)))
             {
                 using (DbDataReader dr = find.ExecuteReader())
@@ -194,12 +196,15 @@ namespace Db
 
                     while (dr.Read())  //bug fix for repeated same game added after rematch
                     {
+                        string id           = dr[0].ToString();
+                        int thisHomeTeam    = int.Parse(dr[1].ToString());
+                        string thisKoDate   = dr[2].ToString();
+                        thisLeagueId        = int.Parse(dr[3].ToString());
 
-                        string id = dr[0].ToString();
-                        int thisHomeTeam = int.Parse(dr[1].ToString());
-
-                        string thisKoDate = dr[2].ToString();
-                        int thisLeagueId = int.Parse(dr[3].ToString());
+                        if (thisLeagueId == -1)
+                        {
+                            log.Debug("thisHomeTeam: " + thisHomeTeam);
+                        }
 
                         DateTime dt = DateTime.Parse(thisKoDate);
 
@@ -217,6 +222,16 @@ namespace Db
                     }
 
                     dr.Close();
+
+                    string now = DateTime.Now.ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss");
+
+                    if (idx != -1 && thisLeagueId == -1)
+                    {
+                        using (DbCommand update = dbCreator.newCommand("update games set league_id = " + leagueId + " where id = " + "idx;", dbConnectionList.ElementAt(0)))
+                        {
+                            update.ExecuteNonQuery();
+                        }
+                    }
 
                     if (hasRows == false)
                     {
@@ -236,8 +251,6 @@ namespace Db
                                 }
 
                                 dr2.Close();
-
-                                string now = DateTime.Now.ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss");
 
                                 using (DbCommand insert = dbCreator.newCommand("INSERT into games (id, league_id, team1, team2, koDate,  created_at, updated_at  ) VALUES (" + idx + ", " + leagueId + ", " + homeTeamId + ", " + awayTeamId + ", '" + koDate.ToString("yyyy-MM-dd HH:mm:ss") + "', '" + now + "', '" + now + "');", dbConnectionList.ElementAt(0)))
                                 {
@@ -580,5 +593,135 @@ namespace Db
 
 
         public string dbConnectionString { get; set; }
+
+        internal void AddCornerData(int gameID, string cornerline, string homeprice, string awayprice)
+        {
+            int idx = -1;
+
+            bool alreadyGotThis = false;
+
+            using (DbCommand find = dbCreator.newCommand("SELECT game_id, cornerline, homeprice, awayprice, created_at FROM asiancorners WHERE game_id like '" + gameID + "' order by created_at desc;", dbConnectionList.ElementAt(0)))
+            {
+                using (DbDataReader dr = find.ExecuteReader())
+                {
+                    bool hasRows = dr.HasRows;
+
+                    if (hasRows)
+                    {
+                        dr.Read();
+                        if (dr[1].ToString() == cornerline &&
+                           dr[2].ToString() == homeprice &&
+                           dr[3].ToString() == awayprice)
+                        {
+                            log.Info("Already got latest corner price!");
+                            alreadyGotThis = true;
+                        }
+                    }
+
+                    dr.Close();
+                }
+            }
+
+            if (alreadyGotThis == false)
+            {
+                string now = DateTime.Now.ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss");
+                using (DbCommand insert = dbCreator.newCommand("INSERT into asiancorners ( idx, game_id, cornerline, homeprice, awayprice, created_at, updated_at  ) VALUES ('" + 1 + "', '" + gameID + "', '" + cornerline + "', '" + homeprice + "', '" + awayprice + "', '" + now + "', '" + now + "');", dbConnectionList.ElementAt(0)))
+                {
+                    insert.ExecuteNonQuery();
+                }
+            }   
+        }
+
+        internal void AddRaceToCornerData(int gameId, int cornerTarget, string homeprice, string awayprice, string neitherprice)
+        {
+            int idx = -1;
+
+            string now = DateTime.Now.ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss");
+            string sql = "INSERT into racetocorners ( idx, game_id, cornertarget, homeprice, awayprice, neitherprice, created_at, updated_at  ) VALUES ('" + 1 + "', '" + gameId + "', '" + cornerTarget + "', '" + homeprice + "', '" + awayprice + "', '" + neitherprice + "', '" + now + "', '" + now + "');";
+
+            bool alreadyGotThis = false;
+
+            using (DbCommand find = dbCreator.newCommand("SELECT homeprice, awayprice, neitherprice, created_at FROM racetocorners WHERE game_id like '" + gameId + "' AND cornertarget like '" + cornerTarget + "' order by created_at desc;", dbConnectionList.ElementAt(0)))
+            {
+                using (DbDataReader dr = find.ExecuteReader())
+                {
+                    bool hasRows = dr.HasRows;
+
+                    if (hasRows)
+                    {
+                        dr.Read();
+                        if (dr[0].ToString() == homeprice &&
+                            dr[1].ToString() == awayprice &&
+                            dr[2].ToString() == neitherprice)
+                        {
+                            log.Info("Already got latest race to corner price!");
+                            alreadyGotThis = true;
+                        }
+                        else
+                        {
+                            log.Info("Adding new corner info!!!");
+                        }
+                    }
+
+                    dr.Close();
+                }
+            }
+
+            if (alreadyGotThis == false)
+            {
+                log.Info(sql);
+
+                using (DbCommand insert = dbCreator.newCommand(sql, dbConnectionList.ElementAt(0)))
+                {
+                    insert.ExecuteNonQuery();
+                }
+            }
+        }
+
+        internal void AddFinalResultPrices(int gameId, string homeprice, string drawprice, string awayprice)
+        {
+            int idx = -1;
+
+            string now = DateTime.Now.ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss");
+            string sql = "INSERT into fulltimeprice ( idx, game_id, homeprice, drawprice, awayprice, created_at, updated_at  ) VALUES ('" + 1 + "', '" + gameId + "', '" + homeprice + "', '" + drawprice + "', '" + awayprice + "', '" + now + "', '" + now + "');";
+
+            bool alreadyGotThis = false;
+
+            using (DbCommand find = dbCreator.newCommand("SELECT homeprice, drawprice, awayprice, created_at FROM fulltimeprice WHERE game_id like '" + gameId + "' order by created_at desc;", dbConnectionList.ElementAt(0)))
+            {
+                using (DbDataReader dr = find.ExecuteReader())
+                {
+                    bool hasRows = dr.HasRows;
+
+                    if (hasRows)
+                    {
+                        dr.Read();
+                        if (dr[0].ToString() == homeprice &&
+                            dr[1].ToString() == drawprice &&
+                            dr[2].ToString() == awayprice)
+                        {
+                            log.Info("Already got latest fulltime price!");
+                            alreadyGotThis = true;
+                        }
+                        else
+                        {
+                            log.Info("Adding new fulltime info!!!");
+                        }
+                    }
+
+                    dr.Close();
+                }
+            }
+
+            if (alreadyGotThis == false)
+            {
+                log.Info(sql);
+
+                using (DbCommand insert = dbCreator.newCommand(sql, dbConnectionList.ElementAt(0)))
+                {
+                    insert.ExecuteNonQuery();
+                }
+            }
+        }
     }
 }

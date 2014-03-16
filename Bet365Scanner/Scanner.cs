@@ -235,6 +235,7 @@ namespace Scanners
             log.Debug("Adding " + homeTeam + " [" + hTeamId + "] v " + awayTeam + " [" + aTeamId + "] in league [" + leagueId + "] with game id: " + gameId);
             SendStats(snaps, gameId);
         }
+
         private void SendStats(IEnumerable<XElement> snaps, int gameId)
         {
             var lastSnap = snaps.Last();
@@ -324,7 +325,6 @@ namespace Scanners
 
         public override void scan(int sleepTime = 0)
         {
-
             try
             {
                 string path = xmlPath;

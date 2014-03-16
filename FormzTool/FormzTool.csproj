@@ -60,6 +60,9 @@
       <Private>True</Private>
       <HintPath>..\packages\dotConnect.Express.for.PostgreSQL.7.2.80\lib\Devart.Data.PostgreSql.dll</HintPath>
     </Reference>
+    <Reference Include="log4net">
+      <HintPath>..\packages\log4net.2.0.3\lib\net40-full\log4net.dll</HintPath>
+    </Reference>
     <Reference Include="MathNet.Numerics">
       <HintPath>..\packages\MathNet.Numerics.2.6.1\lib\net40\MathNet.Numerics.dll</HintPath>
     </Reference>

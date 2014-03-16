@@ -46,14 +46,16 @@ namespace Scanners
             }
         }
 
+        int dirtySleep = 2000;
+
         private void AddTodaysMatches(int sleepTime, DriverWrapper driver)
         {
             var foundMatches = new List<aMatch>();
 
+            /////////////////////
+
             driver.Url = "https://mobile.bet365.com/premium/#type=Splash;key=1;ip=0;lng=1";
             driver.DirtySleep(sleepTime);
-
-            int dirtySleep = 2000;
 
             GetElementAndClick(driver, "Level1", "Match Markets");
             System.Threading.Thread.Sleep(dirtySleep);
@@ -65,49 +67,521 @@ namespace Scanners
             // it takes time for genericRow to expand 
             driver.ForceSleep(dirtySleep);
 
-            int numGenRows = driver.FindElements(By.ClassName("genericRow")).Count();
+            GetPreMatchData(driver, foundMatches);
 
-            for (int i = 0; i != numGenRows; ++i)
+            /////////////////////
+
+            int longestTeam1 = foundMatches.Select(x => x.team1).Max(x => x.Length);
+            int longestTeam2 = foundMatches.Select(x => x.team2).Max(x => x.Length);
+            int longestLeague = foundMatches.Select(x => x.league).Max(x => x.Length);
+
+            int counter = 0;
+            foreach (aMatch m in foundMatches)
             {
-                var genItem = driver.FindElements(By.ClassName("genericRow")).ElementAt(i);
+                log.Debug(m.team1.PadRight(longestTeam1 + 1) + " " + m.team2.PadRight(longestTeam2 + 1) + " at " + m.koDateTime.TimeOfDay + " in " + m.league);
+                int leagueId    = dbStuff.AddLeague(m.league);
+                int hTeamId     = dbStuff.AddTeam(m.team1);
+                int aTeamId     = dbStuff.AddTeam(m.team2);
+                int gameId =  dbStuff.AddGame(hTeamId, aTeamId, leagueId, m.koDateTime);
+                m.id = gameId;
+            }
+
+            /////////////////////
+
+            driver.Url = "https://mobile.bet365.com/premium/#type=Splash;key=1;ip=0;lng=1";
+            driver.DirtySleep(sleepTime);
+
+            GetElementAndClick(driver, "Level2", "Corners");
+            driver.DirtySleep(sleepTime);
+            GetElementAndClick(driver, "genericRow", "Race To 3 Corners");
+            driver.ForceSleep(dirtySleep);
+
+            GetRaceToCornerData(driver, foundMatches, 3);
+
+            /////////////////////
+
+            driver.Url = "https://mobile.bet365.com/premium/#type=Splash;key=1;ip=0;lng=1";
+            driver.DirtySleep(sleepTime);
+
+            GetElementAndClick(driver, "genericRow", "Race To 5 Corners");
+            driver.ForceSleep(dirtySleep);
+
+            GetRaceToCornerData(driver, foundMatches, 5);
+
+            /////////////////////
+
+            driver.Url = "https://mobile.bet365.com/premium/#type=Splash;key=1;ip=0;lng=1";
+            driver.DirtySleep(sleepTime);
+
+            GetElementAndClick(driver, "genericRow", "Race To 7 Corners");
+            driver.ForceSleep(dirtySleep);
+
+            GetRaceToCornerData(driver, foundMatches, 7);
+
+            /////////////////////
+
+            driver.Url = "https://mobile.bet365.com/premium/#type=Splash;key=1;ip=0;lng=1";
+            driver.DirtySleep(sleepTime);
+
+            GetElementAndClick(driver, "genericRow", "Race To 9 Corners");
+            driver.ForceSleep(dirtySleep);
+
+            GetRaceToCornerData(driver, foundMatches, 9);
+            /////////////////////
+
+            driver.Url = "https://mobile.bet365.com/premium/#type=Splash;key=1;ip=0;lng=1";
+            driver.DirtySleep(sleepTime);
+
+            GetElementAndClick(driver, "genericRow", "Asian Total Corners");
+            System.Threading.Thread.Sleep(dirtySleep);
+
+            driver.ForceSleep(dirtySleep);
+
+            GetAsianCornerData(driver, foundMatches);
+
+            /////////////////////
+
+            foreach (aMatch m in foundMatches)
+            {
+               
+                    log.Debug(m.team1.PadRight(longestTeam1 + 1) + " " + m.team2.PadRight(longestTeam2 + 1) + " corner line: " + m.cornerLine + " " + m.homeAsianCornerPrice + "//" + m.awayAsianCornerPrice );
+
+                    if (String.IsNullOrEmpty(m.cornerLine) == false)
+                    {
+                        dbStuff.AddCornerData(m.id, m.cornerLine, m.homeAsianCornerPrice, m.awayAsianCornerPrice);
+                    }
+                    
+                    if (String.IsNullOrEmpty(m.homeRaceTo3CornersPrice) == false &&
+                        String.IsNullOrEmpty(m.awayRaceTo3CornersPrice) == false &&
+                        String.IsNullOrEmpty(m.neitherRaceTo3CornersPrice) == false)
+                    {
+                        dbStuff.AddRaceToCornerData(m.id, 3, m.homeRaceTo3CornersPrice, m.awayRaceTo3CornersPrice, m.neitherRaceTo3CornersPrice);
+                    }
+
+                    if (String.IsNullOrEmpty(m.homeRaceTo5CornersPrice) == false &&
+                        String.IsNullOrEmpty(m.awayRaceTo5CornersPrice) == false &&
+                        String.IsNullOrEmpty(m.neitherRaceTo5CornersPrice) == false)
+                    {
+                        dbStuff.AddRaceToCornerData(m.id, 5, m.homeRaceTo5CornersPrice, m.awayRaceTo5CornersPrice, m.neitherRaceTo5CornersPrice);
+                    }
+
+                    if (String.IsNullOrEmpty(m.homeRaceTo7CornersPrice) == false &&
+                        String.IsNullOrEmpty(m.awayRaceTo7CornersPrice) == false &&
+                        String.IsNullOrEmpty(m.neitherRaceTo7CornersPrice) == false)
+                    {
+                        dbStuff.AddRaceToCornerData(m.id, 7, m.homeRaceTo7CornersPrice, m.awayRaceTo7CornersPrice, m.neitherRaceTo7CornersPrice);
+                    }
+
+                    if (String.IsNullOrEmpty(m.homeRaceTo9CornersPrice) == false &&
+                        String.IsNullOrEmpty(m.awayRaceTo9CornersPrice) == false &&
+                        String.IsNullOrEmpty(m.neitherRaceTo9CornersPrice) == false)
+                    {
+                        dbStuff.AddRaceToCornerData(m.id, 9, m.homeRaceTo9CornersPrice, m.awayRaceTo9CornersPrice, m.neitherRaceTo9CornersPrice);
+                    }
+
+                    if (String.IsNullOrEmpty(m.homeWinPrice) == false &&
+                        String.IsNullOrEmpty(m.drawPrice) == false &&
+                        String.IsNullOrEmpty(m.awayWinPrice) == false)
+                    {
+                        dbStuff.AddFinalResultPrices(m.id, m.homeWinPrice, m.drawPrice, m.awayWinPrice);
+                    }
+                
+                
+                
+            }
+            /////////////////////
+
+            log.Debug("");
+        }
+
+        private void GetRaceToCornerData(DriverWrapper driver, List<aMatch> foundMatches, int raceToValue)
+        {
+            var rowsCount = driver.FindElements(By.ClassName("genericRow")).Count();
+
+            for (int i = 0; i < rowsCount; ++i)
+            {
+                try
+                {
+                    var genItems = driver.FindElements(By.ClassName("genericRow"));
+
+                    IWebElement genItem = null;
+                    if (i < genItems.Count())
+                    {
+                        genItem = genItems.ElementAt(i);
+                    }
+                    else
+                    {
+                        log.Error("Can't find item at index: " + i);
+                        break;
+                    }
+
+                    string leagueText = genItem.Text.Trim();
+                    genItem.Click();
+                    driver.DirtySleep(dirtySleep);
+
+                     var sectionCount = driver.FindElements(By.ClassName("Section")).Count();
+
+                    for (int j = 1; j < sectionCount; ++j)
+                    {
+                        var sections = driver.FindElements(By.ClassName("Section"));
+                        if (j < sections.Count())
+                        {
+                            try
+                            {
+                                sections.ElementAt(j).Click();
+                            }
+                            catch (Exception ce)
+                            {
+                                log.Error("Exception caught trying to click at index: " + j);
+                            }
+
+                            driver.DirtySleep(500);
+                        }
+                        else
+                        {
+                            log.Error("Can't find item at index: " + j);
+                            break;
+                        }
+                    }
+
+
+                    sectionCount = driver.FindElements(By.ClassName("Section")).Count();
+
+                    for (int j = 0; j < sectionCount; ++j)
+                    {
+                        var sections = driver.FindElements(By.ClassName("Section"));
+
+                        if (j > sections.Count())
+                        {
+                            log.Error("Can't find item at index: " + j);
+                            break;
+                        }
+
+                        var section = sections.ElementAt(j);
+
+                        string sectionText = section.Text;
+
+                        var bits = Regex.Split(sectionText, "\r\n").ToList();
+                        bits.ForEach(x => x.Trim());
+
+                        string matchText = bits.ElementAt(0);
+
+                        if (matchText.Contains("\r\n"))
+                        {
+                            matchText = matchText.Substring(0, matchText.IndexOf("\r\n"));
+                        }
+
+                        if (matchText.Contains(" v "))
+                        {
+                            var teamSplits = Regex.Split(matchText, " v ");
+
+                            var m = new aMatch();
+                            m.team1 = teamSplits.ElementAt(0);
+                            m.team2 = teamSplits.ElementAt(1);
+
+                            m.team1 = DoSubstitutions(m.team1);
+                            m.team2 = DoSubstitutions(m.team2);
+                            m.league = DoSubstitutions(leagueText);
+
+                            var thisMatch = foundMatches.SingleOrDefault(x => x.team1 == m.team1 && x.team2 == m.team2);
+
+                            if (thisMatch != null && bits.Count() == 5)
+                            {
+                                if(bits.ElementAt(2).Contains("  "))
+                                {
+                                    if (raceToValue == 3) thisMatch.homeRaceTo3CornersPrice = GetUkOddsPrice(bits.ElementAt(2)).ToString();
+                                    if (raceToValue == 5) thisMatch.homeRaceTo5CornersPrice = GetUkOddsPrice(bits.ElementAt(2)).ToString();
+                                    if (raceToValue == 7) thisMatch.homeRaceTo7CornersPrice = GetUkOddsPrice(bits.ElementAt(2)).ToString();
+                                    if (raceToValue == 9) thisMatch.homeRaceTo9CornersPrice = GetUkOddsPrice(bits.ElementAt(2)).ToString();
+                                }
+
+                                if(bits.ElementAt(3).Contains("  "))
+                                {
+                                    if (raceToValue == 3) thisMatch.awayRaceTo3CornersPrice = GetUkOddsPrice(bits.ElementAt(3)).ToString();
+                                    if (raceToValue == 5) thisMatch.awayRaceTo5CornersPrice = GetUkOddsPrice(bits.ElementAt(3)).ToString();
+                                    if (raceToValue == 7) thisMatch.awayRaceTo7CornersPrice = GetUkOddsPrice(bits.ElementAt(3)).ToString();
+                                    if (raceToValue == 9) thisMatch.awayRaceTo9CornersPrice = GetUkOddsPrice(bits.ElementAt(3)).ToString();
+                                }
+
+                                if(bits.ElementAt(4).Contains("  "))
+                                {
+                                    if (raceToValue == 3) thisMatch.neitherRaceTo3CornersPrice = GetUkOddsPrice(bits.ElementAt(4)).ToString();
+                                    if (raceToValue == 3) thisMatch.neitherRaceTo5CornersPrice = GetUkOddsPrice(bits.ElementAt(4)).ToString();
+                                    if (raceToValue == 3) thisMatch.neitherRaceTo7CornersPrice = GetUkOddsPrice(bits.ElementAt(4)).ToString();
+                                    if (raceToValue == 3) thisMatch.neitherRaceTo9CornersPrice = GetUkOddsPrice(bits.ElementAt(4)).ToString();
+                                }
+                            }
+                            else
+                            {
+                                log.Error("Error occurred");
+                            }
+
+                        }
+                        else
+                        {
+                            log.Error("Can't get match from " + matchText);
+                        }
+
+                    }
+                }
+                catch (Exception ce)
+                {
+                    log.Error("Exception caught: " + ce);
+                }
+
+                IJavaScriptExecutor js = driver.Driver as IJavaScriptExecutor;
+                js.ExecuteScript("document.getElementById('HeaderBack').click()");
+
+                driver.DirtySleep(dirtySleep);
+            }
+        }
+
+        private static float GetUkOddsPrice(string bit)
+        {
+            string price = Regex.Split(bit, "  ").Last();
+            string numerator = Regex.Split(price, "/").First();
+            string denominator = Regex.Split(price, "/").Last();
+
+            return ( float.Parse(numerator) / float.Parse(denominator)) + 1;
+        }
+
+        private void GetAsianCornerData(DriverWrapper driver, List<aMatch> foundMatches)
+        {
+            var rowsCount = driver.FindElements(By.ClassName("genericRow")).Count();
+
+            for (int i = 0; i < rowsCount; ++i)
+            {
+                try
+                {
+
+                var genItems = driver.FindElements(By.ClassName("genericRow"));
+
+                IWebElement genItem = null;
+                if (i < genItems.Count())
+                {
+                    genItem = genItems.ElementAt(i);
+                }
+                else
+                {
+                    log.Error("Can't find item at index: " + i);
+                    break;
+                }
 
                 string leagueText = genItem.Text.Trim();
                 genItem.Click();
                 driver.DirtySleep(dirtySleep);
 
-                var matches = driver.FindElements(By.ClassName("FixtureDescription"));
+                var sectionCount = driver.FindElements(By.ClassName("Section")).Count();
 
-                var kickOffs = driver.FindElements(By.ClassName("FixtureStartTime"));
-
-                for (int j = 0; j < matches.Count(); ++j)
+                for (int j = 1; j < sectionCount; ++j)
                 {
-                    var m = new aMatch();
-
-                    string matchText = matches.ElementAt(j).Text;
-
-                    if (matchText.Contains("\r\n"))
+                    var sections = driver.FindElements(By.ClassName("Section"));
+                    if (j < sections.Count())
                     {
-                        matchText = matchText.Substring(0, matchText.IndexOf("\r\n"));
-                    }
+                        try
+                        {
+                            sections.ElementAt(j).Click();
+                        }
+                        catch (Exception ce)
+                        {
+                            log.Error("Exception caught trying to click at index: " + j);
+                        }
 
-                    if (matchText.Contains(" v "))
-                    {
-                        var teamSplits = Regex.Split(matchText, " v ");
-
-                        m.team1 = teamSplits.ElementAt(0);
-                        m.team2 = teamSplits.ElementAt(1);
-
-                        m.team1 = DoSubstitutions(m.team1);
-                        m.team2 = DoSubstitutions(m.team2);
-                        m.league = DoSubstitutions(leagueText);
-
-                        m.koDateTime = DateTime.ParseExact(kickOffs.ElementAt(j).Text, "dd MMM HH:mm", CultureInfo.InvariantCulture);
-
-                        foundMatches.Add(m);
+                        driver.DirtySleep(500);
                     }
                     else
                     {
-                        log.Error("Can't get match from " + matchText);
+                        log.Error("Can't find item at index: " + j);
+                        break;
+                    }
+                }
+
+                
+                    sectionCount = driver.FindElements(By.ClassName("Section")).Count();
+
+                    for (int j = 0; j < sectionCount; ++j)
+                    {
+                        var sections = driver.FindElements(By.ClassName("Section"));
+                        
+                        if (j > sections.Count())
+                        {
+                            log.Error("Can't find item at index: " + j);
+                            break;
+                        } 
+                        
+                        var section = sections.ElementAt(j);
+
+                        string sectionText = section.Text;
+
+                        var bits = Regex.Split(sectionText, "\r\n").ToList();
+                        bits.ForEach(x => x.Trim());
+
+
+                        string matchText = bits.ElementAt(0);
+
+                        if (matchText.Contains("\r\n"))
+                        {
+                            matchText = matchText.Substring(0, matchText.IndexOf("\r\n"));
+                        }
+
+                        if (matchText.Contains(" v "))
+                        {
+                            var teamSplits = Regex.Split(matchText, " v ");
+
+                            var m = new aMatch();
+                            m.team1 = teamSplits.ElementAt(0);
+                            m.team2 = teamSplits.ElementAt(1);
+
+                            m.team1 = DoSubstitutions(m.team1);
+                            m.team2 = DoSubstitutions(m.team2);
+                            m.league = DoSubstitutions(leagueText);
+
+                            var thisMatch = foundMatches.SingleOrDefault(x => x.team1 == m.team1 && x.team2 == m.team2);
+
+                            if (thisMatch != null && bits.Count() == 6)
+                            {
+                                var temp = bits.ElementAt(2);
+                                if (temp.StartsWith("O "))
+                                {
+                                    thisMatch.cornerLine = temp.Substring(2);
+                                }
+                                else
+                                {
+                                    log.Debug("temp: " + temp);
+                                }
+
+                                thisMatch.homeAsianCornerPrice = bits.ElementAt(3).Trim();
+                                thisMatch.awayAsianCornerPrice = bits.ElementAt(5).Trim();
+
+                            }
+                            else
+                            {
+                                log.Error("Error occurred");
+                            }
+
+                        }
+                        else
+                        {
+                            log.Error("Can't get match from " + matchText);
+                        }
+
+                    }
+                }
+                catch (Exception ce)
+                {
+                    log.Error("Exception caught: " + ce);
+                }
+
+                IJavaScriptExecutor js = driver.Driver as IJavaScriptExecutor;
+                js.ExecuteScript("document.getElementById('HeaderBack').click()");
+
+                driver.DirtySleep(dirtySleep);
+            }
+        }
+
+        private void GetPreMatchData(DriverWrapper driver, List<aMatch> foundMatches)
+        {
+            var rowsCount = driver.FindElements(By.ClassName("genericRow")).Count();
+
+            for(int i = 0; i < rowsCount; ++i)
+            {
+                var genItems = driver.FindElements(By.ClassName("genericRow"));
+                
+                IWebElement genItem = null;
+                if (i < genItems.Count())
+                {
+                    genItem = genItems.ElementAt(i);
+                }
+                else
+                {
+                    log.Error("Can't find item at index: " + i);
+                    break;
+                }
+
+                string leagueText = genItem.Text.Trim();
+                genItem.Click();
+                driver.DirtySleep(dirtySleep);
+
+                var sectionCount = driver.FindElements(By.ClassName("Section")).Count();
+
+                for (int j = 1; j < sectionCount; ++j)
+                {
+                    var sections = driver.FindElements(By.ClassName("Section"));
+                    if (j < sections.Count())
+                    {
+                        try
+                        {
+                            sections.ElementAt(j).Click();
+                        }
+                        catch (Exception ce)
+                        {
+                            log.Error("Exception caught trying to click at index: " + j);
+                        }
+
+                        driver.DirtySleep(500);
+                    }
+                    else
+                    {
+                        log.Error("Can't find item at index: " + j);
+                        break;
+                    }
+                }
+
+                sectionCount = driver.FindElements(By.ClassName("Section")).Count();
+
+                for (int j = 0; j < sectionCount; ++j)
+                {
+                    var m = new aMatch();
+                    
+                    var sections = driver.FindElements(By.ClassName("Section"));
+
+                    if (j > sections.Count())
+                    {
+                        log.Error("Can't find item at index: " + j);
+                        break;
+                    } 
+
+                    var sectionTexts = Regex.Split(sections.ElementAt(j).Text, "\r\n");
+
+                    if (sectionTexts.Count() == 8)
+                    {
+                        string matchText = sectionTexts.ElementAt(0);
+
+                        if (matchText.Contains(" v "))
+                        {
+                            var teamSplits = Regex.Split(matchText, " v ");
+
+                            m.team1 = teamSplits.ElementAt(0);
+                            m.team2 = teamSplits.ElementAt(1);
+
+                            m.team1 = DoSubstitutions(m.team1);
+                            m.team2 = DoSubstitutions(m.team2);
+                            m.league = DoSubstitutions(leagueText);
+
+                            try
+                            {
+                                m.koDateTime = DateTime.ParseExact(sectionTexts.ElementAt(1).Substring(0,12) , "dd MMM HH:mm", CultureInfo.InvariantCulture);
+                            }
+                            catch (Exception ce)
+                            {
+                                log.Error("Couldn't parse a date out of :" + sectionTexts.ElementAt(1));
+
+                            }
+
+                            m.homeWinPrice  = GetUkOddsPrice(sectionTexts.ElementAt(3)).ToString();
+                            m.drawPrice = GetUkOddsPrice(sectionTexts.ElementAt(5)).ToString();
+                            m.awayWinPrice = GetUkOddsPrice(sectionTexts.ElementAt(7)).ToString();
+
+                            foundMatches.Add(m);
+                        }
+                        else
+                        {
+                            log.Error("Can't get match from " + matchText);
+                        }
+                    }
+                    else
+                    {
+                        log.Error("Wrong text in section: " + sections.ElementAt(j));
                     }
                 }
 
@@ -115,33 +589,14 @@ namespace Scanners
                 js.ExecuteScript("document.getElementById('HeaderBack').click()");
 
                 driver.DirtySleep(dirtySleep);
-
             }
-
-            int longestTeam1 = foundMatches.Select(x => x.team1).Max(x => x.Length);
-            int longestTeam2 = foundMatches.Select(x => x.team2).Max(x => x.Length);
-            int longestLeague = foundMatches.Select(x => x.league).Max(x => x.Length);
-
-            foreach (aMatch m in foundMatches)
-            {
-                log.Debug(m.team1.PadRight(longestTeam1 + 1) + " " + m.team2.PadRight(longestTeam2 + 1) + " at " + m.koDateTime.TimeOfDay + " in " + m.league);
-                int leagueId = dbStuff.AddLeague(m.league);
-                int hTeamId = dbStuff.AddTeam(m.team1);
-                int aTeamId = dbStuff.AddTeam(m.team2);
-                int gameId = dbStuff.AddGame(hTeamId, aTeamId, leagueId, m.koDateTime);
-            }
-
-            log.Debug("");
         }
 
         public override void scan(int sleepTime)
         {
             DriverWrapper driverWrapper = null;
 
-            //TODO: this was always set to 0 in original code
-            int botIndex = 0;
             int idx = -1;
-            bool firstTime = true;
 
             DateTime lastDayGamesUpdated = DateTime.MinValue;
 
@@ -151,7 +606,7 @@ namespace Scanners
                 driverWrapper = driverCreator.CreateDriver(agentString);
             }
 
-            if (botIndex == 0 && skipGames == false)
+            if (skipGames == false)
             {
                 log.Info("Scanning today's games for " + lastDayGamesUpdated.Date);
                 AddTodaysMatches(sleepTime, driverWrapper);
@@ -178,6 +633,7 @@ namespace Scanners
                     }
 
                     if (DateTime.Today.ToUniversalTime().Equals(lastDayGamesUpdated) == false)
+                    //if(true)
                     {
                         if (DateTime.Now.ToUniversalTime().TimeOfDay > TimeSpan.FromHours(3))
                         {
@@ -211,7 +667,6 @@ namespace Scanners
                         driverWrapper.Quit();
                         driverWrapper.Dispose();
                         driverWrapper = null;
-                        firstTime = true;
                         continue;
                     }
 
@@ -238,19 +693,18 @@ namespace Scanners
                     }
 
                     IEnumerable<string> gamesAsText = genericRowElements.Select(x => x.Text);
-                    int attemtps = 3;
-                    do
-                    {
-                        idx = dbStuff.GetActiveBotStates(gamesAsText);
-                        --attemtps;
-                    }
-                    while (idx == -1 && attemtps != 0);
+                    //int attemtps = 3;
+                    //do
+                    //{
+                    //    idx = dbStuff.GetActiveBotStates(gamesAsText);
+                    //    --attemtps;
+                    //}
+                    //while (idx == -1 && attemtps != 0);
 
                     if (idx == -1)
                     {
                         Random random = new Random();
                         idx = random.Next(0, genericRowElements.Count());
-                        firstTime = false;
                     }
 
                     int elementCount = 0;
@@ -278,39 +732,6 @@ namespace Scanners
                         
                         waiter = new WebDriverWait(driverWrapper, TimeSpan.FromSeconds(20));
                         var clockText = "";
-                        /*
-                        driverWrapper.ForceSleep(8000);
-
-                        try
-                        {
-                            ((ITakesScreenshot)(driverWrapper.Driver)).GetScreenshot().SaveAsFile("test.png", ImageFormat.Png);
-                        }
-                        catch (Exception ce)
-                        {
-                            log.Debug(ce);
-                        }
-
-                        driverWrapper.ForceSleep(8000);
-
-                        //try
-                        //{
-                        //    IJavaScriptExecutor js2 = driverWrapper.Driver as IJavaScriptExecutor;
-                        //    js2.ExecuteScript("document.getElementById('arena').setAttribute('style', 'height: 144px;')");
-                        //}
-                        //catch (Exception ce)
-                        //{
-                        //    log.Warn(ce);
-                        //}
-
-                        try
-                        {
-                            ((ITakesScreenshot)(driverWrapper.Driver)).GetScreenshot().SaveAsFile("test2.png", ImageFormat.Png);
-                        }
-                        catch (Exception ce)
-                        {
-                            log.Debug(ce);
-                        }
-                        */
 
                         try
                         {
@@ -482,8 +903,8 @@ namespace Scanners
 
                         var teams = Regex.Split(inPlayTitle, " v ");
 
-                        string homeTeamName = teams.ElementAt(0);
-                        string awayTeamName = teams.ElementAt(1);
+                        string homeTeamName = DoSubstitutions(teams.ElementAt(0));
+                        string awayTeamName = DoSubstitutions(teams.ElementAt(1));
 
                         string today = DateTime.Now.ToUniversalTime().ToString("ddMMyy");
                         string league = "All";

@@ -57,7 +57,9 @@
             this.removeDuplicateMatchesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.tomorrowsGamesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.specialButtonToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.fixBET365LeaguesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.checkBox1 = new System.Windows.Forms.CheckBox();
+            this.doSums = new System.Windows.Forms.Button();
             this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -288,7 +290,8 @@
             this.removeDupTeams,
             this.removeDuplicateMatchesToolStripMenuItem,
             this.tomorrowsGamesToolStripMenuItem,
-            this.specialButtonToolStripMenuItem});
+            this.specialButtonToolStripMenuItem,
+            this.fixBET365LeaguesToolStripMenuItem});
             this.specialToolStripMenuItem.Name = "specialToolStripMenuItem";
             this.specialToolStripMenuItem.Size = new System.Drawing.Size(56, 20);
             this.specialToolStripMenuItem.Text = "Special";
@@ -321,6 +324,13 @@
             this.specialButtonToolStripMenuItem.Text = "Special Button";
             this.specialButtonToolStripMenuItem.Click += new System.EventHandler(this.specialButtonToolStripMenuItem_Click);
             // 
+            // fixBET365LeaguesToolStripMenuItem
+            // 
+            this.fixBET365LeaguesToolStripMenuItem.Name = "fixBET365LeaguesToolStripMenuItem";
+            this.fixBET365LeaguesToolStripMenuItem.Size = new System.Drawing.Size(218, 22);
+            this.fixBET365LeaguesToolStripMenuItem.Text = "Fix BET365 leagues";
+            this.fixBET365LeaguesToolStripMenuItem.Click += new System.EventHandler(this.fixBET365LeaguesToolStripMenuItem_Click);
+            // 
             // checkBox1
             // 
             this.checkBox1.AutoSize = true;
@@ -331,11 +341,23 @@
             this.checkBox1.Text = "Do The Maths";
             this.checkBox1.UseVisualStyleBackColor = true;
             // 
+            // doSums
+            // 
+            this.doSums.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.doSums.Location = new System.Drawing.Point(456, 152);
+            this.doSums.Name = "doSums";
+            this.doSums.Size = new System.Drawing.Size(76, 25);
+            this.doSums.TabIndex = 30;
+            this.doSums.Text = "Do Sums";
+            this.doSums.UseVisualStyleBackColor = true;
+            this.doSums.Click += new System.EventHandler(this.doSums_Click);
+            // 
             // FormzDBEditor
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1074, 973);
+            this.Controls.Add(this.doSums);
             this.Controls.Add(this.checkBox1);
             this.Controls.Add(this.matchBox3);
             this.Controls.Add(this.matchBox2);
@@ -402,6 +424,8 @@
         private System.Windows.Forms.ToolStripMenuItem tomorrowsGamesToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem specialButtonToolStripMenuItem;
         private System.Windows.Forms.CheckBox checkBox1;
+        private System.Windows.Forms.ToolStripMenuItem fixBET365LeaguesToolStripMenuItem;
+        private System.Windows.Forms.Button doSums;
     }
 }
 
