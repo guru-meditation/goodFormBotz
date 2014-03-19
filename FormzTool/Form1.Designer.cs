@@ -60,6 +60,7 @@
             this.fixBET365LeaguesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.checkBox1 = new System.Windows.Forms.CheckBox();
             this.doSums = new System.Windows.Forms.Button();
+            this.button1 = new System.Windows.Forms.Button();
             this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -346,17 +347,29 @@
             this.doSums.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.doSums.Location = new System.Drawing.Point(456, 152);
             this.doSums.Name = "doSums";
-            this.doSums.Size = new System.Drawing.Size(76, 25);
+            this.doSums.Size = new System.Drawing.Size(97, 25);
             this.doSums.TabIndex = 30;
-            this.doSums.Text = "Do Sums";
+            this.doSums.Text = "Goal Prediction";
             this.doSums.UseVisualStyleBackColor = true;
             this.doSums.Click += new System.EventHandler(this.doSums_Click);
+            // 
+            // button1
+            // 
+            this.button1.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.button1.Location = new System.Drawing.Point(559, 152);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(106, 25);
+            this.button1.TabIndex = 31;
+            this.button1.Text = "Corners Prediction";
+            this.button1.UseVisualStyleBackColor = true;
+            this.button1.Click += new System.EventHandler(this.button1_Click_1);
             // 
             // FormzDBEditor
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1074, 973);
+            this.Controls.Add(this.button1);
             this.Controls.Add(this.doSums);
             this.Controls.Add(this.checkBox1);
             this.Controls.Add(this.matchBox3);
@@ -426,6 +439,7 @@
         private System.Windows.Forms.CheckBox checkBox1;
         private System.Windows.Forms.ToolStripMenuItem fixBET365LeaguesToolStripMenuItem;
         private System.Windows.Forms.Button doSums;
+        private System.Windows.Forms.Button button1;
     }
 }
 

@@ -7,10 +7,8 @@ using System.Text;
 
 namespace BotSpace
 {
-    class ExpectedBotCondition
+    public class ExpectedBotCondition
     {
-        private ExpectedBotCondition() { }
-
         public static Func<IWebDriver, IWebElement> GetDivContainingText(string text)
         {
             return (driver) =>
@@ -76,6 +74,49 @@ namespace BotSpace
                 if (iwe != null)
                 {
                     if (iwe.Text.Contains(text))
+                    {
+                        retval = true;
+                    }
+                }
+
+                return retval;
+            };
+        }
+
+        public static Func<IWebDriver, String> ThereIsAClock()
+        {
+            return (driver) =>
+            {
+                    string retVal = "";
+                    var clocks = driver.FindElements(By.Id("mlClock"));
+                    if (clocks.Count != 0)
+                    {
+                        if(clocks[0].Text.Contains(':'))
+                        {
+                            retVal = clocks[0].Text;
+                        }
+                    }
+                    return retVal;
+            };
+        }
+
+        public static Func<IWebDriver, Boolean> ThereIsAnIdWithAttributeWithValue(string id, string attribute, string value)
+        {
+            return (driver) =>
+            {
+                Boolean retval = false;
+                string iwe = "";
+
+                try
+                {
+                    iwe = driver.FindElement(By.Id(id)).GetAttribute(attribute);
+                }
+                catch
+                { }
+
+                if (iwe != "")
+                {
+                    if (iwe == value)
                     {
                         retval = true;
                     }

@@ -1,11 +1,8 @@
-﻿using OpenQA.Selenium;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data.Common;
-using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
 
@@ -13,7 +10,6 @@ namespace Scanners
 {
     using BotSpace;
     using Db;
-    using WebDriver;
 
     public class Scanner
     {
@@ -173,6 +169,7 @@ namespace Scanners
                 }
             }
         }
+
         protected void SendToWeb(string league, DateTime koDate, string homeTeam, string awayTeam, Dictionary<string, int> hstats, Dictionary<string, int> astats, string time)
         {
             int leagueId = addLeague(league);

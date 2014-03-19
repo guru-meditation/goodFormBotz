@@ -1387,7 +1387,20 @@ namespace FormzTool
             string selectedText = matchBox.GetItemText(matchBox.Items[matchBox.SelectedIndex]);
             string id = Regex.Split(selectedText, " ").ElementAt(0);
 
-            WebRequest req = WebRequest.Create("http://127.0.0.1:8000/GetGoalsAndCornersPred?gameId=" + id);
+            WebRequest req = WebRequest.Create("http://127.0.0.1:8000/GetGoalsPrediction?gameId=" + id);
+            WebResponse resp = req.GetResponse();
+
+            System.IO.StreamReader sr = new System.IO.StreamReader(resp.GetResponseStream());
+
+            MessageBox.Show(sr.ReadToEnd().Trim());
+        }
+
+        private void button1_Click_1(object sender, EventArgs e)
+        {
+            string selectedText = matchBox.GetItemText(matchBox.Items[matchBox.SelectedIndex]);
+            string id = Regex.Split(selectedText, " ").ElementAt(0);
+
+            WebRequest req = WebRequest.Create("http://127.0.0.1:8000/GetCornersPrediction?gameId=" + id);
             WebResponse resp = req.GetResponse();
 
             System.IO.StreamReader sr = new System.IO.StreamReader(resp.GetResponseStream());

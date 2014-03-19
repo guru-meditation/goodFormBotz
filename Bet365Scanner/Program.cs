@@ -19,7 +19,7 @@ namespace BotSpace
 {
     using Scanners;
     using Db;
-    using WebDriver;
+
     using System.Collections;
 
     public class aMatch
@@ -55,13 +55,7 @@ namespace BotSpace
         }
     }
 
-    public enum OperationMode
-    {
-        WilliamHillScan,
-        Bet365Scan,
-        UploadWilliamHill,
-        UploadBet365
-    }
+
     /*
     public class GlobalData
     {
@@ -240,6 +234,11 @@ namespace BotSpace
                     gSkipAddGames = true;
                 }
 
+                if (arg.ToLower().Contains("-m:justtodds"))
+                {
+                    gJustOdds = true;
+                }
+
                 if (arg.ToLower().Contains("-m:scratch"))
                 {
                     ScratchPad();
@@ -275,45 +274,20 @@ namespace BotSpace
 
             if (phantomMode)
             {
-                driverCreator = new PhantomDriverCreatorCreatorWait();
+                driverCreator = new PhantomDriverCreator();
             }
             else
             {
-                driverCreator = new ChromeDriverCreatorWait();
+                driverCreator = new ChromeDriverCreator();
             }
 
             Database dbStuff = new Database(dbtype, connectionString, gOpMode);
-
-            //GlobalData gd = GlobalData.Instance;
-            //gd.dbStuff = dbStuff;
 
             while (dbStuff.Connect() == false)
             {
                 log.Warn("Cannot connect to DB... retrying in 10 seconds");
                 System.Threading.Thread.Sleep(10000);
             }
-
-
-            /*
-             * WebServiceHost host = new WebServiceHost(typeof(Service), new Uri("http://localhost:8000/"));
-
-            try
-            {
-                ServiceEndpoint ep = host.AddServiceEndpoint(typeof(IService), new WebHttpBinding(), "");
-                host.Open();
-                using (ChannelFactory<IService> cf = new ChannelFactory<IService>(new WebHttpBinding(), "http://localhost:8000"))
-                {
-                    cf.Endpoint.Behaviors.Add(new WebHttpBehavior());
-
-                    IService channel = cf.CreateChannel();
-                }
-            }
-            catch (CommunicationException cex)
-            {
-                Console.WriteLine("An exception occurred: {0}", cex.Message);
-                host.Abort();
-            }
-            */
 
             Scanner scanner = null;
 
@@ -334,8 +308,8 @@ namespace BotSpace
 
             }
 
-            scanner.scan(sleep);
-            //host.Close();
+            scanner.scan(20);
+
         }     
      
         class Game
@@ -442,5 +416,7 @@ namespace BotSpace
 
             }
         }
+
+        public static bool gJustOdds { get; set; }
     }
 }

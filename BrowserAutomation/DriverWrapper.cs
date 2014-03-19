@@ -7,10 +7,8 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace WebDriver
+namespace BotSpace
 {
-    using BotSpace;
-
     public class DriverWrapper : IWebDriver
     {
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger
@@ -27,10 +25,27 @@ namespace WebDriver
         {
             get { return driver.WindowHandles; }
         }
+
         public string Title
         {
             get { return driver.Title; }
         }
+
+        public void GetElementAndClick(string classType, string findString)
+        {
+            var element = GetWebElementFromClassAndDivText(classType, findString);
+
+            if (element != null)
+            {
+                ClickElement(element);
+            }
+            else
+            {
+                log.Error("Couldn't find " + findString + "in classType: " + classType);
+                return;
+            }
+        }
+
         public string Url
         {
             get
@@ -130,13 +145,6 @@ namespace WebDriver
             return result;
         }
 
-        private bool ScreenContainsInPlayMatch(int timeout)
-        {
-
-            return true;
-        }
-
-
         public virtual bool ClickElement(string xpath)
         {
             bool result = false;
@@ -220,39 +228,135 @@ namespace WebDriver
             return dataList;
         }
 
-        public virtual List<string> GetValuesByClassName(string searchId, int attempts, int expected, char[] seperators)
+        //public virtual List<string> GetValuesByClassName(string searchId, int attempts, int expected, char[] seperators)
+        //{
+        //    while (attempts-- != 0)
+        //    {
+        //        var data = driver.FindElement(By.ClassName(searchId)).Text.Split(seperators);
+        //        var dataList = data.ToList();
+        //        dataList.RemoveAll(x => String.IsNullOrEmpty(x));
+
+        //        if (dataList.Count() == expected)
+        //        {
+        //            return dataList;
+        //        }
+
+        //    }
+        //    return null;
+
+        //}
+
+        private IWebElement FindElement(By by, int timeoutInSeconds)
         {
-            while (attempts-- != 0)
+            if (timeoutInSeconds > 0)
             {
-                var data = driver.FindElement(By.ClassName(searchId)).Text.Split(seperators);
-                var dataList = data.ToList();
-                dataList.RemoveAll(x => String.IsNullOrEmpty(x));
-
-                if (dataList.Count() == expected)
+                var wait = new WebDriverWait(Driver, TimeSpan.FromSeconds(timeoutInSeconds));
+                return wait.Until((drv) =>
                 {
-                    return dataList;
+                    var element = drv.FindElement(by);
+
+                    return element;
                 }
-
+                        );
             }
-            return null;
-
+            return FindElement(by);
         }
 
-        public virtual bool Wait(Func<bool> f)
+        private System.Collections.ObjectModel.ReadOnlyCollection<IWebElement> FindElements(By by, int timeoutInSeconds)
         {
-            DirtySleep(6000);
-            return f();
+            if (timeoutInSeconds > 0)
+            {
+                var wait = new WebDriverWait(Driver, TimeSpan.FromSeconds(timeoutInSeconds));
+                return wait.Until(drv =>
+                {
+                    var elements = drv.FindElements(by);
+                    if (elements.Count == 0)
+                    {
+                        return null;
+                    }
+                    return elements;
+                }
+                    );
+            }
+            return FindElements(by);
         }
+
+        public IWebElement GetWebElementFromClassAndDivTextWait(string classType, string findString)
+        {
+            var wait = new WebDriverWait(Driver, TimeSpan.FromSeconds(20));
+            return wait.Until(drv =>
+            {
+                return GetWebElementFromClassAndDivText(classType, findString);
+            }
+            );
+        }
+
+
+        public List<string> GetValuesByClassName(string searchId, int attempts, int expected, char[] seperators)
+        {
+            var wait = new WebDriverWait(Driver, TimeSpan.FromSeconds(20));
+            
+            try
+            {
+                return wait.Until(drv =>
+                {
+                    while (attempts-- != 0)
+                    {
+                        var data = Driver.FindElement(By.ClassName(searchId)).Text.Split(seperators);
+                        var dataList = data.ToList();
+                        dataList.RemoveAll(x => String.IsNullOrEmpty(x));
+
+                        if (dataList.Count() == expected)
+                        {
+                            return dataList;
+                        }
+                        return null;
+                    }
+                    throw new Exception("Enough Attempts");
+                }
+                );
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
+        public bool WaitUntilConditionIsTrue(Func<IWebDriver, bool> f, int timeToWait)
+        {
+            var waiter = new WebDriverWait(Driver, TimeSpan.FromSeconds(timeToWait));
+            return waiter.Until<bool>(f);
+        }
+
 
         public virtual void DirtySleep(int time)
         {
             log.Debug("DirtySleep for :" + time);
             System.Threading.Thread.Sleep(time);
         }
+
         public void ForceSleep(int time)
         {
             log.Debug("Force sleep for: " + time);
             System.Threading.Thread.Sleep(time);
+        }
+
+        public IWebElement WaitUntil(Func<IWebDriver, IWebElement> ebc, int timeToWait)
+        {
+            var waiter = new WebDriverWait(Driver, TimeSpan.FromSeconds(timeToWait));
+            return waiter.Until(ebc);
+        }
+
+        public bool WaitUntil(Func<IWebDriver, Boolean> ebc, int timeToWait)
+        {
+            var waiter = new WebDriverWait(Driver, TimeSpan.FromSeconds(timeToWait));
+            return waiter.Until(ebc);
+        }
+
+        public String WaitUntil(Func<IWebDriver, String> ebc, int timeToWait)
+        {
+            var waiter = new WebDriverWait(Driver, TimeSpan.FromSeconds(timeToWait));
+            return waiter.Until(ebc);
         }
     }
 }

@@ -8,8 +8,6 @@ using System.Text;
 
 namespace Db
 {
-    using BotSpace;
-
     public abstract class DbCreator
     {
         abstract public DbConnection newConnection(string connectionString);

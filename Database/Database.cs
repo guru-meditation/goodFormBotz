@@ -7,10 +7,17 @@ using System.Text.RegularExpressions;
 
 namespace Db
 {
-    using BotSpace;
     using Npgsql;
     using NpgsqlTypes;
     using System.Data;
+    
+    public enum OperationMode
+    {
+        WilliamHillScan,
+        Bet365Scan,
+        UploadWilliamHill,
+        UploadBet365
+    }
 
     public class Database
     {
@@ -227,7 +234,7 @@ namespace Db
 
                     if (idx != -1 && thisLeagueId == -1)
                     {
-                        using (DbCommand update = dbCreator.newCommand("update games set league_id = " + leagueId + " where id = " + "idx;", dbConnectionList.ElementAt(0)))
+                        using (DbCommand update = dbCreator.newCommand("update games set league_id = " + leagueId + " where id = " + idx + ";", dbConnectionList.ElementAt(0)))
                         {
                             update.ExecuteNonQuery();
                         }
@@ -596,8 +603,6 @@ namespace Db
 
         internal void AddCornerData(int gameID, string cornerline, string homeprice, string awayprice)
         {
-            int idx = -1;
-
             bool alreadyGotThis = false;
 
             using (DbCommand find = dbCreator.newCommand("SELECT game_id, cornerline, homeprice, awayprice, created_at FROM asiancorners WHERE game_id like '" + gameID + "' order by created_at desc;", dbConnectionList.ElementAt(0)))
@@ -634,8 +639,6 @@ namespace Db
 
         internal void AddRaceToCornerData(int gameId, int cornerTarget, string homeprice, string awayprice, string neitherprice)
         {
-            int idx = -1;
-
             string now = DateTime.Now.ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss");
             string sql = "INSERT into racetocorners ( idx, game_id, cornertarget, homeprice, awayprice, neitherprice, created_at, updated_at  ) VALUES ('" + 1 + "', '" + gameId + "', '" + cornerTarget + "', '" + homeprice + "', '" + awayprice + "', '" + neitherprice + "', '" + now + "', '" + now + "');";
 
@@ -680,8 +683,6 @@ namespace Db
 
         internal void AddFinalResultPrices(int gameId, string homeprice, string drawprice, string awayprice)
         {
-            int idx = -1;
-
             string now = DateTime.Now.ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss");
             string sql = "INSERT into fulltimeprice ( idx, game_id, homeprice, drawprice, awayprice, created_at, updated_at  ) VALUES ('" + 1 + "', '" + gameId + "', '" + homeprice + "', '" + drawprice + "', '" + awayprice + "', '" + now + "', '" + now + "');";
 

@@ -1,5 +1,4 @@
-﻿using OpenQA.Selenium;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -7,12 +6,10 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
-
 namespace Scanners
 {
     using BotSpace;
     using Db;
-    using WebDriver;
 
     public class ScanWilliamHill : Scanner
     {
