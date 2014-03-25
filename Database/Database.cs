@@ -19,6 +19,40 @@ namespace Db
         UploadBet365
     }
 
+    public class aMatch
+    {
+        public int id;
+        public string team1;
+        public string team2;
+        public string league;
+        public string cornerLine;
+        public string homeAsianCornerPrice;
+        public string awayAsianCornerPrice;
+        public string homeRaceTo3CornersPrice;
+        public string awayRaceTo3CornersPrice;
+        public string neitherRaceTo3CornersPrice;
+        public string homeRaceTo5CornersPrice;
+        public string awayRaceTo5CornersPrice;
+        public string neitherRaceTo5CornersPrice;
+        public string homeRaceTo7CornersPrice;
+        public string awayRaceTo7CornersPrice;
+        public string neitherRaceTo7CornersPrice;
+        public string homeRaceTo9CornersPrice;
+        public string awayRaceTo9CornersPrice;
+        public string neitherRaceTo9CornersPrice;
+        public string homeWinPrice;
+        public string drawPrice;
+        public string awayWinPrice;
+
+        public DateTime koDateTime;
+
+        public override string ToString()
+        {
+            return team1 + " v " + team2 + " at " + koDateTime + " in " + league;
+        }
+    }
+
+
     public class Database
     {
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger
@@ -601,7 +635,7 @@ namespace Db
 
         public string dbConnectionString { get; set; }
 
-        internal void AddCornerData(int gameID, string cornerline, string homeprice, string awayprice)
+        public void AddCornerData(int gameID, string cornerline, string homeprice, string awayprice)
         {
             bool alreadyGotThis = false;
 
@@ -637,7 +671,7 @@ namespace Db
             }   
         }
 
-        internal void AddRaceToCornerData(int gameId, int cornerTarget, string homeprice, string awayprice, string neitherprice)
+        public void AddRaceToCornerData(int gameId, int cornerTarget, string homeprice, string awayprice, string neitherprice)
         {
             string now = DateTime.Now.ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss");
             string sql = "INSERT into racetocorners ( idx, game_id, cornertarget, homeprice, awayprice, neitherprice, created_at, updated_at  ) VALUES ('" + 1 + "', '" + gameId + "', '" + cornerTarget + "', '" + homeprice + "', '" + awayprice + "', '" + neitherprice + "', '" + now + "', '" + now + "');";
@@ -681,7 +715,7 @@ namespace Db
             }
         }
 
-        internal void AddFinalResultPrices(int gameId, string homeprice, string drawprice, string awayprice)
+        public void AddFinalResultPrices(int gameId, string homeprice, string drawprice, string awayprice)
         {
             string now = DateTime.Now.ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss");
             string sql = "INSERT into fulltimeprice ( idx, game_id, homeprice, drawprice, awayprice, created_at, updated_at  ) VALUES ('" + 1 + "', '" + gameId + "', '" + homeprice + "', '" + drawprice + "', '" + awayprice + "', '" + now + "', '" + now + "');";

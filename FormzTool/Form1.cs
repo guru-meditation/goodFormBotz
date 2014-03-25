@@ -1,5 +1,6 @@
 ﻿using Npgsql;
 using System;
+using System.Configuration;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
@@ -14,9 +15,9 @@ namespace FormzTool
 {
     public partial class FormzDBEditor : Form
     {
+        static string connectionString = ConfigurationManager.AppSettings["connection1"];
         static NpgsqlConnection pgConnection = null;
-        string connectionString = "Database=d7menjp3rap4ts;Server=ec2-54-235-155-182.compute-1.amazonaws.com;Port=5432;User Id=leupjwfvjinxsi;Password=HACn2POfVhsUY9S5HUsV7DhgS_;SSL=true;CommandTimeout=600;Timeout=600";
-
+        
         public FormzDBEditor()
         {
             InitializeComponent();
