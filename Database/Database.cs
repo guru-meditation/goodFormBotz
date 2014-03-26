@@ -60,13 +60,12 @@ namespace Db
         private DbCreator dbCreator = null;
         private List<DbConnection> dbConnectionList = new List<DbConnection>();
         
-        private OperationMode opMode;
+        private OperationMode m_opMode;
 
         public Database(string dbtype, string connectionString, OperationMode operationMode)
         {
-            dbConnectionString = connectionString;
-
-            opMode = operationMode;
+            m_dbConnectionString = connectionString;
+            m_opMode = operationMode;
 
             switch (dbtype)
             {
@@ -79,9 +78,7 @@ namespace Db
                 default:
                     dbCreator = new SQLiteCreator();
                     break;
-            }
-
-            
+            } 
         }
 
         public bool Connect()
@@ -92,7 +89,7 @@ namespace Db
             
             try
             {
-                    connection = dbCreator.newConnection(dbConnectionString);
+                    connection = dbCreator.newConnection(m_dbConnectionString);
 
                     if (connection != null)
                     {
@@ -100,7 +97,6 @@ namespace Db
                         
                         retVal = true;
                     }
-
             }
             catch (Exception ex)
             {
@@ -555,7 +551,7 @@ namespace Db
 
                                 string sql = "";
 
-                                if (opMode == OperationMode.Bet365Scan || opMode == OperationMode.UploadBet365)
+                                if (m_opMode == OperationMode.Bet365Scan || m_opMode == OperationMode.UploadBet365)
                                 {
                                     if (values.Count() == 8)
                                     {
@@ -633,7 +629,7 @@ namespace Db
         }
 
 
-        public string dbConnectionString { get; set; }
+        public string m_dbConnectionString { get; set; }
 
         public void AddCornerData(int gameID, string cornerline, string homeprice, string awayprice)
         {
