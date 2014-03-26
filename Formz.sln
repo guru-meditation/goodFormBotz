@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Database", "Database\Databa
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BrowserAutomation", "BrowserAutomation\BrowserAutomation.csproj", "{F1AD0B8D-5351-4631-8B07-08A762007D14}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PredictionzBot", "PredictionzBot\PredictionzBot.csproj", "{FA7438BB-1EBE-48DE-8E59-5B39875499B2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -89,6 +91,18 @@ Global
 		{F1AD0B8D-5351-4631-8B07-08A762007D14}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{F1AD0B8D-5351-4631-8B07-08A762007D14}.Release|x64.ActiveCfg = Release|Any CPU
 		{F1AD0B8D-5351-4631-8B07-08A762007D14}.Release|x86.ActiveCfg = Release|Any CPU
+		{FA7438BB-1EBE-48DE-8E59-5B39875499B2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FA7438BB-1EBE-48DE-8E59-5B39875499B2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FA7438BB-1EBE-48DE-8E59-5B39875499B2}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{FA7438BB-1EBE-48DE-8E59-5B39875499B2}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{FA7438BB-1EBE-48DE-8E59-5B39875499B2}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{FA7438BB-1EBE-48DE-8E59-5B39875499B2}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{FA7438BB-1EBE-48DE-8E59-5B39875499B2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FA7438BB-1EBE-48DE-8E59-5B39875499B2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FA7438BB-1EBE-48DE-8E59-5B39875499B2}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{FA7438BB-1EBE-48DE-8E59-5B39875499B2}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{FA7438BB-1EBE-48DE-8E59-5B39875499B2}.Release|x64.ActiveCfg = Release|Any CPU
+		{FA7438BB-1EBE-48DE-8E59-5B39875499B2}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

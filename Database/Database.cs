@@ -754,5 +754,34 @@ namespace Db
                 }
             }
         }
+
+        public List<string> GetGamesForThisDay(DateTime thisDay)
+        {
+            string day = thisDay.ToString("yyyy-MM-dd HH:mm:ss").Substring(0, 10);
+            return OneColumnQuery("select id from games where to_char(kodate, 'YYYY-MM-DD') like '" + day + "%'");
+        }
+
+        private List<string> OneColumnQuery(string sql)
+        {
+            var ids = new List<string>();
+
+            using (DbCommand find = dbCreator.newCommand(sql, dbConnectionList.ElementAt(0)))
+            {
+                using (DbDataReader dr = find.ExecuteReader())
+                {
+                    bool hasRows = dr.HasRows;
+
+                    if (hasRows == true)
+                    {
+                        while (dr.Read())
+                        {
+                            ids.Add(dr[0].ToString());
+                        }
+                    }
+                }
+            }
+
+            return ids;
+        }
     }
 }

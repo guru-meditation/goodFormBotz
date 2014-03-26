@@ -10,8 +10,10 @@ namespace PredictionzBot
 {
     class Program
     {
+
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
+        static OperationMode gOpMode = OperationMode.Bet365Scan;
         static string site = ConfigurationManager.AppSettings["site"];
         static string connectionString = ConfigurationManager.AppSettings["connection1"];
         static string dbtype = ConfigurationManager.AppSettings["dbtype"];
