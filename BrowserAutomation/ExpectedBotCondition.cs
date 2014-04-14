@@ -83,19 +83,22 @@ namespace BotSpace
             };
         }
 
-        public static Func<IWebDriver, String> ThereIsAClock()
+        public static Func<IWebDriver, Boolean> ThereIsAClock()
         {
             return (driver) =>
             {
-                    string retVal = "";
+                    Boolean retVal = false;
+                    
                     var clocks = driver.FindElements(By.Id("mlClock"));
+                    
                     if (clocks.Count != 0)
                     {
                         if(clocks[0].Text.Contains(':'))
                         {
-                            retVal = clocks[0].Text;
+                            retVal = true;
                         }
                     }
+
                     return retVal;
             };
         }

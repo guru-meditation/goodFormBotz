@@ -667,6 +667,50 @@ namespace Db
             }   
         }
 
+        public void AddPredictionsData(string gameId, Dictionary<string, string> data)
+        {
+
+            string now = DateTime.Now.ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss");
+            string sql = "INSERT into predictions ( id, \"gameId\", \"goalsWinHome\", \"goalsWinAway\", \"goalsLikelyScoreHome\", \"goalsLikelyScoreAway\", \"goalsLikelyProbability\", " +
+                         "\"cornersWinHome\", \"cornersWinAway\", \"cornersLikelyScoreHome\", \"cornersLikelyScoreAway\", \"cornersLikelyProbability\", created_at, updated_at  ) " + 
+                         " VALUES (" + 
+                         gameId + ", " + 
+                         gameId + ", " + 
+                         data["goalsWinHome"] + ", "  +
+                         data["goalsWinAway"] + ", " +
+                         data["goalsLikelyScoreHome"] + ", " +
+                         data["goalsLikelyScoreAway"] + ", " +
+                         data["goalsLikelyProbability"] + ", " +
+                         data["cornersWinHome"] + ", " +
+                         data["cornersWinAway"] + ", " +
+                         data["cornersLikelyScoreHome"] + ", " +
+                         data["cornersLikelyScoreAway"] + ", " +
+                         data["cornersLikelyProbability"] + ", '" +
+                         now + "', '" + now + "');";
+
+            bool alreadyGotThis = false;
+
+            using (DbCommand find = dbCreator.newCommand("SELECT \"gameId\" FROM predictions WHERE \"gameId\" = " + gameId + ";", dbConnectionList.ElementAt(0)))
+            {
+                using (DbDataReader dr = find.ExecuteReader())
+                {
+                    alreadyGotThis = dr.HasRows;
+                    dr.Close();
+                }
+            }
+
+            //just add it again
+            //if (alreadyGotThis == false)
+            {
+                log.Info(sql);
+
+                using (DbCommand insert = dbCreator.newCommand(sql, dbConnectionList.ElementAt(0)))
+                {
+                    insert.ExecuteNonQuery();
+                }
+            }
+        }
+
         public void AddRaceToCornerData(int gameId, int cornerTarget, string homeprice, string awayprice, string neitherprice)
         {
             string now = DateTime.Now.ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss");
@@ -759,6 +803,16 @@ namespace Db
         {
             string day = thisDay.ToString("yyyy-MM-dd HH:mm:ss").Substring(0, 10);
             return OneColumnQuery("select id from games where to_char(kodate, 'YYYY-MM-DD') like '" + day + "%'");
+        }
+
+        public List<string> GetFurureGames()
+        {
+            return OneColumnQuery("select id from games where kodate > current_date");
+        }
+
+        public List<string> GetIdsFromPredictionTable()
+        {
+            return OneColumnQuery("select id from predictions");
         }
 
         private List<string> OneColumnQuery(string sql)

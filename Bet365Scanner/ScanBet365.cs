@@ -137,7 +137,23 @@ namespace Scanners
 
                         try
                         {
-                            clockText = driverWrapper.WaitUntil(ExpectedBotCondition.ThereIsAClock(), 20);
+                            bool clockIsOnScreen = driverWrapper.WaitUntil(ExpectedBotCondition.ThereIsAClock(), 20);
+
+                            if (clockIsOnScreen)
+                            {
+                                var clock = driverWrapper.FindElement(By.Id("mlClock"));
+                                if (clock.Text.Contains(':'))
+                                {
+                                    clockText = clock.Text;
+                                }
+                            }
+
+                            if (String.IsNullOrEmpty(clockText))
+                            {
+                                log.Error("No time avaiable!!!!");
+                                throw new Exception();
+                            }
+
                         }
                         catch (Exception vr)
                         {

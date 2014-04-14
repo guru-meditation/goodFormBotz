@@ -31,6 +31,7 @@ namespace Scanners
              {".e", "."},
              {".6", "&"},
              {"'", ""},
+             {"/", " "},
              {"Phillipine", "Philippine"}
         };
 
