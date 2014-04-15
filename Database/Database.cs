@@ -799,6 +799,31 @@ namespace Db
             }
         }
 
+        public string GetGameDetails(string id)
+        {
+            var sql = "select g1.id, t1.name, t2.name, l1.name, g1.kodate from games g1 join teams t1 on g1.team1 = t1.id join teams t2 on g1.team2 = t2.id join leagues l1 on l1.id = g1.league_id where g1.id =" + id;
+
+            string retVal = "";
+
+            using (DbCommand find = dbCreator.newCommand(sql, dbConnectionList.ElementAt(0)))
+            {
+                using (DbDataReader dr = find.ExecuteReader())
+                {
+                    bool hasRows = dr.HasRows;
+
+                    if (hasRows)
+                    {
+                        dr.Read();
+                        retVal = dr[0].ToString() + " " + dr[1].ToString() + " " + dr[2].ToString() + " " + dr[3].ToString() + " " + dr[4].ToString();
+                    }
+
+                    dr.Close();
+                }
+            }
+
+            return retVal;
+        }
+
         public List<string> GetGamesForThisDay(DateTime thisDay)
         {
             string day = thisDay.ToString("yyyy-MM-dd HH:mm:ss").Substring(0, 10);

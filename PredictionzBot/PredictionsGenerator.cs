@@ -22,15 +22,26 @@ namespace PredictionzBot
             var ids = m_dbStuff.GetFurureGames();
             var alreadyPredicted = m_dbStuff.GetIdsFromPredictionTable();
 
+            int goodOnes = 0, badOnes = 0;
+            Console.WriteLine("Removing " + alreadyPredicted.Count() + " games");
+
             ids.RemoveAll(i => alreadyPredicted.Contains(i));
 
             foreach (var id in ids)
             {
+                string gameDetails = m_dbStuff.GetGameDetails(id);
                 try
                 {
+                    Console.WriteLine("Good ones: " + goodOnes + " Bad ones " + badOnes + " Total: " + ids.Count());
+                    Console.WriteLine(gameDetails);
+
                     var data = new Dictionary<string, string>();
 
                     var goalResp = getGoalsPredictionFromWebService(id);
+
+                    Console.WriteLine("Goal Reponse:");
+                    Console.WriteLine(goalResp);
+
                     var goalResps = Regex.Split(goalResp, "&#xD").ToList();
 
                     if (goalResps.Count() == 7)
@@ -53,6 +64,9 @@ namespace PredictionzBot
                     var cornerResp = getCornersPredictionFromWebService(id);
                     var cornerResps = Regex.Split(cornerResp, "&#xD").ToList();
 
+                    Console.WriteLine("Corner Reponse:");
+                    Console.WriteLine(cornerResp);
+
                     if (cornerResps.Count() == 7)
                     {
                         cornerResps.RemoveAt(0);
@@ -70,6 +84,7 @@ namespace PredictionzBot
                         data["cornersLikelyProbability"] = moddedCornerResps.ElementAt(4);
 
                         m_dbStuff.AddPredictionsData(id, data);
+                        goodOnes++;
                     }
 
                     foreach (var respText in cornerResps)
@@ -79,8 +94,16 @@ namespace PredictionzBot
                 }
                 catch (Exception ce)
                 {
-                    Console.WriteLine("Threw exception for id: " + id);
+                    badOnes++;
+                    Console.WriteLine("T++++++++++++++++++++++++++++++++++");
+                    Console.WriteLine("Thrown exception for id: " + id);
+                    Console.WriteLine("T++++++++++++++++++++++++++++++++++");
                     Console.WriteLine(ce);
+
+                    System.IO.StreamWriter file = new System.IO.StreamWriter("Fails.txt", true);
+                    file.WriteLine(gameDetails);
+
+                    file.Close();
                 }
 
             }
