@@ -1389,6 +1389,7 @@ namespace FormzTool
             string id = Regex.Split(selectedText, " ").ElementAt(0);
 
             WebRequest req = WebRequest.Create("http://127.0.0.1:8000/GetGoalsPrediction?gameId=" + id);
+            req.Timeout = 300000;
             WebResponse resp = req.GetResponse();
 
             System.IO.StreamReader sr = new System.IO.StreamReader(resp.GetResponseStream());
@@ -1402,6 +1403,7 @@ namespace FormzTool
             string id = Regex.Split(selectedText, " ").ElementAt(0);
 
             WebRequest req = WebRequest.Create("http://127.0.0.1:8000/GetCornersPrediction?gameId=" + id);
+            req.Timeout = 300000;
             WebResponse resp = req.GetResponse();
 
             System.IO.StreamReader sr = new System.IO.StreamReader(resp.GetResponseStream());
