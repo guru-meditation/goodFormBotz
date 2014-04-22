@@ -37,7 +37,21 @@ namespace PredictionzBot
 
                     var data = new Dictionary<string, string>();
 
-                    var goalResp = getGoalsPredictionFromWebService(id);
+                    var goalResp = "";        
+                    bool httpGetOkay = false;
+
+                    while (httpGetOkay == false)
+                    {
+                        try
+                        {
+                            goalResp = getGoalsPredictionFromWebService(id);
+                            httpGetOkay = true;
+                        }
+                        catch(Exception)
+                        {
+                            Console.WriteLine("HTTP GET Failed. Retrying...");
+                        }
+                    }
 
                     Console.WriteLine("Goal Reponse:");
                     Console.WriteLine(goalResp);
@@ -61,7 +75,22 @@ namespace PredictionzBot
                         data["goalsLikelyProbability"] = moddedGoalResps.ElementAt(4);
                     }
 
-                    var cornerResp = getCornersPredictionFromWebService(id);
+                    var cornerResp = "";
+                    httpGetOkay = false;
+
+                    while (httpGetOkay == false)
+                    {
+                        try
+                        {
+                            goalResp = getCornersPredictionFromWebService(id);
+                            httpGetOkay = true;
+                        }
+                        catch (Exception)
+                        {
+                            Console.WriteLine("HTTP GET Failed. Retrying...");
+                        }
+                    }
+
                     var cornerResps = Regex.Split(cornerResp, "&#xD").ToList();
 
                     Console.WriteLine("Corner Reponse:");
@@ -86,11 +115,6 @@ namespace PredictionzBot
                         m_dbStuff.AddPredictionsData(id, data);
                         goodOnes++;
                     }
-
-                    foreach (var respText in cornerResps)
-                    {
-                        Console.WriteLine(cornerResp);
-                    }
                 }
                 catch (Exception ce)
                 {
@@ -99,13 +123,7 @@ namespace PredictionzBot
                     Console.WriteLine("Thrown exception for id: " + id);
                     Console.WriteLine("T++++++++++++++++++++++++++++++++++");
                     Console.WriteLine(ce);
-
-                    System.IO.StreamWriter file = new System.IO.StreamWriter("Fails.txt", true);
-                    file.WriteLine(gameDetails);
-
-                    file.Close();
                 }
-
             }
         }
 
@@ -113,7 +131,7 @@ namespace PredictionzBot
         {
             WebRequest req = WebRequest.Create("http://127.0.0.1:8000/GetCornersPrediction?gameId=" + id);
 
-            req.Timeout = 3000000;
+            req.Timeout = 200000;
             WebResponse resp = req.GetResponse();
 
             System.IO.StreamReader sr = new System.IO.StreamReader(resp.GetResponseStream());
@@ -124,7 +142,7 @@ namespace PredictionzBot
         private string getGoalsPredictionFromWebService(string id)
         {
             WebRequest req = WebRequest.Create("http://127.0.0.1:8000/GetGoalsPrediction?gameId=" + id);
-            req.Timeout = 3000000;
+            req.Timeout = 200000;
             WebResponse resp = req.GetResponse();
 
             System.IO.StreamReader sr = new System.IO.StreamReader(resp.GetResponseStream());
