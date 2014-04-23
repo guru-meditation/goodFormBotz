@@ -19,7 +19,7 @@ namespace PredictionzBot
 
         internal void Go()
         {
-            var ids = m_dbStuff.GetFurureGames();
+            var ids = m_dbStuff.GetFutureGamesWithExceptions( new List<string>() { "1202728" });
             var alreadyPredicted = m_dbStuff.GetIdsFromPredictionTable();
 
             int goodOnes = 0, badOnes = 0;
@@ -74,6 +74,11 @@ namespace PredictionzBot
                         data["goalsLikelyScoreAway"] = moddedGoalResps.ElementAt(3).Split(' ').Last(); ;
                         data["goalsLikelyProbability"] = moddedGoalResps.ElementAt(4);
                     }
+                    else
+                    {
+                        badOnes++;
+                        continue;
+                    }
 
                     var cornerResp = "";
                     httpGetOkay = false;
@@ -82,7 +87,7 @@ namespace PredictionzBot
                     {
                         try
                         {
-                            goalResp = getCornersPredictionFromWebService(id);
+                            cornerResp = getCornersPredictionFromWebService(id);
                             httpGetOkay = true;
                         }
                         catch (Exception)
@@ -114,6 +119,11 @@ namespace PredictionzBot
 
                         m_dbStuff.AddPredictionsData(id, data);
                         goodOnes++;
+                        Console.WriteLine("Completed OKAY!!");
+                    }
+                    else
+                    {
+                        badOnes++;
                     }
                 }
                 catch (Exception ce)
@@ -131,7 +141,7 @@ namespace PredictionzBot
         {
             WebRequest req = WebRequest.Create("http://127.0.0.1:8000/GetCornersPrediction?gameId=" + id);
 
-            req.Timeout = 200000;
+            req.Timeout = 1000000;
             WebResponse resp = req.GetResponse();
 
             System.IO.StreamReader sr = new System.IO.StreamReader(resp.GetResponseStream());
@@ -142,7 +152,8 @@ namespace PredictionzBot
         private string getGoalsPredictionFromWebService(string id)
         {
             WebRequest req = WebRequest.Create("http://127.0.0.1:8000/GetGoalsPrediction?gameId=" + id);
-            req.Timeout = 200000;
+            
+            req.Timeout = 1000000;
             WebResponse resp = req.GetResponse();
 
             System.IO.StreamReader sr = new System.IO.StreamReader(resp.GetResponseStream());

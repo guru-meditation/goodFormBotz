@@ -690,7 +690,7 @@ namespace Db
 
             bool alreadyGotThis = false;
 
-            using (DbCommand find = dbCreator.newCommand("SELECT \"gameid\" FROM predictions WHERE \"gameid\" = " + gameId + ";", dbConnectionList.ElementAt(0)))
+            using (DbCommand find = dbCreator.newCommand("SELECT \"gameid\" FROM prediction_data WHERE \"gameid\" = " + gameId + ";", dbConnectionList.ElementAt(0)))
             {
                 using (DbDataReader dr = find.ExecuteReader())
                 {
@@ -830,9 +830,16 @@ namespace Db
             return OneColumnQuery("select id from games where to_char(kodate, 'YYYY-MM-DD') like '" + day + "%'");
         }
 
-        public List<string> GetFurureGames()
+        public List<string> GetFutureGames()
         {
             return OneColumnQuery("select id from games where kodate > current_date");
+        }
+
+        public List<string> GetFutureGamesWithExceptions( List<string> omitLeaguesList )
+        {
+            string leaguesToOmit = String.Join(",", omitLeaguesList);
+            string sql = "select id from games where kodate > current_date and league_id not in ( " + leaguesToOmit + " )";
+            return OneColumnQuery( sql );
         }
 
         public List<string> GetIdsFromPredictionTable()
