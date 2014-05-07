@@ -824,24 +824,18 @@ namespace Db
             return retVal;
         }
 
-        public List<string> GetGamesForThisDay(DateTime thisDay)
-        {
-            string day = thisDay.ToString("yyyy-MM-dd HH:mm:ss").Substring(0, 10);
-            return OneColumnQuery("select id from games where to_char(kodate, 'YYYY-MM-DD') like '" + day + "%'");
-        }
-
         public List<string> GetFutureGames()
         {
             return OneColumnQuery("select id from games where kodate > current_date");
         }
 
-        public List<string> GetFutureGamesWithExceptions( List<string> omitLeaguesList )
+        public List<string> GetADaysGames(DateTime aDate)
         {
-            string leaguesToOmit = String.Join(",", omitLeaguesList);
-            string sql = "select id from games where kodate > current_date and league_id not in ( " + leaguesToOmit + " )";
-            return OneColumnQuery( sql );
+            string now = aDate.ToString("yyyy-MM-dd HH:mm:ss").Substring(0, 10);
+            string sql = "select id from games where to_char(kodate, 'YYYY-MM-DD') like '" + now + "%' and league_id != -1 order by kodate asc";
+            return OneColumnQuery(sql);
         }
-
+        
         public List<string> GetIdsFromPredictionTable()
         {
             return OneColumnQuery("select id from prediction_data");
