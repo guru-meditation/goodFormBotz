@@ -13,10 +13,19 @@ using System.Collections.ObjectModel;
 namespace Scanners
 {
 
+    class Game
+    {
+        public string name;
+        public string team1;
+        public string team2;
+    }
+
     public class ScanBet365 : Scanner
     {
         private static readonly log4net.ILog log
               = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+
+        private List<Game> competitions = new List<Game>();
 
         public ScanBet365(DriverCreator creator, Database db, string xml_path, bool skip_games)
             : base(creator, db, xml_path, skip_games)
@@ -63,12 +72,13 @@ namespace Scanners
                     }
 
                     //load the main page
-                    driverWrapper.Url = "https://mobile.bet365.com/premium/#type=Splash;key=1;ip=0;lng=1";
-                    IWebElement inPlayElement = null;
+                    driverWrapper.Url = "https://mobile.bet365.com/premium/#type=InPlay;key=1;ip=1;lng=1";
+                    //driverWrapper.Url = "https://mobile.bet365.com/premium/#type=Splash;key=1;ip=0;lng=1";
+                    bool inPlayElement = false;
 
                     try
                     {
-                        inPlayElement = driverWrapper.WaitUntil(ExpectedBotCondition.GetDivContainingText("In-Play"), 60);
+                        inPlayElement = driverWrapper.WaitUntil(ExpectedBotCondition.VerifyInplayScreen(), 60);
                     }
                     catch (WebDriverTimeoutException)
                     {
@@ -80,39 +90,65 @@ namespace Scanners
                         continue;
                     }
 
-                    List<IWebElement> genericRowElements = null;
+                    List<IWebElement> fixtureElements = null;
+                    List<IWebElement> competitionElements = null;
 
-                    if (inPlayElement != null)
+                    if (inPlayElement)
                     {
-                        driverWrapper.ClickElement(inPlayElement);
+                        fixtureElements = driverWrapper.FindElements(By.ClassName("Fixture")).ToList();
+                        int removed = fixtureElements.RemoveAll(x => x.GetAttribute("class") != "Fixture");
 
-                        bool inPlayGamesOnScreen = driverWrapper.WaitUntil(ExpectedBotCondition.PageHasClassContainingString("genericRow", " v "), 20);
+                        log.Warn("Fixtures: " + fixtureElements.Count);
+                        log.Warn("Removed: " + removed); 
                         
-                        genericRowElements = driverWrapper.FindElements(By.ClassName("genericRow")).ToList();
+                        competitionElements = driverWrapper.FindElements(By.ClassName("Competition")).ToList();
+                        competitions.Clear();
 
-                        log.Warn("Generic Rows: " + genericRowElements.Count);
-
-                        int firstNonMatch = genericRowElements.IndexOf(genericRowElements.First(x => x.Text.Contains(" v ") == false));
-                        
-                        if (firstNonMatch != -1)
+                        foreach (var comp in competitionElements)
                         {
-                            genericRowElements.RemoveRange(firstNonMatch, genericRowElements.Count() - firstNonMatch);
+                            var splits = Regex.Split(comp.Text, "\r\n").ToList();
+        
+                            var competitionName = splits.ElementAt(0);
+                            splits.RemoveAll(x => char.IsDigit(x.Last()) == false);
+                            splits.ForEach(x=> x.Trim());
+
+                            Game thisGame = null;
+
+                            for(int i = 0; i != splits.Count(); ++i)
+                            {
+                                //var grrr = splits[i].Substring(splits[i].IndexOf(" ") + 1);
+                                //grrr = grrr.Substring(0, grrr.LastIndexOf(" ")).Trim();
+
+                                //if (i % 2 == 0)
+                                //{
+                                //    thisGame = new Game();
+                                //    thisGame.name = competitionName;
+                                //    thisGame.team1 = grrr;
+                                //}
+                                //else
+                                //{
+                                //    thisGame.team2 = grrr;
+                                //    competitions.Add(thisGame);
+                                //}
+                            }
                         }
 
-                        log.Warn("Generic Rows Inplay: " + genericRowElements.Count);
+                        log.Warn(competitions);
                     }
-
-                    IEnumerable<string> gamesAsText = genericRowElements.Select(x => x.Text);
+                    else
+                    {
+                        continue;
+                    }
 
                     if (idx == -1)
                     {
                         Random random = new Random();
-                        idx = random.Next(0, genericRowElements.Count());
+                        idx = random.Next(0, fixtureElements.Count());
                     }
 
                     int elementCount = 0;
 
-                    genericRowElements.ForEach(x =>
+                    fixtureElements.ForEach(x =>
                     {
                         if (idx == elementCount)
                             log.Warn(x.Text);
@@ -121,17 +157,16 @@ namespace Scanners
                         ++elementCount;
                     });
 
-                    log.Info("Scanning game " + idx + " of " + genericRowElements.Count() + " games in play at " + DateTime.Now.ToUniversalTime());
+                    log.Info("Scanning game " + idx + " of " + fixtureElements.Count() + " games in play at " + DateTime.Now.ToUniversalTime());
 
-                    if (idx < genericRowElements.Count())
+                    if (idx < fixtureElements.Count())
                     {
                         var hstats = new Dictionary<string, int>();
                         var astats = new Dictionary<string, int>();
 
                         int attempts = 3;
 
-                        //*[@id="rw_spl_sc_1-1-5-24705317-2-0-0-1-1-0-0-0-0-0-1-0-0_101"]/div[1]
-                        genericRowElements.ElementAt(idx).Click();
+                        fixtureElements.ElementAt(idx).Click();
 
                         string clockText = "";
 

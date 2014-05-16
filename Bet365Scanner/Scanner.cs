@@ -187,8 +187,12 @@ namespace Scanners
             log.Debug("Adding " + homeTeam + " [" + hTeamId + "] v " + awayTeam + " [" + aTeamId + "] in league [" + leagueId + "] with game id: " + gameId + " at time: " + time);
 
             log.Debug("Goals Corners");
-            log.Debug(hstats[statType[1]].ToString().PadRight(6) + hstats[statType[6]].ToString());
-            log.Debug(astats[statType[1]].ToString().PadRight(6) + astats[statType[6]].ToString());
+
+            var line1 = hstats[statType[1]].ToString().PadRight(6) + hstats[statType[6]].ToString();
+            var line2 = astats[statType[1]].ToString().PadRight(6) + astats[statType[6]].ToString();
+
+            log.Debug(line1);
+            log.Debug(line2);
 
             while (retries < keyClashRetries)
             {

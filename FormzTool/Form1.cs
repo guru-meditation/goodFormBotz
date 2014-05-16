@@ -72,6 +72,7 @@ namespace FormzTool
             public string seenTime;
             public string kodate;
 
+
             public string koDate { get; set; }
         }
 
@@ -293,76 +294,43 @@ namespace FormzTool
 
             hg = ""; ag = ""; hc = ""; ac = ""; ls = "";
 
+            string sql4 = "select hg, ag, hco, aco from statistics where game_id = '" + gameId + "' AND ( gametime=-2 OR gametime = (select max(gametime) from statistics where game_id = '" + gameId + "'));";
+
+            using (NpgsqlCommand find = new NpgsqlCommand(sql4, pgConnection))
             {
-                string sql4 = "select hg, ag, hco, aco from statistics where game_id = '" + gameId + "' AND ( gametime=-2 OR gametime = (select max(gametime) from statistics where game_id = '" + gameId + "'));";
-
-                using (NpgsqlCommand find = new NpgsqlCommand(sql4, pgConnection))
+                using (NpgsqlDataReader dr = find.ExecuteReader())
                 {
-                    using (NpgsqlDataReader dr = find.ExecuteReader())
+                    if (dr.HasRows == true)
                     {
-                        if (dr.HasRows == true)
-                        {
-                            dr.Read();
-                            hg = dr[0].ToString();
-                            ag = dr[1].ToString();
-                            hc = dr[2].ToString();
-                            ac = dr[3].ToString();
-                        }
-
+                        dr.Read();
+                        hg = dr[0].ToString();
+                        ag = dr[1].ToString();
+                        hc = dr[2].ToString();
+                        ac = dr[3].ToString();
                     }
                 }
-
-                ls = lastTime == "-2" ? "Full Time" : lastTime;
             }
 
-            return true;
+            ls = lastTime == "-2" ? "Full Time" : lastTime;
 
+            return true;
         }
 
         private static List<string> GetTeamIds(string teamName)
         {
-            List<string> ids = new List<string>();
-
-            using (NpgsqlCommand find = new NpgsqlCommand("SELECT id FROM teams WHERE name = '" + teamName + "';", pgConnection))
-            {
-                using (NpgsqlDataReader dr = find.ExecuteReader())
-                {
-                    bool hasRows = dr.HasRows;
-
-                    while (dr.Read() == true)
-                    {
-                        ids.Add(dr[0].ToString());
-                    }
-                }
-            }
-
-            return ids;
+            return ExecuteSimpleQuery("SELECT id FROM teams WHERE name = '" + teamName + "';");
         }
 
         private static string GetTeamId(string teamName)
         {
-            string id = "";
-            using (NpgsqlCommand find = new NpgsqlCommand("SELECT id FROM teams WHERE name = '" + teamName + "';", pgConnection))
+            var ids = GetTeamIds(teamName);
+
+            if (ids.Count() > 1)
             {
-                using (NpgsqlDataReader dr = find.ExecuteReader())
-                {
-                    bool hasRows = dr.HasRows;
-
-                    if (hasRows == true)
-                    {
-                        dr.Read();
-                        id = dr[0].ToString();
-                    }
-
-                    if (dr.Read() == true)
-                    {
-                        MessageBox.Show("Warning two teams exist with the name " + teamName);
-                    }
-
-                }
+                MessageBox.Show("Warning " + ids.Count() + " teams exist with the name " + teamName);
             }
 
-            return id;
+            return ids.First();
         }
 
         private static string GetGameCount(string teamId)
@@ -374,22 +342,9 @@ namespace FormzTool
 
         private static string GetLeagueId(string leagueName)
         {
-            string id = "";
-            using (NpgsqlCommand find = new NpgsqlCommand("SELECT id FROM leagues WHERE name = '" + leagueName + "';", pgConnection))
-            {
-                using (NpgsqlDataReader dr = find.ExecuteReader())
-                {
-                    bool hasRows = dr.HasRows;
+            var leagueIds = ExecuteSimpleQuery("SELECT id FROM leagues WHERE name = '" + leagueName + "';");
 
-                    if (hasRows == true)
-                    {
-                        dr.Read();
-                        id = dr[0].ToString();
-
-                    }
-                }
-            }
-            return id;
+            return leagueIds.First();
         }
 
         private static string GetLeagueName(string leagueId)
@@ -405,7 +360,6 @@ namespace FormzTool
                     {
                         dr.Read();
                         id = dr[0].ToString();
-
                     }
                 }
             }
@@ -1119,6 +1073,10 @@ namespace FormzTool
             matches.Add(new Match() { homeTeam = "Home:", awayTeam = "Away:", league = "League:", kodate = "Kick Off:", gameId = "Id:" });
 
             string temp = "select g1.id, t1.name, t2.name, l1.name, g1.kodate from games g1 join teams t1 on g1.team1 = t1.id join teams t2 on g1.team2 = t2.id join leagues l1 on g1.league_id = l1.id where g1.id in (" + sql2 + ") order by g1.kodate asc; ";
+            
+            //string temp = "select g1.id, t1.name, t2.name, l1.name, g1.kodate, p1.\"goalswinhome\", p1.\"goalswinaway\", p1.\"goalslikelyscorehome\", p1.\"goalslikelyscoreaway\", p1.\"goalslikelyprobability\" from games g1 join teams t1 on g1.team1 = t1.id join teams t2 on g1.team2 = t2.id join prediction_data p1 on g1.id = p1.id join leagues l1 on g1.league_id = l1.id where g1.id in (" + sql2 + ") order by g1.kodate asc; ";
+            //string temp3 = "select g1.id, p1.\"goalswinhome\", p1.\"goalswinaway\", p1.\"goalslikelyscorehome\", p1.\"goalslikelyscoreaway\", p1.\"goalslikelyprobability\" from games g1 join prediction_data p1 on g1.id = p1.id where g1.id in (" + sql2 + ");";
+
             using (NpgsqlCommand find = new NpgsqlCommand(temp, pgConnection))
             {
                 using (NpgsqlDataReader dr = find.ExecuteReader())
@@ -1137,6 +1095,25 @@ namespace FormzTool
                     }
                 }
             }
+
+            //using (NpgsqlCommand find = new NpgsqlCommand(temp3, pgConnection))
+            //{
+            //    using (NpgsqlDataReader dr = find.ExecuteReader())
+            //    {
+            //        while (dr.Read())
+            //        {
+            //            var m = new Match()
+            //            {
+            //                gameId = dr[0].ToString(),
+            //                homeTeam = dr[1].ToString(),
+            //                awayTeam = dr[2].ToString(),
+            //                league = dr[3].ToString(),
+            //                kodate = dr[4].ToString()
+            //            };
+            //            matches.Add(m);
+            //        }
+            //    }
+            //}
 
             int longestHomeTeam = matches.Select(x => x.homeTeam).Max(x => x.Length);
             int longestAwayTeam = matches.Select(x => x.awayTeam).Max(x => x.Length);
@@ -1264,13 +1241,13 @@ namespace FormzTool
 
         private void specialButtonToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            string sql2 = "select name from teams where name like '% Utd';";
+            string sql2 = "select name from teams where name like '% Jnrs';";
             var inames = OneColumnQuery(sql2);
 
             int num = 0;
             foreach (var oldName in inames)
             {
-                var newName = oldName.Replace(" Utd"," United");
+                var newName = oldName.Replace(" Jnrs", " Juniors");
 
                 if (GetTeamId(newName) != "")
                 {
@@ -1509,7 +1486,7 @@ namespace FormzTool
             string selectedText = matchBox.GetItemText(matchBox.Items[matchBox.SelectedIndex]);
             string id = Regex.Split(selectedText, " ").ElementAt(0);
 
-            WebRequest req = WebRequest.Create("http://127.0.0.1:8080/GetGoalsPrediction?gameId=" + id);
+            WebRequest req = WebRequest.Create("http://shiney:8080/GetGoalsPrediction?gameId=" + id);
             req.Timeout = 300000;
             WebResponse resp = req.GetResponse();
 
@@ -1523,7 +1500,7 @@ namespace FormzTool
             string selectedText = matchBox.GetItemText(matchBox.Items[matchBox.SelectedIndex]);
             string id = Regex.Split(selectedText, " ").ElementAt(0);
 
-            WebRequest req = WebRequest.Create("http://127.0.0.1:8080/GetCornersPrediction?gameId=" + id);
+            WebRequest req = WebRequest.Create("http://shiney:8080/GetCornersPrediction?gameId=" + id);
             req.Timeout = 300000;
             WebResponse resp = req.GetResponse();
 
@@ -1643,7 +1620,7 @@ namespace FormzTool
             string selectedText = matchBox.GetItemText(matchBox.Items[matchBox.SelectedIndex]);
             string id = Regex.Split(selectedText, " ").ElementAt(0);
 
-            WebRequest req = WebRequest.Create("http://127.0.0.1:8080/GetCornersPredictionWithDepth?gameId=" + id + "&depth=300");
+            WebRequest req = WebRequest.Create("http://shiney:8080/GetCornersPredictionWithDepth?gameId=" + id + "&depth=300");
             req.Timeout = 300000;
             WebResponse resp = req.GetResponse();
 

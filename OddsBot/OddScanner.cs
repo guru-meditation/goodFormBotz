@@ -21,7 +21,7 @@ namespace OddsBot
 
         private static readonly log4net.ILog log
            = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
-        
+
         private Database m_dbStuff;
 
         protected static Dictionary<string, string> m_subs = new Dictionary<string, string>()
@@ -61,9 +61,9 @@ namespace OddsBot
             driver.Url = "https://mobile.bet365.com/premium/#type=Splash;key=1;ip=0;lng=1";
 
             driver.ForceSleep(sleepTime);
-            driver.GetElementAndClick("Level1", "Match Markets");
+            driver.GetElementAndClick("splashSection", "MATCH MARKETS");
             driver.ForceSleep(sleepTime);
-            driver.GetElementAndClick("Level2", "Main");
+            driver.GetElementAndClick("splashSection", "MAIN");
             driver.ForceSleep(sleepTime);
             driver.GetElementAndClick("genericRow", "Full Time Result");
             driver.ForceSleep(sleepTime);
@@ -89,52 +89,53 @@ namespace OddsBot
             /////////////////////
 
             driver.Url = "https://mobile.bet365.com/premium/#type=Splash;key=1;ip=0;lng=1";
-            
-            driver.ForceSleep(sleepTime);
-            driver.GetElementAndClick("Level2", "Corners");
-            driver.ForceSleep(sleepTime);
-            driver.GetElementAndClick("genericRow", "Race To 3 Corners");
             driver.ForceSleep(sleepTime);
 
-            GetRaceToCornerData(driver, foundMatches, 3);
+            driver.GetElementAndClick("splashSection", "CORNERS");
+            driver.ForceSleep(sleepTime);
 
+            //driver.GetElementAndClick("genericRow", "Race To 3 Corners");
+            //driver.ForceSleep(sleepTime);
+
+            //GetRaceToCornerData(driver, foundMatches, 3);
+
+            ///////////////////////
+
+            //driver.Url = "https://mobile.bet365.com/premium/#type=Splash;key=1;ip=0;lng=1";
+
+            //driver.ForceSleep(sleepTime);
+            //driver.GetElementAndClick("genericRow", "Race To 5 Corners");
+            //driver.ForceSleep(sleepTime);
+
+            //GetRaceToCornerData(driver, foundMatches, 5);
+
+            ///////////////////////
+
+            //driver.Url = "https://mobile.bet365.com/premium/#type=Splash;key=1;ip=0;lng=1";
+
+            //driver.ForceSleep(sleepTime);
+            //driver.GetElementAndClick("genericRow", "Race To 7 Corners");
+            //driver.ForceSleep(sleepTime);
+
+            //GetRaceToCornerData(driver, foundMatches, 7);
+
+            ///////////////////////
+
+            //driver.Url = "https://mobile.bet365.com/premium/#type=Splash;key=1;ip=0;lng=1";
+
+            //driver.ForceSleep(sleepTime);
+            //driver.GetElementAndClick("genericRow", "Race To 9 Corners");
+            //driver.ForceSleep(sleepTime);
+
+            //GetRaceToCornerData(driver, foundMatches, 9);
             /////////////////////
 
-            driver.Url = "https://mobile.bet365.com/premium/#type=Splash;key=1;ip=0;lng=1";
-      
-            driver.ForceSleep(sleepTime);
-            driver.GetElementAndClick("genericRow", "Race To 5 Corners");
-            driver.ForceSleep(sleepTime);
+            //driver.Url = "https://mobile.bet365.com/premium/#type=Splash;key=1;ip=0;lng=1";
+            //driver.ForceSleep(sleepTime);
 
-            GetRaceToCornerData(driver, foundMatches, 5);
-
-            /////////////////////
-
-            driver.Url = "https://mobile.bet365.com/premium/#type=Splash;key=1;ip=0;lng=1";
-           
-            driver.ForceSleep(sleepTime);
-            driver.GetElementAndClick("genericRow", "Race To 7 Corners");
-            driver.ForceSleep(sleepTime);
-
-            GetRaceToCornerData(driver, foundMatches, 7);
-
-            /////////////////////
-
-            driver.Url = "https://mobile.bet365.com/premium/#type=Splash;key=1;ip=0;lng=1";
-            
-            driver.ForceSleep(sleepTime);
-            driver.GetElementAndClick("genericRow", "Race To 9 Corners");
-            driver.ForceSleep(sleepTime);
-
-            GetRaceToCornerData(driver, foundMatches, 9);
-            /////////////////////
-
-            driver.Url = "https://mobile.bet365.com/premium/#type=Splash;key=1;ip=0;lng=1";
-
-            driver.ForceSleep(sleepTime);
             driver.GetElementAndClick("genericRow", "Asian Total Corners");
+            
             System.Threading.Thread.Sleep(sleepTime);
-
             driver.ForceSleep(sleepTime);
 
             GetAsianCornerData(driver, foundMatches);
@@ -150,34 +151,34 @@ namespace OddsBot
                 {
                     m_dbStuff.AddCornerData(m.id, m.cornerLine, m.homeAsianCornerPrice, m.awayAsianCornerPrice);
                 }
+            
+            //    if (String.IsNullOrEmpty(m.homeRaceTo3CornersPrice) == false &&
+            //        String.IsNullOrEmpty(m.awayRaceTo3CornersPrice) == false &&
+            //        String.IsNullOrEmpty(m.neitherRaceTo3CornersPrice) == false)
+            //    {
+            //        m_dbStuff.AddRaceToCornerData(m.id, 3, m.homeRaceTo3CornersPrice, m.awayRaceTo3CornersPrice, m.neitherRaceTo3CornersPrice);
+            //    }
 
-                if (String.IsNullOrEmpty(m.homeRaceTo3CornersPrice) == false &&
-                    String.IsNullOrEmpty(m.awayRaceTo3CornersPrice) == false &&
-                    String.IsNullOrEmpty(m.neitherRaceTo3CornersPrice) == false)
-                {
-                    m_dbStuff.AddRaceToCornerData(m.id, 3, m.homeRaceTo3CornersPrice, m.awayRaceTo3CornersPrice, m.neitherRaceTo3CornersPrice);
-                }
+            //    if (String.IsNullOrEmpty(m.homeRaceTo5CornersPrice) == false &&
+            //        String.IsNullOrEmpty(m.awayRaceTo5CornersPrice) == false &&
+            //        String.IsNullOrEmpty(m.neitherRaceTo5CornersPrice) == false)
+            //    {
+            //        m_dbStuff.AddRaceToCornerData(m.id, 5, m.homeRaceTo5CornersPrice, m.awayRaceTo5CornersPrice, m.neitherRaceTo5CornersPrice);
+            //    }
 
-                if (String.IsNullOrEmpty(m.homeRaceTo5CornersPrice) == false &&
-                    String.IsNullOrEmpty(m.awayRaceTo5CornersPrice) == false &&
-                    String.IsNullOrEmpty(m.neitherRaceTo5CornersPrice) == false)
-                {
-                    m_dbStuff.AddRaceToCornerData(m.id, 5, m.homeRaceTo5CornersPrice, m.awayRaceTo5CornersPrice, m.neitherRaceTo5CornersPrice);
-                }
+            //    if (String.IsNullOrEmpty(m.homeRaceTo7CornersPrice) == false &&
+            //        String.IsNullOrEmpty(m.awayRaceTo7CornersPrice) == false &&
+            //        String.IsNullOrEmpty(m.neitherRaceTo7CornersPrice) == false)
+            //    {
+            //        m_dbStuff.AddRaceToCornerData(m.id, 7, m.homeRaceTo7CornersPrice, m.awayRaceTo7CornersPrice, m.neitherRaceTo7CornersPrice);
+            //    }
 
-                if (String.IsNullOrEmpty(m.homeRaceTo7CornersPrice) == false &&
-                    String.IsNullOrEmpty(m.awayRaceTo7CornersPrice) == false &&
-                    String.IsNullOrEmpty(m.neitherRaceTo7CornersPrice) == false)
-                {
-                    m_dbStuff.AddRaceToCornerData(m.id, 7, m.homeRaceTo7CornersPrice, m.awayRaceTo7CornersPrice, m.neitherRaceTo7CornersPrice);
-                }
-
-                if (String.IsNullOrEmpty(m.homeRaceTo9CornersPrice) == false &&
-                    String.IsNullOrEmpty(m.awayRaceTo9CornersPrice) == false &&
-                    String.IsNullOrEmpty(m.neitherRaceTo9CornersPrice) == false)
-                {
-                    m_dbStuff.AddRaceToCornerData(m.id, 9, m.homeRaceTo9CornersPrice, m.awayRaceTo9CornersPrice, m.neitherRaceTo9CornersPrice);
-                }
+            //    if (String.IsNullOrEmpty(m.homeRaceTo9CornersPrice) == false &&
+            //        String.IsNullOrEmpty(m.awayRaceTo9CornersPrice) == false &&
+            //        String.IsNullOrEmpty(m.neitherRaceTo9CornersPrice) == false)
+            //    {
+            //        m_dbStuff.AddRaceToCornerData(m.id, 9, m.homeRaceTo9CornersPrice, m.awayRaceTo9CornersPrice, m.neitherRaceTo9CornersPrice);
+            //    }
 
                 if (String.IsNullOrEmpty(m.homeWinPrice) == false &&
                     String.IsNullOrEmpty(m.drawPrice) == false &&
@@ -185,13 +186,10 @@ namespace OddsBot
                 {
                     m_dbStuff.AddFinalResultPrices(m.id, m.homeWinPrice, m.drawPrice, m.awayWinPrice);
                 }
-
-
-
             }
-            /////////////////////
+            ///////////////////////
 
-            Console.WriteLine("");
+            Console.WriteLine("Finished");
         }
 
         private void GetRaceToCornerData(DriverWrapper driver, List<aMatch> foundMatches, int raceToValue)
@@ -371,101 +369,7 @@ namespace OddsBot
                     genItem.Click();
                     driver.ForceSleep(m_sleepTime);
 
-                    var sectionCount = driver.FindElements(By.ClassName("Section")).Count();
-
-                    for (int j = 1; j < sectionCount; ++j)
-                    {
-                        var sections = driver.FindElements(By.ClassName("Section"));
-                        if (j < sections.Count())
-                        {
-                            try
-                            {
-                                sections.ElementAt(j).Click();
-                            }
-                            catch (Exception ce)
-                            {
-                                Console.WriteLine("Exception caught trying to click at index: " + j);
-                            }
-
-                            driver.ForceSleep(500);
-                        }
-                        else
-                        {
-                            Console.WriteLine("Can't find item at index: " + j);
-                            break;
-                        }
-                    }
-
-
-                    sectionCount = driver.FindElements(By.ClassName("Section")).Count();
-
-                    for (int j = 0; j < sectionCount; ++j)
-                    {
-                        var sections = driver.FindElements(By.ClassName("Section"));
-
-                        if (j > sections.Count())
-                        {
-                            Console.WriteLine("Can't find item at index: " + j);
-                            break;
-                        }
-
-                        var section = sections.ElementAt(j);
-
-                        string sectionText = section.Text;
-
-                        var bits = Regex.Split(sectionText, "\r\n").ToList();
-                        bits.ForEach(x => x.Trim());
-
-
-                        string matchText = bits.ElementAt(0);
-
-                        if (matchText.Contains("\r\n"))
-                        {
-                            matchText = matchText.Substring(0, matchText.IndexOf("\r\n"));
-                        }
-
-                        if (matchText.Contains(" v "))
-                        {
-                            var teamSplits = Regex.Split(matchText, " v ");
-
-                            var m = new aMatch();
-                            m.team1 = teamSplits.ElementAt(0);
-                            m.team2 = teamSplits.ElementAt(1);
-
-                            m.team1 = DoSubstitutions(m.team1);
-                            m.team2 = DoSubstitutions(m.team2);
-                            m.league = DoSubstitutions(leagueText);
-
-                            var thisMatch = foundMatches.SingleOrDefault(x => x.team1 == m.team1 && x.team2 == m.team2);
-
-                            if (thisMatch != null && bits.Count() == 6)
-                            {
-                                var temp = bits.ElementAt(2);
-                                if (temp.StartsWith("O "))
-                                {
-                                    thisMatch.cornerLine = temp.Substring(2);
-                                }
-                                else
-                                {
-                                    Console.WriteLine("temp: " + temp);
-                                }
-
-                                thisMatch.homeAsianCornerPrice = bits.ElementAt(3).Trim();
-                                thisMatch.awayAsianCornerPrice = bits.ElementAt(5).Trim();
-
-                            }
-                            else
-                            {
-                                Console.WriteLine("Error occurred");
-                            }
-
-                        }
-                        else
-                        {
-                            Console.WriteLine("Can't get match from " + matchText);
-                        }
-
-                    }
+                    ReadInformation(driver, foundMatches, leagueText, " OVER UNDER");
                 }
                 catch (Exception ce)
                 {
@@ -491,126 +395,158 @@ namespace OddsBot
                 if (i < genItems.Count())
                 {
                     genItem = genItems.ElementAt(i);
+
+                    string leagueText = genItem.Text.Trim();
+                    genItem.Click();
+                    driver.ForceSleep(m_sleepTime);
+
+                    ReadInformation(driver, foundMatches, leagueText, " 1 X 2");
+
+                    IJavaScriptExecutor js = driver.Driver as IJavaScriptExecutor;
+                    js.ExecuteScript("document.getElementById('HeaderBack').click()");
+
+                    driver.ForceSleep(m_sleepTime);
                 }
                 else
                 {
                     Console.WriteLine("Can't find item at index: " + i);
                     break;
                 }
-
-                string leagueText = genItem.Text.Trim();
-                genItem.Click();
-                driver.ForceSleep(m_sleepTime);
-
-                var sectionCount = driver.FindElements(By.ClassName("Section")).Count();
-
-                for (int j = 1; j < sectionCount; ++j)
-                {
-                    var sections = driver.FindElements(By.ClassName("Section"));
-                    if (j < sections.Count())
-                    {
-                        try
-                        {
-                            sections.ElementAt(j).Click();
-                        }
-                        catch (Exception ce)
-                        {
-                            Console.WriteLine("Exception caught trying to click at index: " + j);
-                        }
-
-                        driver.ForceSleep(500);
-                    }
-                    else
-                    {
-                        Console.WriteLine("Can't find item at index: " + j);
-                        break;
-                    }
-                }
-
-                sectionCount = driver.FindElements(By.ClassName("Section")).Count();
-
-                for (int j = 0; j < sectionCount; ++j)
-                {
-                    var m = new aMatch();
-
-                    var sections = driver.FindElements(By.ClassName("Section"));
-
-                    if (j > sections.Count())
-                    {
-                        Console.WriteLine("Can't find item at index: " + j);
-                        break;
-                    }
-
-                    var sectionText = sections.ElementAt(j).Text;
-                    var sectionTexts = Regex.Split(sectionText, "\r\n");
-
-                    if (sectionTexts.Count() != 8 && sectionTexts.Count() != 9)
-                    {
-                        try
-                        {
-                            sections.ElementAt(j).Click();
-                        }
-                        catch
-                        {
-                            continue;
-                        }
-
-                        driver.ForceSleep(1500);
-                        sectionText = sections.ElementAt(j).Text;
-                        sectionTexts = Regex.Split(sectionText, "\r\n");
-                    }
-
-
-                    if (sectionTexts.Count() == 8 || sectionTexts.Count() == 9)
-                    {
-                        string matchText = sectionTexts.ElementAt(0);
-
-                        int offset = sectionTexts.Count() == 8 ? 0 : 1;
-
-                        if (matchText.Contains(" v "))
-                        {
-                            var teamSplits = Regex.Split(matchText, " v ");
-
-                            m.team1 = teamSplits.ElementAt(0 + offset);
-                            m.team2 = teamSplits.ElementAt(1 + offset);
-
-                            m.team1 = DoSubstitutions(m.team1);
-                            m.team2 = DoSubstitutions(m.team2);
-                            m.league = DoSubstitutions(leagueText);
-
-                            try
-                            {
-                                m.koDateTime = DateTime.ParseExact(sectionTexts.ElementAt(1 + offset).Substring(0, 12), "dd MMM HH:mm", CultureInfo.InvariantCulture);
-                            }
-                            catch (Exception ce)
-                            {
-                                Console.WriteLine("Couldn't parse a date out of :" + sectionTexts.ElementAt(1 + offset));
-
-                            }
-
-                            m.homeWinPrice = GetUkOddsPrice(sectionTexts.ElementAt(3 + offset)).ToString();
-                            m.drawPrice = GetUkOddsPrice(sectionTexts.ElementAt(5 + offset)).ToString();
-                            m.awayWinPrice = GetUkOddsPrice(sectionTexts.ElementAt(7 + offset)).ToString();
-
-                            foundMatches.Add(m);
-                        }
-                        else
-                        {
-                            Console.WriteLine("Can't get match from " + matchText);
-                        }
-                    }
-                    else
-                    {
-                        Console.WriteLine("Wrong text in section: " + sectionText);
-                    }
-                }
-
-                IJavaScriptExecutor js = driver.Driver as IJavaScriptExecutor;
-                js.ExecuteScript("document.getElementById('HeaderBack').click()");
-
-                driver.ForceSleep(m_sleepTime);
             }
         }
 
+        private void ReadInformation(DriverWrapper driver, List<aMatch> foundMatches, string leagueText, string marker)
+        {
+            var sections = driver.FindElements(By.ClassName("Section"));
+            var sectionTexts = Regex.Split(sections.First().Text, "\r\n").ToList();
+            sectionTexts.RemoveAt(0);
+
+            var sectionCount = sectionTexts.Where(x => x.Contains(marker)).Count();
+
+            log.Debug(sectionTexts.Count());
+
+            for (int j = 0; j < sectionCount; ++j)
+            {
+                var txt = Chomp(sectionTexts);
+
+                if (txt.Contains(marker))
+                {
+                    DateTime koDate;
+
+                    bool parsed = DateTime.TryParse(txt.Substring(0, txt.IndexOf(marker)), out koDate);
+
+                    while (true)
+                    {
+                        if (sectionTexts.Count() == 0)
+                        {
+                            break;
+                        }
+
+                        if (sectionTexts.First().Contains(marker) == true)
+                        {
+                            break;
+                        }
+
+                        var team1 = DoSubstitutions(Chomp(sectionTexts));
+                        var team2 = DoSubstitutions(Chomp(sectionTexts));
+
+                        //search for teams already in matches list here.
+                        var m = foundMatches.SingleOrDefault(x => x.team1 == team1 && x.team2 == team2);
+                        
+                        bool needToAdd = false;
+
+                        if (m == null)
+                        {
+                            m = new aMatch();
+                            needToAdd = true;
+                        }
+
+                        m.koDateTime = koDate;
+                        m.league = leagueText;
+
+                        m.team1 = team1;
+                        m.team2 = team2;
+
+                        var kodate = Chomp(sectionTexts);
+                        var hours = kodate.Substring(0, 2);
+                        var mins = kodate.Substring(3, 2);
+
+                        try
+                        {
+                            m.koDateTime = m.koDateTime.AddHours(Double.Parse(hours));
+                            m.koDateTime = m.koDateTime.AddMinutes(Double.Parse(mins));
+                        }
+                        catch (Exception ce)
+                        {
+                            Console.WriteLine("Exception trying to parse hours: [" + hours + "] + minutes [" + mins + "]");
+                        }
+
+                        //goals
+                        if (marker == " 1 X 2")
+                        {
+                            var pricesText = Chomp(sectionTexts);
+                            if (char.IsDigit(pricesText[0]))
+                            {
+                                var prices = pricesText.Split(' ');
+
+                                m.homeWinPrice = GetUkOddsPrice(prices[0]).ToString();
+                                m.drawPrice = GetUkOddsPrice(prices[1]).ToString();
+                                m.awayWinPrice = GetUkOddsPrice(prices[2]).ToString();
+
+                                if (needToAdd)
+                                {
+                                    foundMatches.Add(m);
+                                }
+
+                                Console.WriteLine("Found: " + m.team1 + " v " + m.team2 + " in " + m.league + " at " + m.koDateTime + " Prices: " + pricesText);
+                            }
+                            else
+                            {
+                                Console.WriteLine("Unrecognised price format: " + pricesText);
+                            }
+                        }
+                        //corners
+                        else 
+                        {
+                            var pricesText1 = Chomp(sectionTexts);
+                            if (char.IsDigit(pricesText1[0]))
+                            {
+                                var prices = pricesText1.Split(' ');
+
+                                m.homeAsianCornerPrice = prices[0];
+                                m.cornerLine = prices[1];
+
+                                var pricesText2 = Chomp(sectionTexts);
+                                m.awayAsianCornerPrice = pricesText2;
+
+                                if (needToAdd)
+                                {
+                                    foundMatches.Add(m);
+                                }
+
+                                Console.WriteLine("Found: " + m.team1 + " v " + m.team2 + " in " + m.league + " at " + m.koDateTime + " Corner Prices: " + pricesText1 + " " + pricesText2);
+                            }
+                            else
+                            {
+                                Console.WriteLine("Unrecognised price format: " + pricesText1);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        private string Chomp(List<string> sectionTexts)
+        {
+            string retVal = "";
+
+            if (sectionTexts.Count() > 0)
+            {
+                retVal = sectionTexts.First();
+                sectionTexts.RemoveAt(0);
+            }
+
+            return retVal;
+        }
     }
 }
