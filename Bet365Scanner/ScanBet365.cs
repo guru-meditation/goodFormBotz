@@ -15,9 +15,14 @@ namespace Scanners
 
     class Game
     {
-        public string name;
+        public string competitionName;
         public string team1;
         public string team2;
+
+        public override string ToString()
+        {
+            return team1 + " v " + team2 + " in " + competitionName + System.Environment.NewLine;
+        }
     }
 
     public class ScanBet365 : Scanner
@@ -32,11 +37,24 @@ namespace Scanners
         {
         }
 
-        protected override int addLeague(string league)
+        private string Chomp(List<string> sectionTexts)
         {
-            return -1;
+            string retVal = "";
 
+            if (sectionTexts.Count() > 0)
+            {
+                retVal = sectionTexts.First();
+                sectionTexts.RemoveAt(0);
+            }
+
+            return retVal;
         }
+
+        private List<string> excludeString = new List<string>() {"Coupons",
+            "1ST HALF ASIANS IN-PLAY",
+            "IN-PLAY COUPON",
+            "ASIANS IN-PLAY"
+        };
 
         public override void scan(int sleepTime)
         {
@@ -91,7 +109,6 @@ namespace Scanners
                     }
 
                     List<IWebElement> fixtureElements = null;
-                    List<IWebElement> competitionElements = null;
 
                     if (inPlayElement)
                     {
@@ -100,40 +117,78 @@ namespace Scanners
 
                         log.Warn("Fixtures: " + fixtureElements.Count);
                         log.Warn("Removed: " + removed); 
-                        
-                        competitionElements = driverWrapper.FindElements(By.ClassName("Competition")).ToList();
+
+                        var fixtureList = driverWrapper.FindElement(By.ClassName("FixtureList"));
+                        var fText = fixtureList.Text;
+
+                        var fixtureSplits = Regex.Split(fText, "\r\n").ToList();
+
+                        fixtureSplits.RemoveAll(x => excludeString.Contains(x));
+
+                        var competitionName = "";
                         competitions.Clear();
 
-                        foreach (var comp in competitionElements)
+                        while (fixtureSplits.Count() != 0)
                         {
-                            var splits = Regex.Split(comp.Text, "\r\n").ToList();
-        
-                            var competitionName = splits.ElementAt(0);
-                            splits.RemoveAll(x => char.IsDigit(x.Last()) == false);
-                            splits.ForEach(x=> x.Trim());
+                            var tempBuf = new List<string>();
 
-                            Game thisGame = null;
+                            Game a = null;
 
-                            for(int i = 0; i != splits.Count(); ++i)
+                            while (fixtureSplits.Count() != 0)
                             {
-                                //var grrr = splits[i].Substring(splits[i].IndexOf(" ") + 1);
-                                //grrr = grrr.Substring(0, grrr.LastIndexOf(" ")).Trim();
+                                if (fixtureSplits.First().StartsWith("  "))
+                                {
+                                    tempBuf.Add(Chomp(fixtureSplits));
+                                    break;
+                                }
+                                else
+                                {
+                                    tempBuf.Add(Chomp(fixtureSplits));
+                                }
+                            }
 
-                                //if (i % 2 == 0)
-                                //{
-                                //    thisGame = new Game();
-                                //    thisGame.name = competitionName;
-                                //    thisGame.team1 = grrr;
-                                //}
-                                //else
-                                //{
-                                //    thisGame.team2 = grrr;
-                                //    competitions.Add(thisGame);
-                                //}
+                            if (tempBuf.Count() == 2)
+                            {
+                                var team1 = tempBuf[0];
+                                var team2 = tempBuf[1];
+
+                                if (team1.Contains(":"))
+                                {
+                                    team1 = team1.Substring(team1.IndexOf(' '));
+                                }
+
+                                a = new Game();
+                                a.competitionName = competitionName.Trim();
+                                a.team1 = team1.Trim();
+                                a.team2 = team2.Trim();
+
+                            }
+                            else if (tempBuf.Count() == 3)
+                            {
+                                competitionName = tempBuf[0];
+                                var team1 = tempBuf[1];
+                                var team2 = tempBuf[2];
+
+                                if (team1.Contains(":"))
+                                {
+                                    team1 = team1.Substring(team1.IndexOf(' '));
+                                }
+
+                                a = new Game();
+                                a.competitionName = competitionName.Trim();
+                                a.team1 = team1.Trim();
+                                a.team2 = team2.Trim();
+                            }
+                            else
+                            {
+                                log.Info("Unexpected number of string in temp buf");
+                            }
+
+                            if (a != null)
+                            {
+                                competitions.Add(a);
                             }
                         }
-
-                        log.Warn(competitions);
                     }
                     else
                     {
@@ -388,7 +443,24 @@ namespace Scanners
                         string awayTeamName = DoSubstitutions(teams.ElementAt(1));
 
                         string today = DateTime.Now.ToUniversalTime().ToString("ddMMyy");
+
+                        Game maybeGame = null;
+
+                        try
+                        {
+                            maybeGame = competitions.SingleOrDefault(x => x.team1.StartsWith(homeTeamName.ToUpper()) && x.team2.StartsWith(awayTeamName.ToUpper()));
+                        }
+                        catch (Exception ce)
+                        {
+                            log.Warn("Exception thrown in your shit code!:" + ce);
+                        }
+
                         string league = "All";
+
+                        if (maybeGame != null)
+                        {
+                            league = DoSubstitutions(maybeGame.competitionName);
+                        }
 
                         string yesterday = (DateTime.Today.ToUniversalTime() - TimeSpan.FromDays(1)).ToString("ddMMyy");
                         string finalName = Path.Combine(xmlPath, league, homeTeamName + " v " + awayTeamName + "_" + today + ".xml");

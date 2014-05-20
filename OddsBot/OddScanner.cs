@@ -79,6 +79,7 @@ namespace OddsBot
             foreach (aMatch m in foundMatches)
             {
                 Console.WriteLine(m.team1.PadRight(longestTeam1 + 1) + " " + m.team2.PadRight(longestTeam2 + 1) + " at " + m.koDateTime.TimeOfDay + " in " + m.league);
+                
                 int leagueId = m_dbStuff.AddLeague(m.league);
                 int hTeamId = m_dbStuff.AddTeam(m.team1);
                 int aTeamId = m_dbStuff.AddTeam(m.team2);
@@ -462,7 +463,7 @@ namespace OddsBot
                         }
 
                         m.koDateTime = koDate;
-                        m.league = leagueText;
+                        m.league = DoSubstitutions(leagueText);
 
                         m.team1 = team1;
                         m.team2 = team2;

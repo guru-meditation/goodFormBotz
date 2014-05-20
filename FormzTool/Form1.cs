@@ -1431,7 +1431,7 @@ namespace FormzTool
 
         private void fixBET365LeaguesToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            string sql = "select id, team1, team2, kodate from games where league_id = -1;";
+            string sql = "select id, team1, team2, kodate from games where league_id in (-1,  723, 724);";
 
             var bet365games = new List<string>();
 
@@ -1486,7 +1486,7 @@ namespace FormzTool
             string selectedText = matchBox.GetItemText(matchBox.Items[matchBox.SelectedIndex]);
             string id = Regex.Split(selectedText, " ").ElementAt(0);
 
-            WebRequest req = WebRequest.Create("http://shiney:8080/GetGoalsPrediction?gameId=" + id);
+            WebRequest req = WebRequest.Create("http://localhost:8080/GetGoalsPrediction?gameId=" + id);
             req.Timeout = 300000;
             WebResponse resp = req.GetResponse();
 
@@ -1500,7 +1500,7 @@ namespace FormzTool
             string selectedText = matchBox.GetItemText(matchBox.Items[matchBox.SelectedIndex]);
             string id = Regex.Split(selectedText, " ").ElementAt(0);
 
-            WebRequest req = WebRequest.Create("http://shiney:8080/GetCornersPrediction?gameId=" + id);
+            WebRequest req = WebRequest.Create("http://localhost:8080/GetCornersPrediction?gameId=" + id);
             req.Timeout = 300000;
             WebResponse resp = req.GetResponse();
 
@@ -1620,7 +1620,7 @@ namespace FormzTool
             string selectedText = matchBox.GetItemText(matchBox.Items[matchBox.SelectedIndex]);
             string id = Regex.Split(selectedText, " ").ElementAt(0);
 
-            WebRequest req = WebRequest.Create("http://shiney:8080/GetCornersPredictionWithDepth?gameId=" + id + "&depth=300");
+            WebRequest req = WebRequest.Create("http://localhost:8080/GetCornersPredictionWithDepth?gameId=" + id + "&depth=300");
             req.Timeout = 300000;
             WebResponse resp = req.GetResponse();
 
