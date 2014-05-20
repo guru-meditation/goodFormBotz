@@ -17,7 +17,7 @@ namespace FormzTool
     {
         static string connectionString = ConfigurationManager.AppSettings["connection1"];
         static NpgsqlConnection pgConnection = null;
-        
+
         public FormzDBEditor()
         {
             InitializeComponent();
@@ -71,6 +71,9 @@ namespace FormzTool
             public string aco;
             public string seenTime;
             public string kodate;
+
+
+            public string koDate { get; set; }
         }
 
         private void GetOldTeam(string teamName, int box = 1)
@@ -103,7 +106,7 @@ namespace FormzTool
                 return;
             }
 
-            string sql = "select teams.name, leagues.name, games.id from games join teams on games.team2 = teams.id join leagues on games.league_id = leagues.id where games.id in ( SELECT id FROM games WHERE team1 = '" + id + "') order by games.kodate desc;";
+            string sql = "select teams.name, leagues.name, games.id, games.kodate from games join teams on games.team2 = teams.id join leagues on games.league_id = leagues.id where games.id in ( SELECT id FROM games WHERE team1 = '" + id + "') order by games.kodate desc;";
 
             int maxHomeTeamLength = teamName.Length;
             int maxAwayTeamLength = teamName.Length;
@@ -120,6 +123,7 @@ namespace FormzTool
             title.hco = "HC:";
             title.aco = "AC:";
             title.seenTime = "Seen:";
+            title.koDate = "Date:";
 
             matches.Add(title);
 
@@ -136,12 +140,14 @@ namespace FormzTool
                             string awayTeam = dr[0].ToString();
                             string league = dr[1].ToString();
                             string gameId = dr[2].ToString();
+                            string koDate = dr[3].ToString();
 
                             Match m = new Match();
                             m.homeTeam = teamName;
                             m.awayTeam = awayTeam;
                             m.league = league;
                             m.gameId = gameId;
+                            m.koDate = koDate;
 
                             matches.Add(m);
                         }
@@ -149,7 +155,7 @@ namespace FormzTool
                 }
             }
 
-            string sql2 = "select teams.name, leagues.name, games.id from games join teams on games.team1 = teams.id join leagues on games.league_id = leagues.id where games.id in ( SELECT id FROM games WHERE team2 = '" + id + "') order by games.kodate desc;";
+            string sql2 = "select teams.name, leagues.name, games.id, games.kodate from games join teams on games.team1 = teams.id join leagues on games.league_id = leagues.id where games.id in ( SELECT id FROM games WHERE team2 = '" + id + "') order by games.kodate desc;";
 
             using (NpgsqlCommand find = new NpgsqlCommand(sql2, pgConnection))
             {
@@ -164,12 +170,14 @@ namespace FormzTool
                             string homeTeam = dr[0].ToString();
                             string league = dr[1].ToString();
                             string gameId = dr[2].ToString();
+                            string koDate = dr[3].ToString();
 
                             Match m = new Match();
                             m.homeTeam = homeTeam;
                             m.awayTeam = teamName;
                             m.league = league;
                             m.gameId = gameId;
+                            m.koDate = koDate;
 
                             matches.Add(m);
                         }
@@ -270,7 +278,8 @@ namespace FormzTool
                     tMatchBox.Items.Add(matches[i].gameId.PadRight(longestGameId + 1) + " "
                         + matches[i].homeTeam.PadRight(longestHomeTeam + 1) + " "
                         + matches[i].awayTeam.PadRight(longestAwayTeam) + " "
-                        + matches[i].league);
+                        + matches[i].league.PadRight(longestLeagueId) + " "
+                        + matches[i].koDate);
                 }
             }
 
@@ -285,96 +294,57 @@ namespace FormzTool
 
             hg = ""; ag = ""; hc = ""; ac = ""; ls = "";
 
+            string sql4 = "select hg, ag, hco, aco from statistics where game_id = '" + gameId + "' AND ( gametime=-2 OR gametime = (select max(gametime) from statistics where game_id = '" + gameId + "'));";
+
+            using (NpgsqlCommand find = new NpgsqlCommand(sql4, pgConnection))
             {
-                string sql4 = "select hg, ag, hco, aco from statistics where game_id = '" + gameId + "' AND ( gametime=-2 OR gametime = (select max(gametime) from statistics where game_id = '" + gameId + "'));";
-
-                using (NpgsqlCommand find = new NpgsqlCommand(sql4, pgConnection))
+                using (NpgsqlDataReader dr = find.ExecuteReader())
                 {
-                    using (NpgsqlDataReader dr = find.ExecuteReader())
+                    if (dr.HasRows == true)
                     {
-                        if (dr.HasRows == true)
-                        {
-                            dr.Read();
-                            hg = dr[0].ToString();
-                            ag = dr[1].ToString();
-                            hc = dr[2].ToString();
-                            ac = dr[3].ToString();
-                        }
-
+                        dr.Read();
+                        hg = dr[0].ToString();
+                        ag = dr[1].ToString();
+                        hc = dr[2].ToString();
+                        ac = dr[3].ToString();
                     }
                 }
-
-                ls = lastTime == "-2" ? "Full Time" : lastTime;
             }
 
-            return true;
+            ls = lastTime == "-2" ? "Full Time" : lastTime;
 
+            return true;
         }
 
         private static List<string> GetTeamIds(string teamName)
         {
-            List<string> ids = new List<string>();
-
-            using (NpgsqlCommand find = new NpgsqlCommand("SELECT id FROM teams WHERE name = '" + teamName + "';", pgConnection))
-            {
-                using (NpgsqlDataReader dr = find.ExecuteReader())
-                {
-                    bool hasRows = dr.HasRows;
-
-                    while (dr.Read() == true)
-                    {
-                        ids.Add(dr[0].ToString());
-                    }
-                }
-            }
-
-            return ids;
+            return ExecuteSimpleQuery("SELECT id FROM teams WHERE name = '" + teamName + "';");
         }
 
         private static string GetTeamId(string teamName)
         {
-            string id = "";
-            using (NpgsqlCommand find = new NpgsqlCommand("SELECT id FROM teams WHERE name = '" + teamName + "';", pgConnection))
+            var ids = GetTeamIds(teamName);
+
+            if (ids.Count() > 1)
             {
-                using (NpgsqlDataReader dr = find.ExecuteReader())
-                {
-                    bool hasRows = dr.HasRows;
-
-                    if (hasRows == true)
-                    {
-                        dr.Read();
-                        id = dr[0].ToString();
-                    }
-
-                    if (dr.Read() == true)
-                    {
-                        MessageBox.Show("Warning two teams exist with the name " + teamName);
-                    }
-
-                }
+                MessageBox.Show("Warning " + ids.Count() + " teams exist with the name " + teamName);
             }
 
-            return id;
+            return ids.First();
+        }
+
+        private static string GetGameCount(string teamId)
+        {
+            var counts = ExecuteSimpleQuery("select count(*) from games where team1=" + teamId + " or team2=" + teamId + ";");
+
+            return counts.First();
         }
 
         private static string GetLeagueId(string leagueName)
         {
-            string id = "";
-            using (NpgsqlCommand find = new NpgsqlCommand("SELECT id FROM leagues WHERE name = '" + leagueName + "';", pgConnection))
-            {
-                using (NpgsqlDataReader dr = find.ExecuteReader())
-                {
-                    bool hasRows = dr.HasRows;
+            var leagueIds = ExecuteSimpleQuery("SELECT id FROM leagues WHERE name = '" + leagueName + "';");
 
-                    if (hasRows == true)
-                    {
-                        dr.Read();
-                        id = dr[0].ToString();
-
-                    }
-                }
-            }
-            return id;
+            return leagueIds.First();
         }
 
         private static string GetLeagueName(string leagueId)
@@ -390,7 +360,6 @@ namespace FormzTool
                     {
                         dr.Read();
                         id = dr[0].ToString();
-
                     }
                 }
             }
@@ -477,17 +446,19 @@ namespace FormzTool
                 originalId = GetTeamId(alias);
             }
 
+            bool haveAssociationAlready = false;
+
             using (NpgsqlCommand find = new NpgsqlCommand("SELECT id FROM team_associations WHERE name = '" + alias + "';", pgConnection))
             {
                 using (NpgsqlDataReader dr = find.ExecuteReader())
                 {
-                    bool hasRows = dr.HasRows;
-                    if (hasRows == true)
-                    {
-                        MessageBox.Show("Already have association for this team");
-                        return false;
-                    }
+                    haveAssociationAlready = dr.HasRows;
                 }
+            }
+
+            if (haveAssociationAlready == true)
+            {
+                MessageBox.Show("Already have association: " + alias + " for team: " + teamName);
             }
 
             if (aliasId != "")
@@ -499,29 +470,33 @@ namespace FormzTool
             }
 
             int idx = -1;
-            using (NpgsqlCommand count = new NpgsqlCommand("select max(id) from team_associations", pgConnection))
+
+            if (haveAssociationAlready == false)
             {
-                using (NpgsqlDataReader dr2 = count.ExecuteReader())
+                using (NpgsqlCommand count = new NpgsqlCommand("select max(id) from team_associations", pgConnection))
                 {
-                    dr2.Read();
-
-                    try
+                    using (NpgsqlDataReader dr2 = count.ExecuteReader())
                     {
-                        int rows = int.Parse(dr2[0].ToString());
-                        idx = rows + 1;
-                    }
-                    catch (Exception)
-                    {
-                        idx = 1;
-                    }
+                        dr2.Read();
 
-                    dr2.Close();
+                        try
+                        {
+                            int rows = int.Parse(dr2[0].ToString());
+                            idx = rows + 1;
+                        }
+                        catch (Exception)
+                        {
+                            idx = 1;
+                        }
 
-                    string now = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+                        dr2.Close();
 
-                    using (NpgsqlCommand insert = new NpgsqlCommand("INSERT into team_associations ( id, team_id, name, created_at, updated_at ) VALUES ('" + idx + "', '" + originalId + "', '" + alias + "', '" + now + "', '" + now + "');", pgConnection))
-                    {
-                        insert.ExecuteNonQuery();
+                        string now = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+
+                        using (NpgsqlCommand insert = new NpgsqlCommand("INSERT into team_associations ( id, team_id, name, created_at, updated_at ) VALUES ('" + idx + "', '" + originalId + "', '" + alias + "', '" + now + "', '" + now + "');", pgConnection))
+                        {
+                            insert.ExecuteNonQuery();
+                        }
                     }
                 }
             }
@@ -547,7 +522,7 @@ namespace FormzTool
                     if (hasRows == true)
                     {
                         MessageBox.Show("Already have association for this league");
-                        return false;
+                        //return false;
                     }
                 }
             }
@@ -626,6 +601,90 @@ namespace FormzTool
 
             return idx.ToString();
         }
+
+        public string AddLeague(string leagueName)
+        {
+            int idx = -1;
+
+            bool hasRows = false;
+            using (NpgsqlCommand find = new NpgsqlCommand("SELECT id, name FROM leagues WHERE name = '" + leagueName + "';", pgConnection))
+            {
+                using (NpgsqlDataReader dr = find.ExecuteReader())
+                {
+                    hasRows = dr.HasRows;
+
+                    if (hasRows == true)
+                    {
+                        dr.Read();
+                        string id = dr[0].ToString();
+                        string name = dr[1].ToString();
+
+                        if (name == leagueName)
+                        {
+                            idx = int.Parse(id);
+                        }
+                    }
+
+                    dr.Close();
+                }
+            }
+
+            if (hasRows == false)
+            {
+                //see if it exists in the team_associations
+                using (NpgsqlCommand findInTeamsTable = new NpgsqlCommand("SELECT league_id, name FROM league_associations WHERE name = '" + leagueName + "';", pgConnection))
+                {
+                    using (NpgsqlDataReader dr = findInTeamsTable.ExecuteReader())
+                    {
+                        hasRows = dr.HasRows;
+
+                        if (hasRows == true)
+                        {
+                            dr.Read();
+                            string id = dr[0].ToString();
+                            string name = dr[1].ToString();
+
+                            if (name == leagueName)
+                            {
+                                idx = int.Parse(id);
+                            }
+                        }
+
+                        dr.Close();
+                    }
+                }
+            }
+
+            if (hasRows == false)
+            {
+                using (NpgsqlCommand count = new NpgsqlCommand("select max(id) from leagues;", pgConnection))
+                {
+                    using (NpgsqlDataReader dr2 = count.ExecuteReader())
+                    {
+                        dr2.Read();
+                        try
+                        {
+                            int rows = int.Parse(dr2[0].ToString());
+                            idx = rows + 1;
+                        }
+                        catch (Exception)
+                        {
+                            idx = 1;
+                        }
+
+                        dr2.Close();
+                        string now = DateTime.Now.ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss");
+                        using (NpgsqlCommand insert = new NpgsqlCommand("INSERT into leagues ( id, name, league_id, created_at, updated_at  ) VALUES (" + idx + ", '" + leagueName + "', " + idx + ", '" + now + "', '" + now + "');", pgConnection))
+                        {
+                            insert.ExecuteNonQuery();
+                        }
+                    }
+                }
+            }
+
+            return idx.ToString();
+        }
+
 
         private string[] GetGamesForLeague(string league_id)
         {
@@ -781,6 +840,25 @@ namespace FormzTool
             }
         }
 
+        private static List<string> ExecuteSimpleQuery(string sql)
+        {
+            //check they are consecutive days over midnight
+            var vals = new List<string>();
+
+            using (NpgsqlCommand find = new NpgsqlCommand(sql, pgConnection))
+            {
+                using (NpgsqlDataReader dr = find.ExecuteReader())
+                {
+                    while (dr.Read() == true)
+                    {
+                        vals.Add(dr[0].ToString());
+                    }
+                }
+            }
+
+            return vals;
+        }
+
         private void getLeague_Click(object sender, EventArgs e)
         {
             GetOldLeague();
@@ -876,50 +954,50 @@ namespace FormzTool
             }
         }
 
-        private bool renameLeague(string oldName, string newName)
+        private bool renameLeague(string alias, string properName)
         {
             int test = 0;
-            string oldId = "";
+            string aliasId = "";
 
-            if (int.TryParse(oldName.Trim(), out test))
+            if (int.TryParse(alias.Trim(), out test))
             {
                 //we have an id
-                oldId = oldName.Trim();
+                aliasId = alias.Trim();
             }
             else
             {
-                oldId = GetLeagueId(oldName);
+                aliasId = GetLeagueId(alias);
             }
 
-            string newId = GetLeagueId(newName);
+            string properId = GetLeagueId(properName);
 
-            if (newId == "")
+            if (properId == "")
             {
                 //add new team;
-                newId = GetLeagueId(newName);
-                if (newId == "-1")
+                properId = AddLeague(properName);
+                if (properId == "-1")
                 {
-                    MessageBox.Show("Failed to create new league:", newName);
+                    MessageBox.Show("Failed to create new league:", properName);
                     return false;
                 }
             }
 
-            if (test == 0 && AddLeagueAssociation(oldName, newName) == false)
+            if (test == 0 && AddLeagueAssociation(alias, properName) == false)
             {
                 return false;
             }
 
-            string[] games = GetGamesForLeague(oldId);
+            string[] games = GetGamesForLeague(aliasId);
 
             foreach (var id in games)
             {
-                using (NpgsqlCommand update = new NpgsqlCommand("UPDATE games SET league_id ='" + newId + "' WHERE id = '" + id + "';", pgConnection))
+                using (NpgsqlCommand update = new NpgsqlCommand("UPDATE games SET league_id ='" + properId + "' WHERE id = '" + id + "';", pgConnection))
                 {
                     update.ExecuteNonQuery();
                 }
             }
 
-            using (NpgsqlCommand delete = new NpgsqlCommand("DELETE from leagues where id = '" + oldId + "';", pgConnection))
+            using (NpgsqlCommand delete = new NpgsqlCommand("DELETE from leagues where id = '" + aliasId + "';", pgConnection))
             {
                 delete.ExecuteNonQuery();
             }
@@ -995,6 +1073,10 @@ namespace FormzTool
             matches.Add(new Match() { homeTeam = "Home:", awayTeam = "Away:", league = "League:", kodate = "Kick Off:", gameId = "Id:" });
 
             string temp = "select g1.id, t1.name, t2.name, l1.name, g1.kodate from games g1 join teams t1 on g1.team1 = t1.id join teams t2 on g1.team2 = t2.id join leagues l1 on g1.league_id = l1.id where g1.id in (" + sql2 + ") order by g1.kodate asc; ";
+            
+            //string temp = "select g1.id, t1.name, t2.name, l1.name, g1.kodate, p1.\"goalswinhome\", p1.\"goalswinaway\", p1.\"goalslikelyscorehome\", p1.\"goalslikelyscoreaway\", p1.\"goalslikelyprobability\" from games g1 join teams t1 on g1.team1 = t1.id join teams t2 on g1.team2 = t2.id join prediction_data p1 on g1.id = p1.id join leagues l1 on g1.league_id = l1.id where g1.id in (" + sql2 + ") order by g1.kodate asc; ";
+            //string temp3 = "select g1.id, p1.\"goalswinhome\", p1.\"goalswinaway\", p1.\"goalslikelyscorehome\", p1.\"goalslikelyscoreaway\", p1.\"goalslikelyprobability\" from games g1 join prediction_data p1 on g1.id = p1.id where g1.id in (" + sql2 + ");";
+
             using (NpgsqlCommand find = new NpgsqlCommand(temp, pgConnection))
             {
                 using (NpgsqlDataReader dr = find.ExecuteReader())
@@ -1013,6 +1095,25 @@ namespace FormzTool
                     }
                 }
             }
+
+            //using (NpgsqlCommand find = new NpgsqlCommand(temp3, pgConnection))
+            //{
+            //    using (NpgsqlDataReader dr = find.ExecuteReader())
+            //    {
+            //        while (dr.Read())
+            //        {
+            //            var m = new Match()
+            //            {
+            //                gameId = dr[0].ToString(),
+            //                homeTeam = dr[1].ToString(),
+            //                awayTeam = dr[2].ToString(),
+            //                league = dr[3].ToString(),
+            //                kodate = dr[4].ToString()
+            //            };
+            //            matches.Add(m);
+            //        }
+            //    }
+            //}
 
             int longestHomeTeam = matches.Select(x => x.homeTeam).Max(x => x.Length);
             int longestAwayTeam = matches.Select(x => x.awayTeam).Max(x => x.Length);
@@ -1070,7 +1171,7 @@ namespace FormzTool
                     GetOldTeam(awayTeam, 2);
                     GetOldTeam(homeTeam);
                 }
-                catch(Exception ce )
+                catch (Exception ce)
                 {
 
                     Console.WriteLine(ce);
@@ -1140,30 +1241,27 @@ namespace FormzTool
 
         private void specialButtonToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            string sql2 = "select id from games where team1='9706' and team2='9709';";
+            string sql2 = "select name from teams where name like '% Jnrs';";
+            var inames = OneColumnQuery(sql2);
 
-            var ids = OneColumnQuery(sql2);
-
-            ids.RemoveAt(0);
-
-
-            if (ids.Count() > 1)
+            int num = 0;
+            foreach (var oldName in inames)
             {
-                string primaryId = ids.ElementAt(0);
-                for (int i = 1; i != ids.Count(); ++i)
+                var newName = oldName.Replace(" Jnrs", " Juniors");
+
+                if (GetTeamId(newName) != "")
                 {
-                    string sqlTeam1 = "update statistics set game_id='" + primaryId + "' where game_id='" + ids.ElementAt(i) + "';";
-                    string sqlDeleteTeam = "delete from games where id='" + ids.ElementAt(i) + "';";
+                    renameTeam(oldName, newName);
+                    num++;
 
-                    ExecuteNonQuery(sqlTeam1);
-
-                    ExecuteNonQuery(sqlDeleteTeam);
                 }
-
             }
 
-            matchBox2.Items.Clear();
+            MessageBox.Show("Performed " + num + " special actions"); ;
+
         }
+
+        string moreSql = "select distinct team1, team2, EXTRACT(WEEK FROM kodate), count(*) from games group by team1, team2, EXTRACT(WEEK FROM kodate) having count(*) = 2;";
 
         private void removeDuplicateMatchesToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -1333,7 +1431,7 @@ namespace FormzTool
 
         private void fixBET365LeaguesToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            string sql = "select id, team1, team2, kodate from games where league_id = -1;";
+            string sql = "select id, team1, team2, kodate from games where league_id in (-1,  723, 724);";
 
             var bet365games = new List<string>();
 
@@ -1388,7 +1486,7 @@ namespace FormzTool
             string selectedText = matchBox.GetItemText(matchBox.Items[matchBox.SelectedIndex]);
             string id = Regex.Split(selectedText, " ").ElementAt(0);
 
-            WebRequest req = WebRequest.Create("http://127.0.0.1:8000/GetGoalsPrediction?gameId=" + id);
+            WebRequest req = WebRequest.Create("http://localhost:8080/GetGoalsPrediction?gameId=" + id);
             req.Timeout = 300000;
             WebResponse resp = req.GetResponse();
 
@@ -1402,7 +1500,127 @@ namespace FormzTool
             string selectedText = matchBox.GetItemText(matchBox.Items[matchBox.SelectedIndex]);
             string id = Regex.Split(selectedText, " ").ElementAt(0);
 
-            WebRequest req = WebRequest.Create("http://127.0.0.1:8000/GetCornersPrediction?gameId=" + id);
+            WebRequest req = WebRequest.Create("http://localhost:8080/GetCornersPrediction?gameId=" + id);
+            req.Timeout = 300000;
+            WebResponse resp = req.GetResponse();
+
+            System.IO.StreamReader sr = new System.IO.StreamReader(resp.GetResponseStream());
+
+            MessageBox.Show(sr.ReadToEnd().Trim());
+        }
+
+        private void removeDupMatchesOverMidnightToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            List<Tuple<string, string>> teams = new List<Tuple<string, string>>();
+
+            string sql = "select distinct team1, team2, EXTRACT(WEEK FROM kodate), count(*) from games group by team1, team2, EXTRACT(WEEK FROM kodate) having count(*) = 2;";
+
+            using (NpgsqlCommand find = new NpgsqlCommand(sql, pgConnection))
+            {
+                using (NpgsqlDataReader dr = find.ExecuteReader())
+                {
+                    bool hasRows = dr.HasRows;
+
+                    if (hasRows == true)
+                    {
+                        while (dr.Read())
+                        {
+                            var tup = new Tuple<string, string>(dr[0].ToString(), dr[1].ToString());
+
+                            teams.Add(tup);
+                        }
+                    }
+                }
+            }
+
+            for (int j = 0; j != teams.Count(); ++j)
+            {
+                string sql2 = "select id, league_id from games where team1='" + teams.ElementAt(j).Item1
+                            + "' and team2='" + teams.ElementAt(j).Item2 + "';";
+
+                var idsAndLeagues = new List<Tuple<string, string>>();
+
+                using (NpgsqlCommand find = new NpgsqlCommand(sql2, pgConnection))
+                {
+                    using (NpgsqlDataReader dr = find.ExecuteReader())
+                    {
+                        bool hasRows = dr.HasRows;
+
+                        if (hasRows == true)
+                        {
+                            while (dr.Read())
+                            {
+                                idsAndLeagues.Add(new Tuple<string, string>(dr[0].ToString(), dr[1].ToString()));
+                            }
+                        }
+                    }
+                }
+
+                if (idsAndLeagues.Count() != 2)
+                {
+                    continue;
+                }
+                else
+                {
+                    var kodates1 = ExecuteSimpleQuery("select kodate from games where id='" + idsAndLeagues.ElementAt(0).Item1 + "'");
+                    var kodates2 = ExecuteSimpleQuery("select kodate from games where id='" + idsAndLeagues.ElementAt(1).Item1 + "'");
+
+                    var kodate1 = DateTime.Parse(kodates1.First());
+                    var kodate2 = DateTime.Parse(kodates2.First());
+
+                    if ((kodate1 - kodate2).TotalHours > 4)
+                    {
+                        //MessageBox.Show("Dates too far apart: " + kodate1 + " - " + kodate2);
+                        continue;
+                    }
+                }
+
+                if (idsAndLeagues.Count() == 2)
+                {
+                    string primaryId = "";
+
+                    if (primaryId == "")
+                    {
+                        primaryId = idsAndLeagues.ElementAt(0).Item1;
+                    }
+
+
+                    string sqlTeam1 = "update statistics set game_id='" + primaryId + "' where game_id='" + idsAndLeagues.ElementAt(1).Item1 + "';";
+                    string sqlDeleteTeam = "delete from games where id='" + idsAndLeagues.ElementAt(1).Item1 + "';";
+
+                    ExecuteNonQuery(sqlTeam1);
+                    ExecuteNonQuery(sqlDeleteTeam);
+                }
+            }
+
+            matchBox2.Items.Clear();
+
+
+            for (int j = 0; j != teams.Count(); ++j)
+            {
+                matchBox2.Items.Add(teams.ElementAt(j).Item1 + " v " + teams.ElementAt(j).Item2);
+                //    string newName = name.Replace(" Ladies", " Women");
+                //    renameTeam(name, newName);
+            }
+        }
+
+        private void deleteOldGamesWithNoStatsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var ids = ExecuteSimpleQuery("SELECT count(g1.id) FROM games g1 LEFT JOIN statistics s1 ON s1.game_id = g1.id WHERE s1.game_id IS NULL and g1.kodate < current_date;");
+
+        }
+
+        private void special2ButtonToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var ids = ExecuteSimpleQuery("SELECT id from games");
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            string selectedText = matchBox.GetItemText(matchBox.Items[matchBox.SelectedIndex]);
+            string id = Regex.Split(selectedText, " ").ElementAt(0);
+
+            WebRequest req = WebRequest.Create("http://localhost:8080/GetCornersPredictionWithDepth?gameId=" + id + "&depth=300");
             req.Timeout = 300000;
             WebResponse resp = req.GetResponse();
 

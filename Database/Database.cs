@@ -671,8 +671,8 @@ namespace Db
         {
 
             string now = DateTime.Now.ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss");
-            string sql = "INSERT into predictions ( id, \"gameId\", \"goalsWinHome\", \"goalsWinAway\", \"goalsLikelyScoreHome\", \"goalsLikelyScoreAway\", \"goalsLikelyProbability\", " +
-                         "\"cornersWinHome\", \"cornersWinAway\", \"cornersLikelyScoreHome\", \"cornersLikelyScoreAway\", \"cornersLikelyProbability\", created_at, updated_at  ) " + 
+            string sql = "INSERT into prediction_data ( id, \"gameid\", \"goalswinhome\", \"goalswinaway\", \"goalslikelyscorehome\", \"goalslikelyscoreaway\", \"goalslikelyprobability\", " +
+                         "\"cornerswinhome\", \"cornerswinaway\", \"cornerslikelyscorehome\", \"cornerslikelyscoreaway\", \"cornerslikelyprobability\", created_at, updated_at  ) " + 
                          " VALUES (" + 
                          gameId + ", " + 
                          gameId + ", " + 
@@ -690,7 +690,7 @@ namespace Db
 
             bool alreadyGotThis = false;
 
-            using (DbCommand find = dbCreator.newCommand("SELECT \"gameId\" FROM predictions WHERE \"gameId\" = " + gameId + ";", dbConnectionList.ElementAt(0)))
+            using (DbCommand find = dbCreator.newCommand("SELECT \"gameid\" FROM prediction_data WHERE \"gameid\" = " + gameId + ";", dbConnectionList.ElementAt(0)))
             {
                 using (DbDataReader dr = find.ExecuteReader())
                 {
@@ -824,20 +824,21 @@ namespace Db
             return retVal;
         }
 
-        public List<string> GetGamesForThisDay(DateTime thisDay)
-        {
-            string day = thisDay.ToString("yyyy-MM-dd HH:mm:ss").Substring(0, 10);
-            return OneColumnQuery("select id from games where to_char(kodate, 'YYYY-MM-DD') like '" + day + "%'");
-        }
-
-        public List<string> GetFurureGames()
+        public List<string> GetFutureGames()
         {
             return OneColumnQuery("select id from games where kodate > current_date");
         }
 
+        public List<string> GetADaysGames(DateTime aDate)
+        {
+            string now = aDate.ToString("yyyy-MM-dd HH:mm:ss").Substring(0, 10);
+            string sql = "select id from games where to_char(kodate, 'YYYY-MM-DD') like '" + now + "%' and league_id != -1 order by kodate asc";
+            return OneColumnQuery(sql);
+        }
+        
         public List<string> GetIdsFromPredictionTable()
         {
-            return OneColumnQuery("select id from predictions");
+            return OneColumnQuery("select id from prediction_data");
         }
 
         private List<string> OneColumnQuery(string sql)

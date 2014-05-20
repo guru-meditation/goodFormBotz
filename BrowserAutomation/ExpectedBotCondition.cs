@@ -15,7 +15,7 @@ namespace BotSpace
             {
                 IWebElement retVal = null;
                 // "//h5[contains(@class, 'ban hot') and text() = 'us states']"));
-                var elements = driver.FindElements(By.XPath("//div[text()[contains(.,'" + text +"')]]"));
+                var elements = driver.FindElements(By.XPath("//div[text()[contains(.,'" + text + "')]]"));
                 var first = elements.SingleOrDefault(x => x.Text.Trim() == text);
 
                 if (first != null)
@@ -26,6 +26,18 @@ namespace BotSpace
                 return retVal;
             };
         }
+
+        public static Func<IWebDriver, bool> VerifyInplayScreen()
+        {
+            return (driver) =>
+            {
+                var elements = driver.FindElements(By.ClassName("Classification")).ToList();
+
+                return elements.Any(x => x.Text == "Soccer");
+            };
+        }
+        
+        
 
         public static Func<IWebDriver, Boolean> ElementCountHasIncreased(int oldElementCount)
         {

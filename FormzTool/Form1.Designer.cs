@@ -58,9 +58,13 @@
             this.tomorrowsGamesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.specialButtonToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.fixBET365LeaguesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.removeDupMatchesOverMidnightToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.deleteOldGamesWithNoStatsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.checkBox1 = new System.Windows.Forms.CheckBox();
             this.doSums = new System.Windows.Forms.Button();
             this.button1 = new System.Windows.Forms.Button();
+            this.special2ButtonToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.button2 = new System.Windows.Forms.Button();
             this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -292,7 +296,10 @@
             this.removeDuplicateMatchesToolStripMenuItem,
             this.tomorrowsGamesToolStripMenuItem,
             this.specialButtonToolStripMenuItem,
-            this.fixBET365LeaguesToolStripMenuItem});
+            this.fixBET365LeaguesToolStripMenuItem,
+            this.removeDupMatchesOverMidnightToolStripMenuItem,
+            this.deleteOldGamesWithNoStatsToolStripMenuItem,
+            this.special2ButtonToolStripMenuItem});
             this.specialToolStripMenuItem.Name = "specialToolStripMenuItem";
             this.specialToolStripMenuItem.Size = new System.Drawing.Size(56, 20);
             this.specialToolStripMenuItem.Text = "Special";
@@ -300,37 +307,51 @@
             // removeDupTeams
             // 
             this.removeDupTeams.Name = "removeDupTeams";
-            this.removeDupTeams.Size = new System.Drawing.Size(218, 22);
+            this.removeDupTeams.Size = new System.Drawing.Size(270, 22);
             this.removeDupTeams.Text = "Remove Duplicate Teams";
             this.removeDupTeams.Click += new System.EventHandler(this.removeDuplicateTeamsToolStripMenuItem_Click);
             // 
             // removeDuplicateMatchesToolStripMenuItem
             // 
             this.removeDuplicateMatchesToolStripMenuItem.Name = "removeDuplicateMatchesToolStripMenuItem";
-            this.removeDuplicateMatchesToolStripMenuItem.Size = new System.Drawing.Size(218, 22);
+            this.removeDuplicateMatchesToolStripMenuItem.Size = new System.Drawing.Size(270, 22);
             this.removeDuplicateMatchesToolStripMenuItem.Text = "Remove Duplicate Matches";
             this.removeDuplicateMatchesToolStripMenuItem.Click += new System.EventHandler(this.removeDuplicateMatchesToolStripMenuItem_Click);
             // 
             // tomorrowsGamesToolStripMenuItem
             // 
             this.tomorrowsGamesToolStripMenuItem.Name = "tomorrowsGamesToolStripMenuItem";
-            this.tomorrowsGamesToolStripMenuItem.Size = new System.Drawing.Size(218, 22);
+            this.tomorrowsGamesToolStripMenuItem.Size = new System.Drawing.Size(270, 22);
             this.tomorrowsGamesToolStripMenuItem.Text = "Tomorrows Games";
             this.tomorrowsGamesToolStripMenuItem.Click += new System.EventHandler(this.tomorrowsGamesToolStripMenuItem_Click);
             // 
             // specialButtonToolStripMenuItem
             // 
             this.specialButtonToolStripMenuItem.Name = "specialButtonToolStripMenuItem";
-            this.specialButtonToolStripMenuItem.Size = new System.Drawing.Size(218, 22);
+            this.specialButtonToolStripMenuItem.Size = new System.Drawing.Size(270, 22);
             this.specialButtonToolStripMenuItem.Text = "Special Button";
             this.specialButtonToolStripMenuItem.Click += new System.EventHandler(this.specialButtonToolStripMenuItem_Click);
             // 
             // fixBET365LeaguesToolStripMenuItem
             // 
             this.fixBET365LeaguesToolStripMenuItem.Name = "fixBET365LeaguesToolStripMenuItem";
-            this.fixBET365LeaguesToolStripMenuItem.Size = new System.Drawing.Size(218, 22);
+            this.fixBET365LeaguesToolStripMenuItem.Size = new System.Drawing.Size(270, 22);
             this.fixBET365LeaguesToolStripMenuItem.Text = "Fix BET365 leagues";
             this.fixBET365LeaguesToolStripMenuItem.Click += new System.EventHandler(this.fixBET365LeaguesToolStripMenuItem_Click);
+            // 
+            // removeDupMatchesOverMidnightToolStripMenuItem
+            // 
+            this.removeDupMatchesOverMidnightToolStripMenuItem.Name = "removeDupMatchesOverMidnightToolStripMenuItem";
+            this.removeDupMatchesOverMidnightToolStripMenuItem.Size = new System.Drawing.Size(270, 22);
+            this.removeDupMatchesOverMidnightToolStripMenuItem.Text = "Remove Dup Matches Over Midnight";
+            this.removeDupMatchesOverMidnightToolStripMenuItem.Click += new System.EventHandler(this.removeDupMatchesOverMidnightToolStripMenuItem_Click);
+            // 
+            // deleteOldGamesWithNoStatsToolStripMenuItem
+            // 
+            this.deleteOldGamesWithNoStatsToolStripMenuItem.Name = "deleteOldGamesWithNoStatsToolStripMenuItem";
+            this.deleteOldGamesWithNoStatsToolStripMenuItem.Size = new System.Drawing.Size(270, 22);
+            this.deleteOldGamesWithNoStatsToolStripMenuItem.Text = "Delete Old Games With No Stats";
+            this.deleteOldGamesWithNoStatsToolStripMenuItem.Click += new System.EventHandler(this.deleteOldGamesWithNoStatsToolStripMenuItem_Click);
             // 
             // checkBox1
             // 
@@ -364,11 +385,30 @@
             this.button1.UseVisualStyleBackColor = true;
             this.button1.Click += new System.EventHandler(this.button1_Click_1);
             // 
+            // special2ButtonToolStripMenuItem
+            // 
+            this.special2ButtonToolStripMenuItem.Name = "special2ButtonToolStripMenuItem";
+            this.special2ButtonToolStripMenuItem.Size = new System.Drawing.Size(270, 22);
+            this.special2ButtonToolStripMenuItem.Text = "Special 2 Button";
+            this.special2ButtonToolStripMenuItem.Click += new System.EventHandler(this.special2ButtonToolStripMenuItem_Click);
+            // 
+            // button2
+            // 
+            this.button2.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.button2.Location = new System.Drawing.Point(671, 152);
+            this.button2.Name = "button2";
+            this.button2.Size = new System.Drawing.Size(148, 25);
+            this.button2.TabIndex = 32;
+            this.button2.Text = "Deep Corners Prediction";
+            this.button2.UseVisualStyleBackColor = true;
+            this.button2.Click += new System.EventHandler(this.button2_Click);
+            // 
             // FormzDBEditor
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1074, 973);
+            this.Controls.Add(this.button2);
             this.Controls.Add(this.button1);
             this.Controls.Add(this.doSums);
             this.Controls.Add(this.checkBox1);
@@ -440,6 +480,10 @@
         private System.Windows.Forms.ToolStripMenuItem fixBET365LeaguesToolStripMenuItem;
         private System.Windows.Forms.Button doSums;
         private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.ToolStripMenuItem removeDupMatchesOverMidnightToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem deleteOldGamesWithNoStatsToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem special2ButtonToolStripMenuItem;
+        private System.Windows.Forms.Button button2;
     }
 }
 

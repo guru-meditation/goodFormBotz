@@ -14,16 +14,20 @@ namespace PredictionzBot
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
         static OperationMode gOpMode = OperationMode.Bet365Scan;
-        static string site = ConfigurationManager.AppSettings["site"];
-        static string connectionString = ConfigurationManager.AppSettings["connection1"];
-        static string dbtype = ConfigurationManager.AppSettings["dbtype"];
-        static string sleepTime = ConfigurationManager.AppSettings["sleeptime"];
+        static string site                  = ConfigurationManager.AppSettings["site"];
+        static string connectionString      = ConfigurationManager.AppSettings["connection1"];
+        static string dbtype                = ConfigurationManager.AppSettings["dbtype"];
+        static string sleepTime             = ConfigurationManager.AppSettings["sleeptime"];
+        static string mode                  = ConfigurationManager.AppSettings["mode"];
+        static string predictionServiceHost = ConfigurationManager.AppSettings["predictionservicehost"];
+        static string predictionServicePort = ConfigurationManager.AppSettings["predictionserviceport"];
 
         static void Main(string[] args)
         {
             Console.WriteLine("Connection string           : " + connectionString);
             Console.WriteLine("Database Type               : " + dbtype);
             Console.WriteLine("Sleep Time                  : " + sleepTime);
+            Console.WriteLine("Service Host                : " + predictionServiceHost + ":" + predictionServicePort);
             Console.WriteLine(" ");
 
             int sleep = 2000;
@@ -38,7 +42,7 @@ namespace PredictionzBot
                 System.Threading.Thread.Sleep(10000);
             }
 
-            var gen = new PredictionsGenerator(dbStuff);
+            var gen = new PredictionsGenerator(dbStuff, mode, predictionServiceHost + ":" + predictionServicePort);
             gen.Go();
         }
     }

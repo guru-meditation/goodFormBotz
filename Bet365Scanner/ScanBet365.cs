@@ -13,21 +13,48 @@ using System.Collections.ObjectModel;
 namespace Scanners
 {
 
+    class Game
+    {
+        public string competitionName;
+        public string team1;
+        public string team2;
+
+        public override string ToString()
+        {
+            return team1 + " v " + team2 + " in " + competitionName + System.Environment.NewLine;
+        }
+    }
+
     public class ScanBet365 : Scanner
     {
         private static readonly log4net.ILog log
               = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+
+        private List<Game> competitions = new List<Game>();
 
         public ScanBet365(DriverCreator creator, Database db, string xml_path, bool skip_games)
             : base(creator, db, xml_path, skip_games)
         {
         }
 
-        protected override int addLeague(string league)
+        private string Chomp(List<string> sectionTexts)
         {
-            return -1;
+            string retVal = "";
 
+            if (sectionTexts.Count() > 0)
+            {
+                retVal = sectionTexts.First();
+                sectionTexts.RemoveAt(0);
+            }
+
+            return retVal;
         }
+
+        private List<string> excludeString = new List<string>() {"Coupons",
+            "1ST HALF ASIANS IN-PLAY",
+            "IN-PLAY COUPON",
+            "ASIANS IN-PLAY"
+        };
 
         public override void scan(int sleepTime)
         {
@@ -63,12 +90,13 @@ namespace Scanners
                     }
 
                     //load the main page
-                    driverWrapper.Url = "https://mobile.bet365.com/premium/#type=Splash;key=1;ip=0;lng=1";
-                    IWebElement inPlayElement = null;
+                    driverWrapper.Url = "https://mobile.bet365.com/premium/#type=InPlay;key=1;ip=1;lng=1";
+                    //driverWrapper.Url = "https://mobile.bet365.com/premium/#type=Splash;key=1;ip=0;lng=1";
+                    bool inPlayElement = false;
 
                     try
                     {
-                        inPlayElement = driverWrapper.WaitUntil(ExpectedBotCondition.GetDivContainingText("In-Play"), 60);
+                        inPlayElement = driverWrapper.WaitUntil(ExpectedBotCondition.VerifyInplayScreen(), 60);
                     }
                     catch (WebDriverTimeoutException)
                     {
@@ -80,39 +108,102 @@ namespace Scanners
                         continue;
                     }
 
-                    List<IWebElement> genericRowElements = null;
+                    List<IWebElement> fixtureElements = null;
 
-                    if (inPlayElement != null)
+                    if (inPlayElement)
                     {
-                        driverWrapper.ClickElement(inPlayElement);
+                        fixtureElements = driverWrapper.FindElements(By.ClassName("Fixture")).ToList();
+                        int removed = fixtureElements.RemoveAll(x => x.GetAttribute("class") != "Fixture");
 
-                        bool inPlayGamesOnScreen = driverWrapper.WaitUntil(ExpectedBotCondition.PageHasClassContainingString("genericRow", " v "), 20);
-                        
-                        genericRowElements = driverWrapper.FindElements(By.ClassName("genericRow")).ToList();
+                        log.Warn("Fixtures: " + fixtureElements.Count);
+                        log.Warn("Removed: " + removed); 
 
-                        log.Warn("Generic Rows: " + genericRowElements.Count);
+                        var fixtureList = driverWrapper.FindElement(By.ClassName("FixtureList"));
+                        var fText = fixtureList.Text;
 
-                        int firstNonMatch = genericRowElements.IndexOf(genericRowElements.First(x => x.Text.Contains(" v ") == false));
-                        
-                        if (firstNonMatch != -1)
+                        var fixtureSplits = Regex.Split(fText, "\r\n").ToList();
+
+                        fixtureSplits.RemoveAll(x => excludeString.Contains(x));
+
+                        var competitionName = "";
+                        competitions.Clear();
+
+                        while (fixtureSplits.Count() != 0)
                         {
-                            genericRowElements.RemoveRange(firstNonMatch, genericRowElements.Count() - firstNonMatch);
+                            var tempBuf = new List<string>();
+
+                            Game a = null;
+
+                            while (fixtureSplits.Count() != 0)
+                            {
+                                if (fixtureSplits.First().StartsWith("  "))
+                                {
+                                    tempBuf.Add(Chomp(fixtureSplits));
+                                    break;
+                                }
+                                else
+                                {
+                                    tempBuf.Add(Chomp(fixtureSplits));
+                                }
+                            }
+
+                            if (tempBuf.Count() == 2)
+                            {
+                                var team1 = tempBuf[0];
+                                var team2 = tempBuf[1];
+
+                                if (team1.Contains(":"))
+                                {
+                                    team1 = team1.Substring(team1.IndexOf(' '));
+                                }
+
+                                a = new Game();
+                                a.competitionName = competitionName.Trim();
+                                a.team1 = team1.Trim();
+                                a.team2 = team2.Trim();
+
+                            }
+                            else if (tempBuf.Count() == 3)
+                            {
+                                competitionName = tempBuf[0];
+                                var team1 = tempBuf[1];
+                                var team2 = tempBuf[2];
+
+                                if (team1.Contains(":"))
+                                {
+                                    team1 = team1.Substring(team1.IndexOf(' '));
+                                }
+
+                                a = new Game();
+                                a.competitionName = competitionName.Trim();
+                                a.team1 = team1.Trim();
+                                a.team2 = team2.Trim();
+                            }
+                            else
+                            {
+                                log.Info("Unexpected number of string in temp buf");
+                            }
+
+                            if (a != null)
+                            {
+                                competitions.Add(a);
+                            }
                         }
-
-                        log.Warn("Generic Rows Inplay: " + genericRowElements.Count);
                     }
-
-                    IEnumerable<string> gamesAsText = genericRowElements.Select(x => x.Text);
+                    else
+                    {
+                        continue;
+                    }
 
                     if (idx == -1)
                     {
                         Random random = new Random();
-                        idx = random.Next(0, genericRowElements.Count());
+                        idx = random.Next(0, fixtureElements.Count());
                     }
 
                     int elementCount = 0;
 
-                    genericRowElements.ForEach(x =>
+                    fixtureElements.ForEach(x =>
                     {
                         if (idx == elementCount)
                             log.Warn(x.Text);
@@ -121,17 +212,16 @@ namespace Scanners
                         ++elementCount;
                     });
 
-                    log.Info("Scanning game " + idx + " of " + genericRowElements.Count() + " games in play at " + DateTime.Now.ToUniversalTime());
+                    log.Info("Scanning game " + idx + " of " + fixtureElements.Count() + " games in play at " + DateTime.Now.ToUniversalTime());
 
-                    if (idx < genericRowElements.Count())
+                    if (idx < fixtureElements.Count())
                     {
                         var hstats = new Dictionary<string, int>();
                         var astats = new Dictionary<string, int>();
 
                         int attempts = 3;
 
-                        //*[@id="rw_spl_sc_1-1-5-24705317-2-0-0-1-1-0-0-0-0-0-1-0-0_101"]/div[1]
-                        genericRowElements.ElementAt(idx).Click();
+                        fixtureElements.ElementAt(idx).Click();
 
                         string clockText = "";
 
@@ -353,7 +443,24 @@ namespace Scanners
                         string awayTeamName = DoSubstitutions(teams.ElementAt(1));
 
                         string today = DateTime.Now.ToUniversalTime().ToString("ddMMyy");
+
+                        Game maybeGame = null;
+
+                        try
+                        {
+                            maybeGame = competitions.SingleOrDefault(x => x.team1.StartsWith(homeTeamName.ToUpper()) && x.team2.StartsWith(awayTeamName.ToUpper()));
+                        }
+                        catch (Exception ce)
+                        {
+                            log.Warn("Exception thrown in your shit code!:" + ce);
+                        }
+
                         string league = "All";
+
+                        if (maybeGame != null)
+                        {
+                            league = DoSubstitutions(maybeGame.competitionName);
+                        }
 
                         string yesterday = (DateTime.Today.ToUniversalTime() - TimeSpan.FromDays(1)).ToString("ddMMyy");
                         string finalName = Path.Combine(xmlPath, league, homeTeamName + " v " + awayTeamName + "_" + today + ".xml");

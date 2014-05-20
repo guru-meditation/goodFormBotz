@@ -27,7 +27,7 @@ namespace OddsBot
             int r = 0;
 
             bool phantomMode = false;
-            
+
             gOpMode = OperationMode.Bet365Scan;
 
             foreach (string arg in args)
@@ -78,22 +78,19 @@ namespace OddsBot
                 System.Threading.Thread.Sleep(10000);
             }
 
-            DriverWrapper driverWrapper = null;
+            string agentString = "--user-agent=\"Mozilla/5.0 (Linux; U; Android 2.3.6; en-us; Nexus S Build/GRK39F) AppleWebKit/533/1 (KHTML, like Gecko) Version/4.0 Mobile Safari/533.1\"";
 
-            if (driverWrapper == null)
+            using (var driverWrapper = driverCreator.CreateDriver(agentString))
             {
-                string agentString = "--user-agent=\"Mozilla/5.0 (Linux; U; Android 2.3.6; en-us; Nexus S Build/GRK39F) AppleWebKit/533/1 (KHTML, like Gecko) Version/4.0 Mobile Safari/533.1\"";
-
-                driverWrapper = driverCreator.CreateDriver(agentString);
 
                 if (driverWrapper == null)
                 {
                     log.Error("Failed to make a Selenium Driver");
                 }
-            }
 
-            var scanner = new OddScanner(dbStuff);
-            scanner.AddTodaysMatches(2000, driverWrapper);
+                var scanner = new OddScanner(dbStuff);
+                scanner.AddTodaysMatches(2000, driverWrapper);
+            }
         }
     }
 }
