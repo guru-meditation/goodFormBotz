@@ -9,6 +9,7 @@ using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
+using System.Data.Common;
 
 
 namespace FormzTool
@@ -319,6 +320,11 @@ namespace FormzTool
         private static List<string> GetTeamIds(string teamName)
         {
             return ExecuteSimpleQuery("SELECT id FROM teams WHERE name = '" + teamName + "';");
+        }
+
+        private static List<string> GetLeagueIds(string leagueName)
+        {
+            return ExecuteSimpleQuery("SELECT id FROM leagues WHERE name = '" + leagueName + "';");
         }
 
         private static string GetTeamId(string teamName)
@@ -1229,14 +1235,12 @@ namespace FormzTool
 
             matchBox2.Items.Clear();
 
-
             foreach (var name in badNames)
             {
                 matchBox2.Items.Add(name);
                 //    string newName = name.Replace(" Ladies", " Women");
                 //    renameTeam(name, newName);
             }
-
         }
 
         private void specialButtonToolStripMenuItem_Click(object sender, EventArgs e)
@@ -1431,7 +1435,12 @@ namespace FormzTool
 
         private void fixBET365LeaguesToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            string sql = "select id, team1, team2, kodate from games where league_id in (-1,  723, 724);";
+            //var naughtyLeagues = new List<string>() { "723", "724", "132", "328", "834", "1124", "1343", "-1", "1202831", "3463650" };
+            //var naughtyLeagues = new List<string>() {  "-1" };
+            var naughtyLeagues  = GetLeagueId("All");
+
+            string sql = "select id, team1, team2, kodate from games where league_id in ( " + String.Join(",", naughtyLeagues) + " ) order by id desc;";
+            //string sql = "select id, team1, team2, kodate from games where league_id in ( 723, 1202831, 3463650 ) order by id desc;";
 
             var bet365games = new List<string>();
 
@@ -1452,16 +1461,17 @@ namespace FormzTool
             }
 
             var fails = 0;
+            var successes = 0;
 
             foreach (var game in bet365games)
             {
                 var splits = game.Split(',');
 
-                string team1LeaguesSQL = "select league_id from games where team1 = " + splits[1] + " order by kodate desc;";
-                string team2LeaguesSQL = "select league_id from games where team2 = " + splits[2] + " order by kodate desc;";
+                string team1LeaguesSQL = "select league_id from games where team1 = " + splits[1] + " or team2 = " + splits[1] + " order by kodate desc;";
+                string team2LeaguesSQL = "select league_id from games where team1 = " + splits[2] + " or team2 = " + splits[2] + " order by kodate desc;";
 
-                var team1Leagues = OneColumnQuery(team1LeaguesSQL).Distinct().Where(x => x != "-1");
-                var team2Leagues = OneColumnQuery(team2LeaguesSQL).Distinct().Where(x => x != "-1"); ;
+                var team1Leagues = OneColumnQuery(team1LeaguesSQL).Distinct().Where(x => naughtyLeagues.Contains(x) == false);
+                var team2Leagues = OneColumnQuery(team2LeaguesSQL).Distinct().Where(x => naughtyLeagues.Contains(x) == false); ;
 
                 var common = team1Leagues.Intersect(team2Leagues);
 
@@ -1471,6 +1481,7 @@ namespace FormzTool
                     var sqlUpdate = "update games set league_id = '" + newLeague + "' where id = " + splits[0] + ";";
 
                     ExecuteNonQuery(sqlUpdate);
+                    successes++;
                 }
                 else
                 {
@@ -1481,33 +1492,6 @@ namespace FormzTool
             Console.WriteLine(fails);
         }
 
-        private void doSums_Click(object sender, EventArgs e)
-        {
-            string selectedText = matchBox.GetItemText(matchBox.Items[matchBox.SelectedIndex]);
-            string id = Regex.Split(selectedText, " ").ElementAt(0);
-
-            WebRequest req = WebRequest.Create("http://localhost:8080/GetGoalsPrediction?gameId=" + id);
-            req.Timeout = 300000;
-            WebResponse resp = req.GetResponse();
-
-            System.IO.StreamReader sr = new System.IO.StreamReader(resp.GetResponseStream());
-
-            MessageBox.Show(sr.ReadToEnd().Trim());
-        }
-
-        private void button1_Click_1(object sender, EventArgs e)
-        {
-            string selectedText = matchBox.GetItemText(matchBox.Items[matchBox.SelectedIndex]);
-            string id = Regex.Split(selectedText, " ").ElementAt(0);
-
-            WebRequest req = WebRequest.Create("http://localhost:8080/GetCornersPrediction?gameId=" + id);
-            req.Timeout = 300000;
-            WebResponse resp = req.GetResponse();
-
-            System.IO.StreamReader sr = new System.IO.StreamReader(resp.GetResponseStream());
-
-            MessageBox.Show(sr.ReadToEnd().Trim());
-        }
 
         private void removeDupMatchesOverMidnightToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -1627,6 +1611,267 @@ namespace FormzTool
             System.IO.StreamReader sr = new System.IO.StreamReader(resp.GetResponseStream());
 
             MessageBox.Show(sr.ReadToEnd().Trim());
+        }
+
+        public void RunSQL(string sql, Action<DbDataReader> a)
+        {
+            try
+            {
+                using (DbCommand cmd = new NpgsqlCommand(sql, pgConnection))
+                {
+                    using (DbDataReader dr = cmd.ExecuteReader())
+                    {
+                        while (dr.Read())
+                        {
+                            a(dr);
+                        }
+
+                        dr.Close();
+                    }
+                }
+            }
+            catch (DbException e)
+            {
+                MessageBox.Show("Exception: " + e);
+            }
+        }
+
+        class Prediction
+        {
+            public string id;
+            public string team1;
+            public string team2;
+            public int cornerslikelyscorehome;
+            public int cornerslikelyscoreaway;
+            public float cornerLine = -1;
+            public DateTime koDate;
+
+            internal bool BetDeJour()
+            {
+                bool retVal = false;
+
+                int totalCorners = cornerslikelyscoreaway + cornerslikelyscorehome;
+
+                if (Math.Abs(totalCorners - cornerLine) > 2)
+                    retVal = true;
+
+                return retVal;
+            }
+        }
+
+        private void betDeJourToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var sql_preds = "select p1.id, t1.name, t2.name, p1.cornerslikelyscorehome, p1.cornerslikelyscoreaway, a1.cornerline, g1.kodate from prediction_data p1 join games g1 on g1.id = p1.id join teams t1 on g1.team1 = t1.id join teams t2 on g1.team2 = t2.id join asiancorners a1 on CAST(a1.game_id AS integer) = g1.id where g1.kodate > current_date order by g1.kodate asc;";
+            var preds = new List<Prediction>();
+
+            RunSQL(sql_preds,
+                    (dr) =>
+                    {
+                        Prediction p = new Prediction();
+                        p.id = dr[0].ToString();
+                        p.team1 = dr[1].ToString();
+                        p.team2 = dr[2].ToString();
+
+                        p.cornerslikelyscorehome = int.Parse(dr[3].ToString());
+                        p.cornerslikelyscoreaway = int.Parse(dr[4].ToString());
+
+                        p.cornerLine = float.Parse(dr[5].ToString());
+
+                        p.koDate = DateTime.Parse(dr[6].ToString());
+                        preds.Add(p);
+                    }
+                );
+
+            preds.RemoveAll(x => x.cornerLine == -1);
+            preds.RemoveAll(x => x.BetDeJour() == false);
+            preds.OrderBy(x => x.koDate);
+
+            int longestHomeTeam = preds.Select(x => x.team1).Max(x => x.Length);
+            int longestAwayTeam = preds.Select(x => x.team2).Max(x => x.Length);
+ 
+            int longestLines = preds.Select(x => x.cornerLine).Max(x => x.ToString().Length);
+
+            matchBox2.Items.Clear();
+
+            for(int i = 0; i != preds.Count(); ++i)
+            {
+                matchBox2.Items.Add(preds.ElementAt(i).id + "\t" + preds.ElementAt(i).team1.PadRight(longestHomeTeam) + "\t" + preds.ElementAt(i).team2.PadRight(longestAwayTeam) + "\t\tPredicted: " + preds.ElementAt(i).cornerslikelyscoreaway + "-" + preds.ElementAt(i).cornerslikelyscorehome + "\tLine: " + preds.ElementAt(i).cornerLine.ToString().PadRight(longestLines) + "\t" + preds.ElementAt(i).koDate);
+            }
+        }
+
+        private void analysisToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var gameIds = ExecuteSimpleQuery("select id from prediction_data");
+            var gameIdsString = string.Join(",", gameIds);
+
+            string sql4 = "select hg, ag, hco, aco, gametime, game_id from " +
+              "(select game_id, gametime, hg, ag, hco, aco, max(gametime) over (partition by game_id) max_gameTime from statistics where game_id in  (  " + gameIdsString + " ))" +
+              " a where game_id in  (  " + gameIdsString + " ) AND gametime = max_GameTime";
+
+            string hg, ag, hc, ac, ls, g_id;
+
+            var matches = new List<Match>();
+
+            using (NpgsqlCommand find = new NpgsqlCommand(sql4, pgConnection))
+            {
+                using (NpgsqlDataReader dr = find.ExecuteReader())
+                {
+                    while (dr.Read() == true)
+                    {
+                        hg = dr[0].ToString();
+                        ag = dr[1].ToString();
+                        hc = dr[2].ToString();
+                        ac = dr[3].ToString();
+                        ls = dr[4].ToString();
+                        g_id = (dr[5].ToString());
+
+                        Match m = matches.SingleOrDefault(x => x.gameId == g_id);
+                        if (m == null)
+                        {
+                            MessageBox.Show("null match!!");
+                        }
+                        else
+                        {
+                            m.aco = ac;
+                            m.hco = hc;
+                            m.hgs = hg;
+                            m.ags = ag;
+                            m.seenTime = ls;
+                        }
+                    }
+                }
+            }
+
+            var sql_preds = "select p1.id, t1.name, t2.name, p1.cornerslikelyscorehome, p1.cornerslikelyscoreaway, a1.cornerline, g1.kodate from prediction_data p1 join games g1 on g1.id = p1.id join teams t1 on g1.team1 = t1.id join teams t2 on g1.team2 = t2.id join asiancorners a1 on CAST(a1.game_id AS integer) = g1.id where g1.kodate > current_date order by g1.kodate asc;";
+            var preds = new List<Prediction>();
+
+            RunSQL(sql_preds,
+                    (dr) =>
+                    {
+                        Prediction p = new Prediction();
+                        p.id = dr[0].ToString();
+                        p.team1 = dr[1].ToString();
+                        p.team2 = dr[2].ToString();
+
+                        p.cornerslikelyscorehome = int.Parse(dr[3].ToString());
+                        p.cornerslikelyscoreaway = int.Parse(dr[4].ToString());
+
+                        p.cornerLine = float.Parse(dr[5].ToString());
+
+                        p.koDate = DateTime.Parse(dr[6].ToString());
+                        preds.Add(p);
+                    }
+                );
+        }
+
+        private void removeDuplicateLeaguesToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            List<string> badNames = new List<string>();
+
+            string sql = "select name, count(*) from leagues group by name having count(*) > 1;";
+
+            using (NpgsqlCommand find = new NpgsqlCommand(sql, pgConnection))
+            {
+                using (NpgsqlDataReader dr = find.ExecuteReader())
+                {
+                    bool hasRows = dr.HasRows;
+
+                    if (hasRows == true)
+                    {
+                        while (dr.Read())
+                        {
+                            badNames.Add(dr[0].ToString());
+
+                        }
+                    }
+                }
+            }
+
+            foreach (var name in badNames)
+            {
+                var ids = GetLeagueIds(name);
+
+                if (ids.Count() > 1)
+                {
+                    string primaryId = ids.ElementAt(0);
+                    for (int i = 1; i != ids.Count(); ++i)
+                    {
+                        string sqlLeague1 = "update games set league_id='" + primaryId + "' where league_id='" + ids.ElementAt(i) + "';";
+                        string sqlDeleteTeam = "delete from leagues where id='" + ids.ElementAt(i) + "';";
+                        ExecuteNonQuery(sqlLeague1);
+                        ExecuteNonQuery(sqlDeleteTeam);
+                    }
+
+                }
+            }
+
+            matchBox2.Items.Clear();
+
+            foreach (var name in badNames)
+            {
+                matchBox2.Items.Add(name);
+            }
+        }
+
+        private void simpleGoalToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            string selectedText = matchBox.GetItemText(matchBox.Items[matchBox.SelectedIndex]);
+            string id = Regex.Split(selectedText, " ").ElementAt(0);
+
+            WebRequest req = WebRequest.Create("http://localhost:8080/GetGoalsPrediction?gameId=" + id);
+            req.Timeout = 300000;
+            WebResponse resp = req.GetResponse();
+
+            System.IO.StreamReader sr = new System.IO.StreamReader(resp.GetResponseStream());
+
+            MessageBox.Show(sr.ReadToEnd().Trim());
+        }
+
+        private void simpleCornerToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            string selectedText = matchBox.GetItemText(matchBox.Items[matchBox.SelectedIndex]);
+            string id = Regex.Split(selectedText, " ").ElementAt(0);
+
+            WebRequest req = WebRequest.Create("http://localhost:8080/GetCornersPrediction?gameId=" + id);
+            req.Timeout = 300000;
+            WebResponse resp = req.GetResponse();
+
+            System.IO.StreamReader sr = new System.IO.StreamReader(resp.GetResponseStream());
+
+            MessageBox.Show(sr.ReadToEnd().Trim());
+        }
+
+        private void bivariateGoalPrediction_Click(object sender, EventArgs e)
+        {
+            string selectedText = matchBox.GetItemText(matchBox.Items[matchBox.SelectedIndex]);
+            string id = Regex.Split(selectedText, " ").ElementAt(0);
+
+            WebRequest req = WebRequest.Create("http://localhost:8080/GetGoalsBiVarPrediction?gameId=" + id);
+            req.Timeout = 300000;
+            WebResponse resp = req.GetResponse();
+
+            System.IO.StreamReader sr = new System.IO.StreamReader(resp.GetResponseStream());
+
+            MessageBox.Show(sr.ReadToEnd().Trim());
+        }
+
+        private void bivariateCornerPrediction_Click(object sender, EventArgs e)
+        {
+            string selectedText = matchBox.GetItemText(matchBox.Items[matchBox.SelectedIndex]);
+            string id = Regex.Split(selectedText, " ").ElementAt(0);
+
+            WebRequest req = WebRequest.Create("http://localhost:8080/GetCornersBiVarPrediction?gameId=" + id);
+            req.Timeout = 300000;
+            WebResponse resp = req.GetResponse();
+
+            System.IO.StreamReader sr = new System.IO.StreamReader(resp.GetResponseStream());
+
+            MessageBox.Show(sr.ReadToEnd().Trim());
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+
         }
     }
 }

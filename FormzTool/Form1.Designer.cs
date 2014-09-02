@@ -60,12 +60,25 @@
             this.fixBET365LeaguesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.removeDupMatchesOverMidnightToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.deleteOldGamesWithNoStatsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.special2ButtonToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.betDeJourToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.analysisToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.removeDuplicateLeaguesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.predictionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.simpleGoalToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.simpleCornerToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.bivariateGoalToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.bivariateCornerToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.checkBox1 = new System.Windows.Forms.CheckBox();
             this.doSums = new System.Windows.Forms.Button();
             this.button1 = new System.Windows.Forms.Button();
-            this.special2ButtonToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.button2 = new System.Windows.Forms.Button();
+            this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.button3 = new System.Windows.Forms.Button();
+            this.button4 = new System.Windows.Forms.Button();
+            this.button5 = new System.Windows.Forms.Button();
             this.menuStrip1.SuspendLayout();
+            this.groupBox1.SuspendLayout();
             this.SuspendLayout();
             // 
             // label1
@@ -100,9 +113,9 @@
             this.matchBox.Font = new System.Drawing.Font("Consolas", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.matchBox.FormattingEnabled = true;
             this.matchBox.ItemHeight = 14;
-            this.matchBox.Location = new System.Drawing.Point(21, 180);
+            this.matchBox.Location = new System.Drawing.Point(21, 220);
             this.matchBox.Name = "matchBox";
-            this.matchBox.Size = new System.Drawing.Size(1036, 256);
+            this.matchBox.Size = new System.Drawing.Size(1036, 214);
             this.matchBox.TabIndex = 3;
             this.matchBox.SelectedIndexChanged += new System.EventHandler(this.matchBox_SelectedIndexChanged);
             // 
@@ -166,9 +179,9 @@
             // 
             // setLeague
             // 
-            this.setLeague.Location = new System.Drawing.Point(260, 151);
+            this.setLeague.Location = new System.Drawing.Point(247, 151);
             this.setLeague.Name = "setLeague";
-            this.setLeague.Size = new System.Drawing.Size(92, 26);
+            this.setLeague.Size = new System.Drawing.Size(70, 26);
             this.setLeague.TabIndex = 12;
             this.setLeague.Text = "Set League";
             this.setLeague.UseVisualStyleBackColor = true;
@@ -178,7 +191,7 @@
             // 
             this.deleteGame.Location = new System.Drawing.Point(163, 151);
             this.deleteGame.Name = "deleteGame";
-            this.deleteGame.Size = new System.Drawing.Size(91, 26);
+            this.deleteGame.Size = new System.Drawing.Size(78, 26);
             this.deleteGame.TabIndex = 13;
             this.deleteGame.Text = "Delete Game";
             this.deleteGame.UseVisualStyleBackColor = true;
@@ -232,7 +245,7 @@
             // 
             // createLeague
             // 
-            this.createLeague.Location = new System.Drawing.Point(358, 151);
+            this.createLeague.Location = new System.Drawing.Point(323, 151);
             this.createLeague.Name = "createLeague";
             this.createLeague.Size = new System.Drawing.Size(92, 26);
             this.createLeague.TabIndex = 21;
@@ -276,7 +289,8 @@
             // 
             this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.File,
-            this.specialToolStripMenuItem});
+            this.specialToolStripMenuItem,
+            this.predictionsToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
             this.menuStrip1.Size = new System.Drawing.Size(1074, 24);
@@ -299,7 +313,10 @@
             this.fixBET365LeaguesToolStripMenuItem,
             this.removeDupMatchesOverMidnightToolStripMenuItem,
             this.deleteOldGamesWithNoStatsToolStripMenuItem,
-            this.special2ButtonToolStripMenuItem});
+            this.special2ButtonToolStripMenuItem,
+            this.betDeJourToolStripMenuItem,
+            this.analysisToolStripMenuItem,
+            this.removeDuplicateLeaguesToolStripMenuItem});
             this.specialToolStripMenuItem.Name = "specialToolStripMenuItem";
             this.specialToolStripMenuItem.Size = new System.Drawing.Size(56, 20);
             this.specialToolStripMenuItem.Text = "Special";
@@ -353,6 +370,73 @@
             this.deleteOldGamesWithNoStatsToolStripMenuItem.Text = "Delete Old Games With No Stats";
             this.deleteOldGamesWithNoStatsToolStripMenuItem.Click += new System.EventHandler(this.deleteOldGamesWithNoStatsToolStripMenuItem_Click);
             // 
+            // special2ButtonToolStripMenuItem
+            // 
+            this.special2ButtonToolStripMenuItem.Name = "special2ButtonToolStripMenuItem";
+            this.special2ButtonToolStripMenuItem.Size = new System.Drawing.Size(270, 22);
+            this.special2ButtonToolStripMenuItem.Text = "Special 2 Button";
+            this.special2ButtonToolStripMenuItem.Click += new System.EventHandler(this.special2ButtonToolStripMenuItem_Click);
+            // 
+            // betDeJourToolStripMenuItem
+            // 
+            this.betDeJourToolStripMenuItem.Name = "betDeJourToolStripMenuItem";
+            this.betDeJourToolStripMenuItem.Size = new System.Drawing.Size(270, 22);
+            this.betDeJourToolStripMenuItem.Text = "Bet De Jour";
+            this.betDeJourToolStripMenuItem.Click += new System.EventHandler(this.betDeJourToolStripMenuItem_Click);
+            // 
+            // analysisToolStripMenuItem
+            // 
+            this.analysisToolStripMenuItem.Name = "analysisToolStripMenuItem";
+            this.analysisToolStripMenuItem.Size = new System.Drawing.Size(270, 22);
+            this.analysisToolStripMenuItem.Text = "Analysis";
+            this.analysisToolStripMenuItem.Click += new System.EventHandler(this.analysisToolStripMenuItem_Click);
+            // 
+            // removeDuplicateLeaguesToolStripMenuItem
+            // 
+            this.removeDuplicateLeaguesToolStripMenuItem.Name = "removeDuplicateLeaguesToolStripMenuItem";
+            this.removeDuplicateLeaguesToolStripMenuItem.Size = new System.Drawing.Size(270, 22);
+            this.removeDuplicateLeaguesToolStripMenuItem.Text = "Remove Duplicate Leagues";
+            this.removeDuplicateLeaguesToolStripMenuItem.Click += new System.EventHandler(this.removeDuplicateLeaguesToolStripMenuItem_Click);
+            // 
+            // predictionsToolStripMenuItem
+            // 
+            this.predictionsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.simpleGoalToolStripMenuItem,
+            this.simpleCornerToolStripMenuItem,
+            this.bivariateGoalToolStripMenuItem,
+            this.bivariateCornerToolStripMenuItem});
+            this.predictionsToolStripMenuItem.Name = "predictionsToolStripMenuItem";
+            this.predictionsToolStripMenuItem.Size = new System.Drawing.Size(78, 20);
+            this.predictionsToolStripMenuItem.Text = "Predictions";
+            // 
+            // simpleGoalToolStripMenuItem
+            // 
+            this.simpleGoalToolStripMenuItem.Name = "simpleGoalToolStripMenuItem";
+            this.simpleGoalToolStripMenuItem.Size = new System.Drawing.Size(158, 22);
+            this.simpleGoalToolStripMenuItem.Text = "Simple Goal";
+            this.simpleGoalToolStripMenuItem.Click += new System.EventHandler(this.simpleGoalToolStripMenuItem_Click);
+            // 
+            // simpleCornerToolStripMenuItem
+            // 
+            this.simpleCornerToolStripMenuItem.Name = "simpleCornerToolStripMenuItem";
+            this.simpleCornerToolStripMenuItem.Size = new System.Drawing.Size(158, 22);
+            this.simpleCornerToolStripMenuItem.Text = "Simple Corner";
+            this.simpleCornerToolStripMenuItem.Click += new System.EventHandler(this.simpleCornerToolStripMenuItem_Click);
+            // 
+            // bivariateGoalToolStripMenuItem
+            // 
+            this.bivariateGoalToolStripMenuItem.Name = "bivariateGoalToolStripMenuItem";
+            this.bivariateGoalToolStripMenuItem.Size = new System.Drawing.Size(158, 22);
+            this.bivariateGoalToolStripMenuItem.Text = "Bivariate Goal";
+            this.bivariateGoalToolStripMenuItem.Click += new System.EventHandler(this.bivariateGoalPrediction_Click);
+            // 
+            // bivariateCornerToolStripMenuItem
+            // 
+            this.bivariateCornerToolStripMenuItem.Name = "bivariateCornerToolStripMenuItem";
+            this.bivariateCornerToolStripMenuItem.Size = new System.Drawing.Size(158, 22);
+            this.bivariateCornerToolStripMenuItem.Text = "Bivariate Corner";
+            this.bivariateCornerToolStripMenuItem.Click += new System.EventHandler(this.bivariateCornerPrediction_Click);
+            // 
             // checkBox1
             // 
             this.checkBox1.AutoSize = true;
@@ -366,51 +450,88 @@
             // doSums
             // 
             this.doSums.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.doSums.Location = new System.Drawing.Point(456, 152);
+            this.doSums.Location = new System.Drawing.Point(139, 9);
             this.doSums.Name = "doSums";
-            this.doSums.Size = new System.Drawing.Size(97, 25);
+            this.doSums.Size = new System.Drawing.Size(88, 25);
             this.doSums.TabIndex = 30;
             this.doSums.Text = "Goal Prediction";
             this.doSums.UseVisualStyleBackColor = true;
-            this.doSums.Click += new System.EventHandler(this.doSums_Click);
             // 
             // button1
             // 
             this.button1.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.button1.Location = new System.Drawing.Point(559, 152);
+            this.button1.Location = new System.Drawing.Point(233, 9);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(106, 25);
             this.button1.TabIndex = 31;
             this.button1.Text = "Corners Prediction";
             this.button1.UseVisualStyleBackColor = true;
-            this.button1.Click += new System.EventHandler(this.button1_Click_1);
-            // 
-            // special2ButtonToolStripMenuItem
-            // 
-            this.special2ButtonToolStripMenuItem.Name = "special2ButtonToolStripMenuItem";
-            this.special2ButtonToolStripMenuItem.Size = new System.Drawing.Size(270, 22);
-            this.special2ButtonToolStripMenuItem.Text = "Special 2 Button";
-            this.special2ButtonToolStripMenuItem.Click += new System.EventHandler(this.special2ButtonToolStripMenuItem_Click);
             // 
             // button2
             // 
             this.button2.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.button2.Location = new System.Drawing.Point(671, 152);
+            this.button2.Location = new System.Drawing.Point(482, 9);
             this.button2.Name = "button2";
-            this.button2.Size = new System.Drawing.Size(148, 25);
+            this.button2.Size = new System.Drawing.Size(131, 25);
             this.button2.TabIndex = 32;
             this.button2.Text = "Deep Corners Prediction";
             this.button2.UseVisualStyleBackColor = true;
             this.button2.Click += new System.EventHandler(this.button2_Click);
+            // 
+            // groupBox1
+            // 
+            this.groupBox1.Controls.Add(this.button5);
+            this.groupBox1.Controls.Add(this.button4);
+            this.groupBox1.Controls.Add(this.button3);
+            this.groupBox1.Controls.Add(this.doSums);
+            this.groupBox1.Controls.Add(this.button2);
+            this.groupBox1.Controls.Add(this.button1);
+            this.groupBox1.Location = new System.Drawing.Point(24, 180);
+            this.groupBox1.Name = "groupBox1";
+            this.groupBox1.Size = new System.Drawing.Size(1008, 34);
+            this.groupBox1.TabIndex = 33;
+            this.groupBox1.TabStop = false;
+            this.groupBox1.Text = "Predictions";
+            // 
+            // button3
+            // 
+            this.button3.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.button3.Location = new System.Drawing.Point(345, 9);
+            this.button3.Name = "button3";
+            this.button3.Size = new System.Drawing.Size(131, 25);
+            this.button3.TabIndex = 33;
+            this.button3.Text = "Deep Goals Prediction";
+            this.button3.UseVisualStyleBackColor = true;
+            this.button3.Click += new System.EventHandler(this.button3_Click);
+            // 
+            // button4
+            // 
+            this.button4.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.button4.Location = new System.Drawing.Point(619, 9);
+            this.button4.Name = "button4";
+            this.button4.Size = new System.Drawing.Size(131, 25);
+            this.button4.TabIndex = 34;
+            this.button4.Text = "Bivariate Goals Prediction";
+            this.button4.UseVisualStyleBackColor = true;
+            this.button4.Click += new System.EventHandler(this.bivariateGoalPrediction_Click);
+            // 
+            // button5
+            // 
+            this.button5.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.button5.Location = new System.Drawing.Point(756, 9);
+            this.button5.Name = "button5";
+            this.button5.Size = new System.Drawing.Size(131, 25);
+            this.button5.TabIndex = 35;
+            this.button5.Text = "Bivariate Corners Prediction";
+            this.button5.UseVisualStyleBackColor = true;
+            this.button5.Click += new System.EventHandler(this.bivariateCornerPrediction_Click);
             // 
             // FormzDBEditor
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1074, 973);
-            this.Controls.Add(this.button2);
-            this.Controls.Add(this.button1);
-            this.Controls.Add(this.doSums);
+            this.Controls.Add(this.groupBox1);
             this.Controls.Add(this.checkBox1);
             this.Controls.Add(this.matchBox3);
             this.Controls.Add(this.matchBox2);
@@ -440,6 +561,7 @@
             this.Text = "FormzDBEditor";
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
+            this.groupBox1.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -484,6 +606,18 @@
         private System.Windows.Forms.ToolStripMenuItem deleteOldGamesWithNoStatsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem special2ButtonToolStripMenuItem;
         private System.Windows.Forms.Button button2;
+        private System.Windows.Forms.ToolStripMenuItem betDeJourToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem analysisToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem removeDuplicateLeaguesToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem predictionsToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem simpleGoalToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem simpleCornerToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem bivariateGoalToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem bivariateCornerToolStripMenuItem;
+        private System.Windows.Forms.GroupBox groupBox1;
+        private System.Windows.Forms.Button button5;
+        private System.Windows.Forms.Button button4;
+        private System.Windows.Forms.Button button3;
     }
 }
 

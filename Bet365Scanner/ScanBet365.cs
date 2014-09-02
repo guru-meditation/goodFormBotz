@@ -50,10 +50,11 @@ namespace Scanners
             return retVal;
         }
 
-        private List<string> excludeString = new List<string>() {"Coupons",
+        private List<string> excludeString = new List<string>() {"COUPONS",
             "1ST HALF ASIANS IN-PLAY",
             "IN-PLAY COUPON",
-            "ASIANS IN-PLAY"
+            "ASIANS IN-PLAY",
+            "VIDEO"
         };
 
         public override void scan(int sleepTime)
@@ -123,7 +124,7 @@ namespace Scanners
 
                         var fixtureSplits = Regex.Split(fText, "\r\n").ToList();
 
-                        fixtureSplits.RemoveAll(x => excludeString.Contains(x));
+                        fixtureSplits.RemoveAll(x => excludeString.Contains(x.ToUpper()));
 
                         var competitionName = "";
                         competitions.Clear();
@@ -131,6 +132,8 @@ namespace Scanners
                         while (fixtureSplits.Count() != 0)
                         {
                             var tempBuf = new List<string>();
+
+                            fixtureSplits.RemoveAll(x => x == "VIDEO");
 
                             Game a = null;
 
@@ -393,6 +396,11 @@ namespace Scanners
                         }
 
                         string inPlayTitle = inPlayTitles.ElementAt(0);
+                        
+                        if(inPlayTitle.Contains("\r\n"))
+                        {
+                            inPlayTitle = inPlayTitle.Substring(0, inPlayTitle.IndexOf("\r\n"));
+                        }
 
                         var vals = new List<string>();
 
@@ -448,7 +456,7 @@ namespace Scanners
 
                         try
                         {
-                            maybeGame = competitions.SingleOrDefault(x => x.team1.StartsWith(homeTeamName.ToUpper()) && x.team2.StartsWith(awayTeamName.ToUpper()));
+                            maybeGame = competitions.SingleOrDefault(x => x.team1.ToUpper().StartsWith(homeTeamName.ToUpper()) && x.team2.ToUpper().StartsWith(awayTeamName.ToUpper()));
                         }
                         catch (Exception ce)
                         {
@@ -463,7 +471,19 @@ namespace Scanners
                         }
 
                         string yesterday = (DateTime.Today.ToUniversalTime() - TimeSpan.FromDays(1)).ToString("ddMMyy");
-                        string finalName = Path.Combine(xmlPath, league, homeTeamName + " v " + awayTeamName + "_" + today + ".xml");
+
+                        string finalName = "";
+
+                        try
+                        {
+
+                            finalName = Path.Combine(xmlPath, league, homeTeamName + " v " + awayTeamName + "_" + today + ".xml");
+                        }
+                        catch ( Exception ce )
+                        {
+                            log.Warn("Another exception thrown in your shit code!:" + ce);
+                            throw ce;
+                        }
 
                         bool exists = File.Exists(finalName);
 

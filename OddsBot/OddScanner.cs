@@ -63,7 +63,7 @@ namespace OddsBot
             driver.ForceSleep(sleepTime);
             driver.GetElementAndClick("splashSection", "MATCH MARKETS");
             driver.ForceSleep(sleepTime);
-            driver.GetElementAndClick("splashSection", "MAIN");
+            driver.GetElementAndClick("splashSection", "Main");
             driver.ForceSleep(sleepTime);
             driver.GetElementAndClick("genericRow", "Full Time Result");
             driver.ForceSleep(sleepTime);
@@ -152,34 +152,34 @@ namespace OddsBot
                 {
                     m_dbStuff.AddCornerData(m.id, m.cornerLine, m.homeAsianCornerPrice, m.awayAsianCornerPrice);
                 }
-            
-            //    if (String.IsNullOrEmpty(m.homeRaceTo3CornersPrice) == false &&
-            //        String.IsNullOrEmpty(m.awayRaceTo3CornersPrice) == false &&
-            //        String.IsNullOrEmpty(m.neitherRaceTo3CornersPrice) == false)
-            //    {
-            //        m_dbStuff.AddRaceToCornerData(m.id, 3, m.homeRaceTo3CornersPrice, m.awayRaceTo3CornersPrice, m.neitherRaceTo3CornersPrice);
-            //    }
 
-            //    if (String.IsNullOrEmpty(m.homeRaceTo5CornersPrice) == false &&
-            //        String.IsNullOrEmpty(m.awayRaceTo5CornersPrice) == false &&
-            //        String.IsNullOrEmpty(m.neitherRaceTo5CornersPrice) == false)
-            //    {
-            //        m_dbStuff.AddRaceToCornerData(m.id, 5, m.homeRaceTo5CornersPrice, m.awayRaceTo5CornersPrice, m.neitherRaceTo5CornersPrice);
-            //    }
+                if (String.IsNullOrEmpty(m.homeRaceTo3CornersPrice) == false &&
+                    String.IsNullOrEmpty(m.awayRaceTo3CornersPrice) == false &&
+                    String.IsNullOrEmpty(m.neitherRaceTo3CornersPrice) == false)
+                {
+                    m_dbStuff.AddRaceToCornerData(m.id, 3, m.homeRaceTo3CornersPrice, m.awayRaceTo3CornersPrice, m.neitherRaceTo3CornersPrice);
+                }
 
-            //    if (String.IsNullOrEmpty(m.homeRaceTo7CornersPrice) == false &&
-            //        String.IsNullOrEmpty(m.awayRaceTo7CornersPrice) == false &&
-            //        String.IsNullOrEmpty(m.neitherRaceTo7CornersPrice) == false)
-            //    {
-            //        m_dbStuff.AddRaceToCornerData(m.id, 7, m.homeRaceTo7CornersPrice, m.awayRaceTo7CornersPrice, m.neitherRaceTo7CornersPrice);
-            //    }
+                if (String.IsNullOrEmpty(m.homeRaceTo5CornersPrice) == false &&
+                    String.IsNullOrEmpty(m.awayRaceTo5CornersPrice) == false &&
+                    String.IsNullOrEmpty(m.neitherRaceTo5CornersPrice) == false)
+                {
+                    m_dbStuff.AddRaceToCornerData(m.id, 5, m.homeRaceTo5CornersPrice, m.awayRaceTo5CornersPrice, m.neitherRaceTo5CornersPrice);
+                }
 
-            //    if (String.IsNullOrEmpty(m.homeRaceTo9CornersPrice) == false &&
-            //        String.IsNullOrEmpty(m.awayRaceTo9CornersPrice) == false &&
-            //        String.IsNullOrEmpty(m.neitherRaceTo9CornersPrice) == false)
-            //    {
-            //        m_dbStuff.AddRaceToCornerData(m.id, 9, m.homeRaceTo9CornersPrice, m.awayRaceTo9CornersPrice, m.neitherRaceTo9CornersPrice);
-            //    }
+                if (String.IsNullOrEmpty(m.homeRaceTo7CornersPrice) == false &&
+                    String.IsNullOrEmpty(m.awayRaceTo7CornersPrice) == false &&
+                    String.IsNullOrEmpty(m.neitherRaceTo7CornersPrice) == false)
+                {
+                    m_dbStuff.AddRaceToCornerData(m.id, 7, m.homeRaceTo7CornersPrice, m.awayRaceTo7CornersPrice, m.neitherRaceTo7CornersPrice);
+                }
+
+                if (String.IsNullOrEmpty(m.homeRaceTo9CornersPrice) == false &&
+                    String.IsNullOrEmpty(m.awayRaceTo9CornersPrice) == false &&
+                    String.IsNullOrEmpty(m.neitherRaceTo9CornersPrice) == false)
+                {
+                    m_dbStuff.AddRaceToCornerData(m.id, 9, m.homeRaceTo9CornersPrice, m.awayRaceTo9CornersPrice, m.neitherRaceTo9CornersPrice);
+                }
 
                 if (String.IsNullOrEmpty(m.homeWinPrice) == false &&
                     String.IsNullOrEmpty(m.drawPrice) == false &&
@@ -419,6 +419,13 @@ namespace OddsBot
         private void ReadInformation(DriverWrapper driver, List<aMatch> foundMatches, string leagueText, string marker)
         {
             var sections = driver.FindElements(By.ClassName("Section"));
+
+            if (sections.Count() == 0)
+            {
+                log.Warn("No sections found :(");
+                return;
+            }
+
             var sectionTexts = Regex.Split(sections.First().Text, "\r\n").ToList();
             sectionTexts.RemoveAt(0);
 
