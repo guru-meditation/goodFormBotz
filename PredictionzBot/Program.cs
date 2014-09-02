@@ -24,7 +24,7 @@ namespace PredictionzBot
 
         static void Main(string[] args)
         {
-            Console.WriteLine("Connection string           : " + connectionString);
+            log.Info("Connection string           : " + connectionString);
             Console.WriteLine("Database Type               : " + dbtype);
             Console.WriteLine("Sleep Time                  : " + sleepTime);
             Console.WriteLine("Service Host                : " + predictionServiceHost + ":" + predictionServicePort);
