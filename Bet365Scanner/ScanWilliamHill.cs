@@ -21,6 +21,11 @@ namespace Scanners
         {
         }
 
+        protected override bool isBet365()
+        {
+            return false;
+        }
+
         public override void scan(int sleepTime = 0)
         {
             DriverWrapper driver = null;

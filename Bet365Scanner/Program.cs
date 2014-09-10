@@ -11,6 +11,14 @@ namespace BotSpace
     using Scanners;
     using Db;
 
+    public enum OperationMode
+    {
+        WilliamHillScan,
+        Bet365Scan,
+        UploadWilliamHill,
+        UploadBet365
+    }
+
     public class TheBot
     {
         private static readonly log4net.ILog log
@@ -128,9 +136,9 @@ namespace BotSpace
                 driverCreator = new ChromeDriverCreator();
             }
 
-            Database dbStuff = new Database(dbtype, connectionString, gOpMode);
+            Database dbStuff = new Database(DbCreator.Create(dbtype));
 
-            while (dbStuff.Connect() == false)
+            while (dbStuff.Connect(connectionString) == false)
             {
                 log.Warn("Cannot connect to DB... retrying in 10 seconds");
                 System.Threading.Thread.Sleep(10000);

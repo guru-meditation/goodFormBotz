@@ -79,11 +79,11 @@ namespace OddsBot
             foreach (aMatch m in foundMatches)
             {
                 Console.WriteLine(m.team1.PadRight(longestTeam1 + 1) + " " + m.team2.PadRight(longestTeam2 + 1) + " at " + m.koDateTime.TimeOfDay + " in " + m.league);
-                
-                int leagueId = m_dbStuff.AddLeague(m.league);
-                int hTeamId = m_dbStuff.AddTeam(m.team1);
-                int aTeamId = m_dbStuff.AddTeam(m.team2);
-                int gameId = m_dbStuff.AddGame(hTeamId, aTeamId, leagueId, m.koDateTime);
+
+                int leagueId = AddLeague.DoIt(m_dbStuff, m.league);
+                int hTeamId = AddTeam.DoIt(m_dbStuff, m.team1);
+                int aTeamId = AddTeam.DoIt(m_dbStuff, m.team2);
+                int gameId = AddGame.DoIt(m_dbStuff, hTeamId, aTeamId, leagueId, m.koDateTime);
                 m.id = gameId;
             }
 
@@ -150,42 +150,42 @@ namespace OddsBot
 
                 if (String.IsNullOrEmpty(m.cornerLine) == false)
                 {
-                    m_dbStuff.AddCornerData(m.id, m.cornerLine, m.homeAsianCornerPrice, m.awayAsianCornerPrice);
+                    AddCornerData.DoIt(m_dbStuff, m.id, m.cornerLine, m.homeAsianCornerPrice, m.awayAsianCornerPrice);
                 }
 
                 if (String.IsNullOrEmpty(m.homeRaceTo3CornersPrice) == false &&
                     String.IsNullOrEmpty(m.awayRaceTo3CornersPrice) == false &&
                     String.IsNullOrEmpty(m.neitherRaceTo3CornersPrice) == false)
                 {
-                    m_dbStuff.AddRaceToCornerData(m.id, 3, m.homeRaceTo3CornersPrice, m.awayRaceTo3CornersPrice, m.neitherRaceTo3CornersPrice);
+                    AddRaceToCornerData.DoIt(m_dbStuff, m.id, 3, m.homeRaceTo3CornersPrice, m.awayRaceTo3CornersPrice, m.neitherRaceTo3CornersPrice);
                 }
 
                 if (String.IsNullOrEmpty(m.homeRaceTo5CornersPrice) == false &&
                     String.IsNullOrEmpty(m.awayRaceTo5CornersPrice) == false &&
                     String.IsNullOrEmpty(m.neitherRaceTo5CornersPrice) == false)
                 {
-                    m_dbStuff.AddRaceToCornerData(m.id, 5, m.homeRaceTo5CornersPrice, m.awayRaceTo5CornersPrice, m.neitherRaceTo5CornersPrice);
+                    AddRaceToCornerData.DoIt(m_dbStuff, m.id, 5, m.homeRaceTo5CornersPrice, m.awayRaceTo5CornersPrice, m.neitherRaceTo5CornersPrice);
                 }
 
                 if (String.IsNullOrEmpty(m.homeRaceTo7CornersPrice) == false &&
                     String.IsNullOrEmpty(m.awayRaceTo7CornersPrice) == false &&
                     String.IsNullOrEmpty(m.neitherRaceTo7CornersPrice) == false)
                 {
-                    m_dbStuff.AddRaceToCornerData(m.id, 7, m.homeRaceTo7CornersPrice, m.awayRaceTo7CornersPrice, m.neitherRaceTo7CornersPrice);
+                    AddRaceToCornerData.DoIt(m_dbStuff, m.id, 7, m.homeRaceTo7CornersPrice, m.awayRaceTo7CornersPrice, m.neitherRaceTo7CornersPrice);
                 }
 
                 if (String.IsNullOrEmpty(m.homeRaceTo9CornersPrice) == false &&
                     String.IsNullOrEmpty(m.awayRaceTo9CornersPrice) == false &&
                     String.IsNullOrEmpty(m.neitherRaceTo9CornersPrice) == false)
                 {
-                    m_dbStuff.AddRaceToCornerData(m.id, 9, m.homeRaceTo9CornersPrice, m.awayRaceTo9CornersPrice, m.neitherRaceTo9CornersPrice);
+                    AddRaceToCornerData.DoIt(m_dbStuff, m.id, 9, m.homeRaceTo9CornersPrice, m.awayRaceTo9CornersPrice, m.neitherRaceTo9CornersPrice);
                 }
 
                 if (String.IsNullOrEmpty(m.homeWinPrice) == false &&
                     String.IsNullOrEmpty(m.drawPrice) == false &&
                     String.IsNullOrEmpty(m.awayWinPrice) == false)
                 {
-                    m_dbStuff.AddFinalResultPrices(m.id, m.homeWinPrice, m.drawPrice, m.awayWinPrice);
+                    AddFinalResultPrices.DoIt(m_dbStuff, m.id, m.homeWinPrice, m.drawPrice, m.awayWinPrice);
                 }
             }
             ///////////////////////
@@ -229,7 +229,7 @@ namespace OddsBot
                             {
                                 sections.ElementAt(j).Click();
                             }
-                            catch (Exception ce)
+                            catch (Exception)
                             {
                                 Console.WriteLine("Exception caught trying to click at index: " + j);
                             }
@@ -484,7 +484,7 @@ namespace OddsBot
                             m.koDateTime = m.koDateTime.AddHours(Double.Parse(hours));
                             m.koDateTime = m.koDateTime.AddMinutes(Double.Parse(mins));
                         }
-                        catch (Exception ce)
+                        catch (Exception)
                         {
                             Console.WriteLine("Exception trying to parse hours: [" + hours + "] + minutes [" + mins + "]");
                         }

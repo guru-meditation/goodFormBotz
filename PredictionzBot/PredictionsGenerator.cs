@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Db;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -25,18 +26,18 @@ namespace PredictionzBot
 
         internal void Go()
         {
-            var ids = m_dbStuff.GetADaysGames(DateTime.Today);
-            ids.AddRange(m_dbStuff.GetADaysGames(DateTime.Today + TimeSpan.FromDays(1)));
+            var ids = GetADaysGames.DoIt(m_dbStuff, DateTime.Today);
+            ids.AddRange(GetADaysGames.DoIt(m_dbStuff, DateTime.Today + TimeSpan.FromDays(1)));
 
             //var ids = m_dbStuff.GetFutureGamesWithExceptions( new List<string>() { "1202728" });
-            var alreadyPredicted = m_dbStuff.GetIdsFromPredictionTable();
+            var alreadyPredicted = GetIdsFromPredictionTable.DoIt(m_dbStuff);
 
             int goodOnes = 0, badOnes = 0;
             Console.WriteLine("Removing " + ids.RemoveAll(i => alreadyPredicted.Contains(i)) + " games");
 
             foreach (var id in ids)
             {
-                string gameDetails = m_dbStuff.GetGameDetails(id);
+                string gameDetails = GetGameDetails.DoIt(m_dbStuff, id);
                 try
                 {
                     Console.WriteLine("Good ones: " + goodOnes + " Bad ones " + badOnes + " Total: " + ids.Count());
@@ -183,7 +184,7 @@ namespace PredictionzBot
                 data["cornersLikelyScoreAway"] = moddedCornerResps.ElementAt(3).Split(' ').Last(); ;
                 data["cornersLikelyProbability"] = moddedCornerResps.ElementAt(4);
 
-                m_dbStuff.AddPredictionsData(id, data);
+                AddPredictionsData.DoIt(m_dbStuff, id, data);
 
                 Console.WriteLine("Completed OKAY!!");
             }

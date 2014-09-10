@@ -57,13 +57,13 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\..\Visual Studio 2012\Projects\Database\Database\Database.csproj">
+      <Project>{f31723ea-9582-4f24-8005-797b95517b1d}</Project>
+      <Name>Database</Name>
+    </ProjectReference>
     <ProjectReference Include="..\BrowserAutomation\BrowserAutomation.csproj">
       <Project>{f1ad0b8d-5351-4631-8b07-08a762007d14}</Project>
       <Name>BrowserAutomation</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Database\Database.csproj">
-      <Project>{3f39aec9-777d-49ff-a545-4de54ff2c752}</Project>
-      <Name>Database</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

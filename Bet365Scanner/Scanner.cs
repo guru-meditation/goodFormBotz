@@ -174,9 +174,9 @@ namespace Scanners
         protected void SendToWeb(string league, DateTime koDate, string homeTeam, string awayTeam, Dictionary<string, int> hstats, Dictionary<string, int> astats, string time)
         {
             int leagueId = addLeague(league);
-            int hTeamId = dbStuff.AddTeam(homeTeam);
-            int aTeamId = dbStuff.AddTeam(awayTeam);
-            int gameId = dbStuff.AddGame(hTeamId, aTeamId, leagueId, koDate);
+            int hTeamId = AddTeam.DoIt(dbStuff, homeTeam);
+            int aTeamId = AddTeam.DoIt(dbStuff, awayTeam);
+            int gameId = AddGame.DoIt(dbStuff, hTeamId, aTeamId, leagueId, koDate);
 
             List<int> allStats = new List<int>();
             allStats.AddRange(hstats.Values);
@@ -198,7 +198,7 @@ namespace Scanners
             {
                 try
                 {
-                    dbStuff.AddStatistics(allStats, gameId, time, "", koDate);
+                    AddStatistics.DoIt(dbStuff, isBet365(), allStats, gameId, time, "", koDate);
                 }
                 catch (DbException)
                 {
@@ -209,9 +209,14 @@ namespace Scanners
             }
         }
 
+        virtual protected bool isBet365()
+        {
+            return true;
+        }
+
         protected virtual int addLeague(string league)
         {
-            return dbStuff.AddLeague(league);
+            return AddLeague.DoIt(dbStuff, league);
         }
         public virtual void scan(int sleepTime = 0) { }
     }
@@ -226,13 +231,18 @@ namespace Scanners
         {
         }
 
+        protected override bool isBet365()
+        {
+            return false;
+        }
+
         private void Upload(string league, DateTime koDate, string homeTeam, string awayTeam, IEnumerable<XElement> snaps)
         {
             int leagueId = addLeague(league);
 
-            int hTeamId = dbStuff.AddTeam(homeTeam);
-            int aTeamId = dbStuff.AddTeam(awayTeam);
-            int gameId = dbStuff.AddGame(hTeamId, aTeamId, leagueId, koDate);
+            int hTeamId = AddTeam.DoIt(dbStuff, homeTeam);
+            int aTeamId = AddTeam.DoIt(dbStuff, awayTeam);
+            int gameId = AddGame.DoIt(dbStuff, hTeamId, aTeamId, leagueId, koDate);
 
             log.Debug("Adding " + homeTeam + " [" + hTeamId + "] v " + awayTeam + " [" + aTeamId + "] in league [" + leagueId + "] with game id: " + gameId);
             SendStats(snaps, gameId);
@@ -282,7 +292,7 @@ namespace Scanners
                     {
                         try
                         {
-                            result = dbStuff.AddStatistics(values, gameId, time, lastTime, seenTime);
+                            result = AddStatistics.DoIt(dbStuff, isBet365(), values, gameId, time, lastTime, seenTime);
                         }
                         catch (DbException)
                         {
@@ -304,7 +314,7 @@ namespace Scanners
                     {
                         try
                         {
-                            dbStuff.AddStatistics(values, gameId, time, "", seenTime);
+                            AddStatistics.DoIt(dbStuff, isBet365(), values, gameId, time, "", seenTime);
                         }
                         catch (DbException)
                         {

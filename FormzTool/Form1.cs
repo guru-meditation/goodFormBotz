@@ -1079,7 +1079,7 @@ namespace FormzTool
             matches.Add(new Match() { homeTeam = "Home:", awayTeam = "Away:", league = "League:", kodate = "Kick Off:", gameId = "Id:" });
 
             string temp = "select g1.id, t1.name, t2.name, l1.name, g1.kodate from games g1 join teams t1 on g1.team1 = t1.id join teams t2 on g1.team2 = t2.id join leagues l1 on g1.league_id = l1.id where g1.id in (" + sql2 + ") order by g1.kodate asc; ";
-            
+
             //string temp = "select g1.id, t1.name, t2.name, l1.name, g1.kodate, p1.\"goalswinhome\", p1.\"goalswinaway\", p1.\"goalslikelyscorehome\", p1.\"goalslikelyscoreaway\", p1.\"goalslikelyprobability\" from games g1 join teams t1 on g1.team1 = t1.id join teams t2 on g1.team2 = t2.id join prediction_data p1 on g1.id = p1.id join leagues l1 on g1.league_id = l1.id where g1.id in (" + sql2 + ") order by g1.kodate asc; ";
             //string temp3 = "select g1.id, p1.\"goalswinhome\", p1.\"goalswinaway\", p1.\"goalslikelyscorehome\", p1.\"goalslikelyscoreaway\", p1.\"goalslikelyprobability\" from games g1 join prediction_data p1 on g1.id = p1.id where g1.id in (" + sql2 + ");";
 
@@ -1265,8 +1265,6 @@ namespace FormzTool
 
         }
 
-        string moreSql = "select distinct team1, team2, EXTRACT(WEEK FROM kodate), count(*) from games group by team1, team2, EXTRACT(WEEK FROM kodate) having count(*) = 2;";
-
         private void removeDuplicateMatchesToolStripMenuItem_Click(object sender, EventArgs e)
         {
             List<string> team1s = new List<string>();
@@ -1437,7 +1435,7 @@ namespace FormzTool
         {
             //var naughtyLeagues = new List<string>() { "723", "724", "132", "328", "834", "1124", "1343", "-1", "1202831", "3463650" };
             //var naughtyLeagues = new List<string>() {  "-1" };
-            var naughtyLeagues  = GetLeagueId("All");
+            var naughtyLeagues = GetLeagueId("All");
 
             string sql = "select id, team1, team2, kodate from games where league_id in ( " + String.Join(",", naughtyLeagues) + " ) order by id desc;";
             //string sql = "select id, team1, team2, kodate from games where league_id in ( 723, 1202831, 3463650 ) order by id desc;";
@@ -1688,12 +1686,12 @@ namespace FormzTool
 
             int longestHomeTeam = preds.Select(x => x.team1).Max(x => x.Length);
             int longestAwayTeam = preds.Select(x => x.team2).Max(x => x.Length);
- 
+
             int longestLines = preds.Select(x => x.cornerLine).Max(x => x.ToString().Length);
 
             matchBox2.Items.Clear();
 
-            for(int i = 0; i != preds.Count(); ++i)
+            for (int i = 0; i != preds.Count(); ++i)
             {
                 matchBox2.Items.Add(preds.ElementAt(i).id + "\t" + preds.ElementAt(i).team1.PadRight(longestHomeTeam) + "\t" + preds.ElementAt(i).team2.PadRight(longestAwayTeam) + "\t\tPredicted: " + preds.ElementAt(i).cornerslikelyscoreaway + "-" + preds.ElementAt(i).cornerslikelyscorehome + "\tLine: " + preds.ElementAt(i).cornerLine.ToString().PadRight(longestLines) + "\t" + preds.ElementAt(i).koDate);
             }
