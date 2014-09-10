@@ -113,11 +113,31 @@ namespace OddsBot
 
             Database dbStuff = new Database(DbCreator.Create(dbtype));
 
-            while (dbStuff.Connect(connectionString) == false)
+            int cnt = 0;
+            int maxWait = 10;
+
+            while (true)
             {
-                log.Warn("Cannot connect to DB... retrying in 10 seconds");
-                System.Threading.Thread.Sleep(10000);
+                try
+                {
+                    dbStuff.Connect(connectionString);
+                    break;
+                }
+                catch (Exception e)
+                {
+                    log.Error(e);
+                    log.Warn("Cannot connect to DB... retrying in 10 seconds");
+                    if (cnt++ < maxWait)
+                    {
+                        System.Threading.Thread.Sleep(10000);
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
             }
+
 
             string agentString = "--user-agent=\"Mozilla/5.0 (Linux; U; Android 2.3.6; en-us; Nexus S Build/GRK39F) AppleWebKit/533/1 (KHTML, like Gecko) Version/4.0 Mobile Safari/533.1\"";
 

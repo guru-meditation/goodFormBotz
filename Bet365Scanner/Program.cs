@@ -138,10 +138,29 @@ namespace BotSpace
 
             Database dbStuff = new Database(DbCreator.Create(dbtype));
 
-            while (dbStuff.Connect(connectionString) == false)
+            int cnt = 0;
+            int maxWait = 10;
+
+            while (true)
             {
-                log.Warn("Cannot connect to DB... retrying in 10 seconds");
-                System.Threading.Thread.Sleep(10000);
+                try
+                {
+                    dbStuff.Connect(connectionString);
+                    break;
+                }
+                catch (Exception e)
+                {
+                    log.Error(e);
+                    log.Warn("Cannot connect to DB... retrying in 10 seconds");
+                    if (cnt++ < maxWait)
+                    {
+                        System.Threading.Thread.Sleep(10000);
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
             }
 
             Scanner scanner = null;
